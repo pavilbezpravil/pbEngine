@@ -1,0 +1,25 @@
+[submodule "pbe/vendor/GLFW"]
+	path = pbe/vendor/GLFW
+	url = https://github.com/TheCherno/glfw
+[submodule "pbe/vendor/imgui"]
+	path = pbe/vendor/imgui
+	url = https://github.com/TheCherno/imgui
+	branch = docking
+[submodule "pbe/vendor/glm"]
+	path = pbe/vendor/glm
+	url = https://github.com/g-truc/glm
+[submodule "pbe/vendor/FastNoise"]
+	path = pbe/vendor/FastNoise
+	url = https://github.com/Auburns/FastNoise
+[submodule "pbe/vendor/Box2D"]
+	path = pbe/vendor/Box2D
+	url = https://github.com/TheCherno/Box2D
+[submodule "pbe/vendor/spdlog"]
+	path = pbe/vendor/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "pbe/vendor/entt"]
+	path = pbe/vendor/entt
+	url = https://github.com/skypjack/entt.git
+[submodule "pbe/vendor/yaml-cpp"]
+	path = pbe/vendor/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git

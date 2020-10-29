@@ -1,0 +1,14 @@
+# Binaries
+**/bin/
+!vendor/bin/premake/
+!pbe/vendor/mono/bin
+bin-int/
+obj/
+
+# Visual Studio files and folder
+.vs/
+**.sln
+**.vcxproj
+**.vcxproj.filters
+**.vcxproj.user
+**.csproj
