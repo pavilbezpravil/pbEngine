@@ -3,6 +3,7 @@
 !vendor/bin
 !pbe/vendor/mono/bin
 !pbe/vendor/assimp/bin
+!pbe/vendor/WinPixEventRuntime/bin
 bin-int/
 obj/
 
