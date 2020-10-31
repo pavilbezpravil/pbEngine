@@ -50,13 +50,21 @@ struct DWParam
     | D3D12_RESOURCE_STATE_COPY_DEST \
     | D3D12_RESOURCE_STATE_COPY_SOURCE )
 
+enum class ContextType
+{
+	Command,
+	Graphics,
+	Compute,
+	Compute_Async,
+};
+
 class ContextManager
 {
 	friend pbe::Renderer;
 public:
     ContextManager(void) {}
 
-    CommandContext* AllocateContext(D3D12_COMMAND_LIST_TYPE Type);
+    CommandContext* AllocateContext(ContextType Type);
     void FreeContext(CommandContext*);
     void DestroyAllContexts();
 
@@ -78,9 +86,12 @@ class CommandContext : NonCopyable
     friend ContextManager;
 private:
 
-    CommandContext(D3D12_COMMAND_LIST_TYPE Type);
-
     void Reset( void );
+
+protected:
+	CommandContext(ContextType Type);
+
+	static CommandContext& BeginAbstractContext(const std::wstring ID, ContextType type);
 
 public:
 
@@ -100,7 +111,7 @@ public:
     void Initialize(void);
 
     GraphicsContext& GetGraphicsContext() {
-        ASSERT(m_Type != D3D12_COMMAND_LIST_TYPE_COMPUTE, "Cannot convert async compute context to graphics");
+        ASSERT(m_CommandListType != D3D12_COMMAND_LIST_TYPE_COMPUTE, "Cannot convert async compute context to graphics");
         return reinterpret_cast<GraphicsContext&>(*this);
     }
 
@@ -175,12 +186,16 @@ protected:
     std::wstring m_ID;
     void SetID(const std::wstring& ID) { m_ID = ID; }
 
-    D3D12_COMMAND_LIST_TYPE m_Type;
+    ContextType m_Type;
+    D3D12_COMMAND_LIST_TYPE m_CommandListType;
 };
+
 
 class GraphicsContext : public CommandContext
 {
 public:
+
+	GraphicsContext() : CommandContext(ContextType::Graphics) {}
 
     static GraphicsContext& Begin(const std::wstring& ID = L"")
     {
@@ -256,6 +271,8 @@ private:
 class ComputeContext : public CommandContext
 {
 public:
+
+	ComputeContext(bool async) : CommandContext(async ? ContextType::Compute_Async : ContextType::Compute) {}
 
     static ComputeContext& Begin(const std::wstring& ID = L"", bool Async = false);
 

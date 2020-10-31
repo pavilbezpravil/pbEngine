@@ -12,6 +12,22 @@
 
 using namespace Graphics;
 
+namespace 
+{
+	D3D12_COMMAND_LIST_TYPE CommandListTypeFromContextType(ContextType type)
+	{
+		switch (type)
+		{
+		case ContextType::Command:
+		case ContextType::Graphics:
+		case ContextType::Compute:
+			return D3D12_COMMAND_LIST_TYPE_DIRECT;
+		case ContextType::Compute_Async:
+			return D3D12_COMMAND_LIST_TYPE_COMPUTE;
+		}
+		HZ_CORE_ASSERT(false);
+	}
+}
 
 void ContextManager::DestroyAllContexts(void)
 {
@@ -19,17 +35,24 @@ void ContextManager::DestroyAllContexts(void)
         sm_ContextPool[i].clear();
 }
 
-CommandContext* ContextManager::AllocateContext(D3D12_COMMAND_LIST_TYPE Type)
+CommandContext* ContextManager::AllocateContext(ContextType Type)
 {
     std::lock_guard<std::mutex> LockGuard(sm_ContextAllocationMutex);
 
-    auto& AvailableContexts = sm_AvailableContexts[Type];
+    auto& AvailableContexts = sm_AvailableContexts[(int)Type];
 
     CommandContext* ret = nullptr;
     if (AvailableContexts.empty())
     {
-        ret = new CommandContext(Type);
-        sm_ContextPool[Type].emplace_back(ret);
+	    switch (Type) {
+	    case ContextType::Command: ret = new CommandContext(ContextType::Command); break;
+	    case ContextType::Graphics: ret = new GraphicsContext(); break;
+	    case ContextType::Compute: ret = new ComputeContext(false); break;
+	    case ContextType::Compute_Async: ret = new ComputeContext(true); break;
+	    default: ;
+	    }
+
+        sm_ContextPool[(int)Type].emplace_back(ret);
         ret->Initialize();
     }
     else
@@ -49,7 +72,7 @@ void ContextManager::FreeContext(CommandContext* UsedContext)
 {
     ASSERT(UsedContext != nullptr);
     std::lock_guard<std::mutex> LockGuard(sm_ContextAllocationMutex);
-    sm_AvailableContexts[UsedContext->m_Type].push(UsedContext);
+    sm_AvailableContexts[(int)UsedContext->m_Type].push(UsedContext);
 }
 
 void CommandContext::DestroyAllContexts(void)
@@ -59,20 +82,25 @@ void CommandContext::DestroyAllContexts(void)
     g_ContextManager.DestroyAllContexts();
 }
 
+CommandContext& CommandContext::BeginAbstractContext(const std::wstring ID, ContextType type)
+{
+	CommandContext* NewContext = g_ContextManager.AllocateContext(type);
+	NewContext->SetID(ID);
+	// dx12
+	// if (ID.length() > 0)
+	//     EngineProfiling::BeginBlock(ID, NewContext);
+	return *NewContext;
+}
+
 CommandContext& CommandContext::Begin( const std::wstring ID )
 {
-    CommandContext* NewContext = g_ContextManager.AllocateContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
-    NewContext->SetID(ID);
-	// dx12
-    // if (ID.length() > 0)
-    //     EngineProfiling::BeginBlock(ID, NewContext);
-    return *NewContext;
+	return BeginAbstractContext(ID, ContextType::Command);
 }
 
 ComputeContext& ComputeContext::Begin(const std::wstring& ID, bool Async)
 {
     ComputeContext& NewContext = g_ContextManager.AllocateContext(
-        Async ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT)->GetComputeContext();
+        Async ? ContextType::Compute_Async : ContextType::Compute)->GetComputeContext();
     NewContext.SetID(ID);
 	// dx12
     // if (ID.length() > 0)
@@ -86,7 +114,7 @@ uint64_t CommandContext::Flush(bool WaitForCompletion)
 
     ASSERT(m_CurrentAllocator != nullptr);
 
-    uint64_t FenceValue = g_CommandManager.GetQueue(m_Type).ExecuteCommandList(m_CommandList);
+    uint64_t FenceValue = g_CommandManager.GetQueue(m_CommandListType).ExecuteCommandList(m_CommandList);
 
     if (WaitForCompletion)
         g_CommandManager.WaitForFence(FenceValue);
@@ -117,7 +145,7 @@ uint64_t CommandContext::Flush(bool WaitForCompletion)
 
 uint64_t CommandContext::Finish( bool WaitForCompletion )
 {
-    ASSERT(m_Type == D3D12_COMMAND_LIST_TYPE_DIRECT || m_Type == D3D12_COMMAND_LIST_TYPE_COMPUTE);
+    ASSERT(m_CommandListType == D3D12_COMMAND_LIST_TYPE_DIRECT || m_CommandListType == D3D12_COMMAND_LIST_TYPE_COMPUTE);
 
     FlushResourceBarriers();
 
@@ -127,7 +155,7 @@ uint64_t CommandContext::Finish( bool WaitForCompletion )
 
     ASSERT(m_CurrentAllocator != nullptr);
 
-    CommandQueue& Queue = g_CommandManager.GetQueue(m_Type);
+    CommandQueue& Queue = g_CommandManager.GetQueue(m_CommandListType);
 
     uint64_t FenceValue = Queue.ExecuteCommandList(m_CommandList);
     Queue.DiscardAllocator(FenceValue, m_CurrentAllocator);
@@ -146,8 +174,9 @@ uint64_t CommandContext::Finish( bool WaitForCompletion )
     return FenceValue;
 }
 
-CommandContext::CommandContext(D3D12_COMMAND_LIST_TYPE Type) :
+CommandContext::CommandContext(ContextType Type) :
     m_Type(Type),
+    m_CommandListType(CommandListTypeFromContextType(Type)),
     m_DynamicViewDescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV),
     m_DynamicSamplerDescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER),
     m_CpuLinearAllocator(kCpuWritable), 
@@ -172,7 +201,7 @@ CommandContext::~CommandContext( void )
 
 void CommandContext::Initialize(void)
 {
-    g_CommandManager.CreateNewCommandList(m_Type, &m_CommandList, &m_CurrentAllocator);
+    g_CommandManager.CreateNewCommandList(m_CommandListType, &m_CommandList, &m_CurrentAllocator);
 }
 
 void CommandContext::Reset( void )
@@ -180,7 +209,7 @@ void CommandContext::Reset( void )
     // We only call Reset() on previously freed contexts.  The command list persists, but we must
     // request a new allocator.
     ASSERT(m_CommandList != nullptr && m_CurrentAllocator == nullptr);
-    m_CurrentAllocator = g_CommandManager.GetQueue(m_Type).RequestAllocator();
+    m_CurrentAllocator = g_CommandManager.GetQueue(m_CommandListType).RequestAllocator();
     m_CommandList->Reset(m_CurrentAllocator, nullptr);
 
     m_CurGraphicsRootSignature = nullptr;
@@ -327,7 +356,7 @@ void CommandContext::TransitionResource(GpuResource& Resource, D3D12_RESOURCE_ST
 {
     D3D12_RESOURCE_STATES OldState = Resource.m_UsageState;
 
-    if (m_Type == D3D12_COMMAND_LIST_TYPE_COMPUTE)
+    if (m_CommandListType == D3D12_COMMAND_LIST_TYPE_COMPUTE)
     {
         ASSERT((OldState & VALID_COMPUTE_QUEUE_RESOURCE_STATES) == OldState);
         ASSERT((NewState & VALID_COMPUTE_QUEUE_RESOURCE_STATES) == NewState);

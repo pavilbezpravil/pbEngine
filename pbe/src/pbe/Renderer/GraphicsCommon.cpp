@@ -141,13 +141,13 @@ void Graphics::InitializeCommonState(void)
     DepthStateReadWrite = DepthStateDisabled;
     DepthStateReadWrite.DepthEnable = TRUE;
     DepthStateReadWrite.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-    DepthStateReadWrite.DepthFunc = D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+    DepthStateReadWrite.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
     DepthStateReadOnly = DepthStateReadWrite;
     DepthStateReadOnly.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 
     DepthStateReadOnlyReversed = DepthStateReadOnly;
-    DepthStateReadOnlyReversed.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+    DepthStateReadOnlyReversed.DepthFunc = D3D12_COMPARISON_FUNC_GREATER;
 
     DepthStateTestEqual = DepthStateReadOnly;
     DepthStateTestEqual.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
