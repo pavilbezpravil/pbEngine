@@ -94,6 +94,11 @@ namespace pbe {
 			m_TimeStep = time - m_LastFrameTime;
 			m_LastFrameTime = time;
 		}
+
+		for (auto& l : m_LayerStack) {
+			l->OnDetach();
+		}
+
 		OnShutdown();
 	}
 

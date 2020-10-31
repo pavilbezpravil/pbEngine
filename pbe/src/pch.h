@@ -15,6 +15,7 @@
 #include <fstream>
 
 #include <pbe/Core/Base.h>
+#include <pbe/Core/Types.h>
 #include <pbe/Core/Log.h>
 #include <pbe/Core/Events/Event.h>
 

@@ -205,7 +205,7 @@ namespace pbe {
 		}
 
 		// Materials
-		if (scene->HasMaterials())
+		if (scene->HasMaterials() && false)
 		{
 			HZ_MESH_LOG("---- Materials - {0} ----", filename);
 

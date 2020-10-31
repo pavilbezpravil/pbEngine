@@ -122,6 +122,9 @@ namespace pbe {
 		std::vector<Submesh>& GetSubmeshes() { return m_Submeshes; }
 		const std::vector<Submesh>& GetSubmeshes() const { return m_Submeshes; }
 
+		Ref<VertexBuffer>& GetVertexBuffer() { return m_VertexBuffer; }
+		Ref<IndexBuffer>& GetIndexBuffer() { return m_IndexBuffer; }
+
 		Ref<Shader> GetMeshShader() { return m_MeshShader; }
 		const std::vector<Ref<Texture2D>>& GetTextures() const { return m_Textures; }
 		const std::string& GetFilePath() const { return m_FilePath; }

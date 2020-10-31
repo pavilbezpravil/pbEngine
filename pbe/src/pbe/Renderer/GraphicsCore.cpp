@@ -374,9 +374,6 @@ void Graphics::PreparePresentLDR(void)
 
 	Context.TransitionResource(GetCurrentBB(), D3D12_RESOURCE_STATE_PRESENT);
 
-	// dx12
-	std::this_thread::sleep_for(std::chrono::milliseconds(16));
-
 	Context.Finish();
 }
 
@@ -392,6 +389,9 @@ void Graphics::Present(void)
     UINT PresentInterval = s_EnableVSync ? std::min(4, (int)std::round(s_FrameTime * 60.0f)) : 0;
 
     s_SwapChain1->Present(PresentInterval, 0);
+
+	// todo:
+	g_CommandManager.IdleGPU();
 
     int64_t CurrentTick = SystemTime::GetCurrentTick();
 	 // static int n = 0;

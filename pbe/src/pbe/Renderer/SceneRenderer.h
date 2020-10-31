@@ -1,8 +1,11 @@
 #pragma once
 
+#include "PipelineState.h"
+#include "RootSignature.h"
 #include "pbe/Core/Singleton.h"
 #include "pbe/Scene/Scene.h"
 #include "pbe/Renderer/Mesh.h"
+#include "pbe/Renderer/PipelineState.h"
 #include "pbe/Scene/SceneCamera.h"
 
 
@@ -34,6 +37,20 @@ namespace pbe {
 			glm::mat4 transform;
 		};
 		std::vector<DrawCommand> _drawList;
+
+		// todo:
+		GraphicsPSO pso;
+		Ref<Shader> vs;
+		Ref<Shader> ps;
+
+		RootSignature BaseRootSignature;
+
+		void InitBaseRootSignature() {
+			BaseRootSignature.Reset(2);
+			BaseRootSignature[0].InitAsConstantBuffer(0);
+			BaseRootSignature[1].InitAsConstantBuffer(1);
+			BaseRootSignature.Finalize(L"Base", D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		}
 	};
 
 }

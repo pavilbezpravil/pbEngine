@@ -5,7 +5,7 @@
 #include "ImGuizmo.h"
 
 // #define IMGUI_IMPL_API
-#include "../../../Types.h"
+
 #include "examples/imgui_impl_win32.h"
 #include "examples/imgui_impl_dx12.h"
 
@@ -30,14 +30,14 @@ namespace pbe {
 			const uint DESC_SIZE = 32;
 			UserDescriptorHeap m_descHeap{ D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, DESC_SIZE };
 			std::vector<DescriptorHandle> m_allocatedDescHandles;
-			uint m_nextAllocHandleIdx = 2;
+			uint m_nextAllocHandleIdx = 1;
 		}
 
 		ImTextureID ImageDesc(D3D12_CPU_DESCRIPTOR_HANDLE Handle) {
 			uint idx = m_nextAllocHandleIdx;
 			m_nextAllocHandleIdx++;
 			if (m_nextAllocHandleIdx >= DESC_SIZE) {
-				m_nextAllocHandleIdx = 2;
+				m_nextAllocHandleIdx = 1;
 			}
 			Graphics::g_Device->CopyDescriptorsSimple(1, m_allocatedDescHandles[idx].GetCpuHandle(), Handle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 			return reinterpret_cast<ImTextureID>(m_allocatedDescHandles[idx].GetGpuHandle().ptr);

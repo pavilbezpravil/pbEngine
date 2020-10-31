@@ -47,18 +47,15 @@ namespace pbe {
 	void SceneHierarchyPanel::OnImGuiRender()
 	{
 		ImGui::Begin("Scene Hierarchy");
-		if (m_Context)
-		{
+		if (m_Context) {
 			uint32_t entityCount = 0, meshCount = 0;
-			m_Context->m_Registry.each([&](auto entity)
-			{
+			m_Context->m_Registry.each([&](auto entity) {
 				Entity e(entity, m_Context.Raw());
 				if (e.HasComponent<IDComponent>())
 					DrawEntityNode(e);
 			});
 
-			if (ImGui::BeginPopupContextWindow(0, 1, false))
-			{
+			if (ImGui::BeginPopupContextWindow(0, 1, false)) {
 				if (ImGui::MenuItem("Create Empty Entity"))
 				{
 					m_Context->CreateEntity("Empty Entity");

@@ -10,15 +10,7 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-
-#include "pbe/Geom/fvf.h"
-#include "pbe/Geom/GeomPrimitive.h"
-#include "pbe/Geom/GeomUtils.h"
-#include "pbe/Renderer/GpuBuffer.h"
-#include "pbe/Renderer/GraphicsCommon.h"
-#include "pbe/Renderer/GraphicsCore.h"
-#include "pbe/Renderer/PipelineState.h"
-#include "pbe/Renderer/RootSignature.h"
+#include "pbe/Allocator/Allocator.h"
 #include "pbe/Renderer/ColorBuffer.h"
 #include "pbe/Renderer/CommandContext.h"
 
@@ -57,21 +49,6 @@ namespace pbe {
 	{
 	}
 
-	GraphicsPSO pso;
-	Ref<Shader> vs;
-	Ref<Shader> ps;
-
-	Ref<VertexBuffer> vb;
-	Ref<IndexBuffer> ib;
-
-	RootSignature BaseRootSignature;
-
-	void InitBaseRootSignature() {
-		BaseRootSignature.Reset(1);
-		BaseRootSignature[0].InitAsConstantBuffer(0);
-		BaseRootSignature.Finalize(L"Base", D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	}
-	
 	void EditorLayer::OnAttach()
 	{
 		// ImGui Colors
@@ -131,31 +108,9 @@ namespace pbe {
 		m_SceneHierarchyPanel->SetSelectionChangedCallback(std::bind(&EditorLayer::SelectEntity, this, std::placeholders::_1));
 		m_SceneHierarchyPanel->SetEntityDeletedCallback(std::bind(&EditorLayer::OnEntityDeleted, this, std::placeholders::_1));
 
-		// dx12
+		// todo: add custom scene deserialize on start
 		// SceneSerializer serializer(m_EditorScene);
 		// serializer.Deserialize("assets/scenes/levels/Physics2D-Game.hsc");
-
-		FVF fvf = FVF_POS | FVF_NORMAL;
-		GeomBuffer geomBuffer = GeomPrimitive::CreateBox(fvf, 1, 1, 1, 0);
-
-		vb = GeomUtils::GeomCreateVertexBuffer(geomBuffer);
-		ib = GeomUtils::GeomCreateIndexBuffer(geomBuffer);
-
-		vs = Shader::Get(L"base", NULL, "mainVS", ShaderType::Vertex);
-		ps = Shader::Get(L"base", NULL, "mainPS", ShaderType::Pixel);
-
-		auto inputLayout = fvfGetInputLayout(fvf);
-
-		InitBaseRootSignature();
-
-		pso = Graphics::GraphicsPSODefault;
-
-		pso.SetRootSignature(BaseRootSignature);
-		pso.SetInputLayout((UINT)inputLayout.size(), inputLayout.data());
-		pso.SetVertexShader(vs->GetByteCode());
-		pso.SetPixelShader(ps->GetByteCode());
-		pso.SetRenderTargetFormat(Renderer::Get().GetFinalRT()->GetFormat(), DXGI_FORMAT_UNKNOWN);
-		pso.Finalize();
 	}
 
 	void EditorLayer::OnDetach()
@@ -241,8 +196,16 @@ namespace pbe {
 	}
 
 	void EditorLayer::OnImGuiRendererInfo() {
-		ImGui::Begin("Renderer");
-		ImGui::Text("Frame Time: %.2fms\n", Application::Get().GetTimeStep().GetMilliseconds());
+		Renderer::Get().OnImGui();
+	}
+
+	void EditorLayer::OnImGuiAllocatorInfo()
+	{
+		ImGui::Begin("Allocator");
+		ImGui::Text("Total alloc count: %ld", pbeAllocator.TotalAllocCount());
+		ImGui::Text("Total alloc bytes: %ld Kb", pbeAllocator.TotalAllocBytes() >> 10);
+		ImGui::Text("Cur alloc count: %ld", pbeAllocator.CurAllocCount());
+		ImGui::Text("Cur alloc bytes: %ld Kb", pbeAllocator.CurAllocBytes() >> 10);
 		ImGui::End();
 	}
 
@@ -261,8 +224,8 @@ namespace pbe {
 			m_RuntimeScene->SetViewportSize((uint32_t)viewportSize.x, (uint32_t)viewportSize.y);
 		m_EditorCamera.SetProjectionMatrix(glm::perspectiveFov(glm::radians(45.0f), viewportSize.x, viewportSize.y, 0.1f, 1000.0f));
 		m_EditorCamera.SetViewportSize((uint32_t)viewportSize.x, (uint32_t)viewportSize.y);
-		// ImGui::Image(pbeImGui::ImageDesc(Renderer::GetFinalRT()->GetSRV()), viewportSize, { 0, 1 }, { 1, 0 });
-		ImGui::Image(pbeImGui::ImageDesc(Renderer::Get().GetFinalRT()->GetSRV()), viewportSize);
+		// ImGui::Image(pbeImGui::ImageDesc(Renderer::GetFullScreenColor()->GetSRV()), viewportSize, { 0, 1 }, { 1, 0 });
+		ImGui::Image(pbeImGui::ImageDesc(Renderer::Get().GetFullScreenColor()->GetSRV()), viewportSize);
 
 		auto windowSize = ImGui::GetWindowSize();
 		ImVec2 minBound = ImGui::GetWindowPos();
@@ -321,34 +284,6 @@ namespace pbe {
 
 	void EditorLayer::OnUpdate(Timestep ts)
 	{
-		GraphicsContext& context = GraphicsContext::Begin(L"Triangle");
-
-		ColorBuffer& rt = *Renderer::Get().GetFinalRT();
-
-		context.TransitionResource(rt, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
-		context.ClearColor(rt);
-		context.SetRenderTarget(rt.GetRTV());
-		context.SetViewportAndScissor(0, 0, rt.GetWidth(), rt.GetHeight());
-
-		context.SetPipelineState(pso);
-		context.SetRootSignature(BaseRootSignature);
-		context.SetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		context.SetVertexBuffer(0, vb->VertexBufferView());
-		context.SetIndexBuffer(ib->IndexBufferView());
-
-		struct cbPass {
-			Mat4 gMVP;
-		};
-		
-		cbPass pass;
-		pass.gMVP = m_EditorCamera.GetViewProjection();
-		context.SetDynamicConstantBufferView(0, sizeof(cbPass), &pass);
-
-		context.DrawIndexed(ib->GetElementCount(), 0, 0);
-
-		context.Finish();
-
 		switch (m_SceneState)
 		{
 			case SceneState::Edit:
@@ -592,6 +527,7 @@ namespace pbe {
 		OnImGuiMenuBar(p_open);
 		OnImGuiSceneHierarchy();
 		OnImGuiRendererInfo();
+		OnImGuiAllocatorInfo();
 		OnImGuiViewport();
 		OnImGuiGizmo();
 		ScriptEngine::OnImGuiRender();
@@ -665,6 +601,9 @@ namespace pbe {
 					break;
 				case KeyCode::S:
 					SaveScene();
+					break;
+				case KeyCode::R:
+					Shader::Recompile(true);
 					break;
 			}
 

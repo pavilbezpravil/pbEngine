@@ -20,7 +20,7 @@ namespace pbe {
 		void AddFace();
 
 		FVF GetFVF() const { return fvf; }
-		int NumVertex() const { return size; }
+		int NumVertex() const { return data.size() / stride; }
 		int GetStride() const { return stride; }
 		const void* GetRawVertexData() const { return data.data(); }
 		const void* GetRawFaceData() const { return faces.data(); }
@@ -41,7 +41,7 @@ namespace pbe {
 
 	private:
 		FVF fvf = FVF_UNKNOWN;
-		int size = 0;
+		// int size = 0;
 		std::vector<byte> data;
 		int stride = 0;
 		std::vector<GeomFace> faces;

@@ -1,7 +1,9 @@
 #include "pch.h"
 #include "Renderer.h"
 
+#include <imgui/imgui.h>
 #include "Shader.h"
+#include "CommandContext.h"
 
 #include "SceneRenderer.h"
 #include "ColorBuffer.h"
@@ -13,18 +15,15 @@ extern DXGI_FORMAT SwapChainFormat;
 
 namespace pbe {
 
-	Ref<ColorBuffer> g_finalRT;
-	uint g_width = 0;
-	uint g_height = 0;
-	DXGI_FORMAT g_finalRTFormat;
-	
 	void Renderer::Init()
 	{
 		auto& window = Application::Get().GetWindow();
 		Graphics::Initialize(*(HWND*)window.GetNativeWindowHandler(), window.GetWidth(), window.GetHeight());
 
-		g_finalRTFormat = SwapChainFormat;
-		g_finalRT = Ref<ColorBuffer>(new ColorBuffer);
+		g_fullScrennColorFormat = SwapChainFormat;
+		g_fullScrennDepthFormat = DXGI_FORMAT_D32_FLOAT;
+		g_fullScreenColor = Ref<ColorBuffer>::Create();
+		g_fullScreenDepth = Ref<DepthBuffer>::Create();
 
 		Renderer::Resize(window.GetWidth(), window.GetHeight());
 
@@ -33,6 +32,8 @@ namespace pbe {
 	}
 
 	void Renderer::Shutdown() {
+		g_fullScreenColor = nullptr;
+		g_fullScreenDepth = nullptr;
 		Graphics::Shutdown();
 	}
 
@@ -42,11 +43,34 @@ namespace pbe {
 		}
 		g_width = width;
 		g_height = height;
-		g_finalRT->Create(L"Final RT", g_width, g_height, 1, g_finalRTFormat);
+		g_fullScreenColor->Create(L"Full Screen Color", g_width, g_height, 1, g_fullScrennColorFormat);
+		g_fullScreenDepth->Create(L"Full Screen Depth", g_width, g_height, 1, g_fullScrennDepthFormat);
 	}
 
-	Ref<ColorBuffer>& Renderer::GetFinalRT() {
-		return g_finalRT;
-	}
+	void Renderer::OnImGui()
+	{
+		ImGui::Begin("Renderer stats");
 
+		ImGui::Text("Frame Time: %.2fms\n", Application::Get().GetTimeStep().GetMilliseconds());
+
+		if (ImGui::TreeNodeEx("ContextManager")){
+			if (ImGui::TreeNodeEx("Available context")) {
+				for (int i = 0; i < 4; ++i) {
+					ImGui::Text("Type %d: %d", i, Graphics::g_ContextManager.sm_AvailableContexts[i].size());
+				}
+				ImGui::TreePop();
+			}
+
+			if (ImGui::TreeNodeEx("Context pool")) {
+				for (int i = 0; i < 4; ++i) {
+					ImGui::Text("Type %d: %d", i, Graphics::g_ContextManager.sm_ContextPool[i].size());
+				}
+				ImGui::TreePop();
+			}
+
+			ImGui::TreePop();
+		}
+
+		ImGui::End();
+	}
 }

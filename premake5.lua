@@ -233,6 +233,7 @@ project "pbe-ScriptCore"
 	location "pbe-ScriptCore"
 	kind "SharedLib"
 	language "C#"
+	systemversion("latest")
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")

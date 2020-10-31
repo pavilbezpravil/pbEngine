@@ -6,7 +6,7 @@
 #include "RootSignature.h"
 #include "SamplerManager.h"
 #include "GraphicsCommon.h"
-#include "../../../Types.h"
+
 #include "pbe/Core/EngineVar.h"
 
 class ColorBuffer;

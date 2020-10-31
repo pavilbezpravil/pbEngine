@@ -77,6 +77,7 @@ namespace pbe {
 	private:
 		void OnImGuiMenuBar(bool &p_open);
 		void OnImGuiRendererInfo();
+		void OnImGuiAllocatorInfo();
 		void OnImGuiViewport();
 		void OnImGuiSceneHierarchy();
 		void OnImGuiGizmo();

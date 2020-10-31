@@ -5,7 +5,6 @@ namespace pbe {
 
 	void GeomBuffer::Create(FVF fvf, int size, int faces) {
 		this->fvf = fvf;
-		this->size = size;
 		stride = fvfGetStride(fvf);
 		data.resize(stride * size);
 
@@ -19,7 +18,7 @@ namespace pbe {
 
 	void GeomBuffer::AddFace()
 	{
-		data.resize(data.size() + 1);
+		faces.push_back({});
 	}
 
 	const BYTE* GeomBuffer::GetRaw(int i, FVF type, int typeIdx) const {

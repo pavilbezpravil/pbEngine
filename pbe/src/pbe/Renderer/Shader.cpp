@@ -106,6 +106,7 @@ namespace pbe {
 
 	void Shader::Recompile(bool force) {
 		ASSERT(force);
+		HZ_CORE_INFO("Recompile shader(force = {})", force);
 
 		for (auto& item : _map) {
 			auto& shader = item.second;
@@ -140,10 +141,12 @@ namespace pbe {
 
 	void Shader::CompileBlobInternal() {
 		// todo: tmp
-		std::wstring fname = L"./assets/shaders/";
+		std::wstring fname = L"assets/shaders/";
 		fname += filename;
 		fname += L".hlsl";
 
+		HZ_CORE_INFO("Compile shader {}", MakeStr(fname));
+		
 		blob = CompileBlob(fname, defines.data(), entrypoint, target);
 		if (blob) {
 			byteCode = { blob->GetBufferPointer(), blob->GetBufferSize() };

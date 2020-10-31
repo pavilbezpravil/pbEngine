@@ -16,6 +16,10 @@
 #include "pbe/Core/Utility.h"
 #include "pbe/Core/Math/Common.h"
 
+namespace pbe {
+	class Renderer;
+}
+
 class ColorBuffer;
 class DepthBuffer;
 class Texture;
@@ -48,6 +52,7 @@ struct DWParam
 
 class ContextManager
 {
+	friend pbe::Renderer;
 public:
     ContextManager(void) {}
 

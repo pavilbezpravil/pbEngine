@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "IndexBuffer.h"
 
-#include "../../../Types.h"
+
 
 namespace pbe {
 
