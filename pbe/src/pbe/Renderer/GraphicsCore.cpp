@@ -43,7 +43,6 @@ namespace
 
 namespace Graphics
 {
-    void PreparePresentLDR();
     void PreparePresentHDR();
 
 #ifndef RELEASE
@@ -63,7 +62,7 @@ namespace Graphics
 
     D3D_FEATURE_LEVEL g_D3DFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 
-    ColorBuffer g_DisplayPlane[SWAP_CHAIN_BUFFER_COUNT];
+    pbe::Ref<ColorBuffer> g_DisplayPlane[SWAP_CHAIN_BUFFER_COUNT];
     UINT g_CurrentBuffer = 0;
 
     IDXGISwapChain1* s_SwapChain1 = nullptr;
@@ -101,7 +100,7 @@ void Graphics::Resize(uint32_t width, uint32_t height)
 
 
     for (uint32_t i = 0; i < SWAP_CHAIN_BUFFER_COUNT; ++i)
-        g_DisplayPlane[i].Destroy();
+        g_DisplayPlane[i]->Destroy();
 
     ASSERT_SUCCEEDED(s_SwapChain1->ResizeBuffers(SWAP_CHAIN_BUFFER_COUNT, width, height, SwapChainFormat, 0));
 
@@ -109,7 +108,7 @@ void Graphics::Resize(uint32_t width, uint32_t height)
     {
         ComPtr<ID3D12Resource> DisplayPlane;
         ASSERT_SUCCEEDED(s_SwapChain1->GetBuffer(i, MY_IID_PPV_ARGS(&DisplayPlane)));
-        g_DisplayPlane[i].CreateFromSwapChain(L"Primary SwapChain Buffer", DisplayPlane.Detach());
+        g_DisplayPlane[i]->CreateFromSwapChain(L"Primary SwapChain Buffer", DisplayPlane.Detach());
     }
 
     g_CurrentBuffer = 0;
@@ -313,7 +312,8 @@ void Graphics::Initialize(HWND g_hWnd, pbe::uint width, pbe::uint height)
     {
         ComPtr<ID3D12Resource> DisplayPlane;
         ASSERT_SUCCEEDED(s_SwapChain1->GetBuffer(i, MY_IID_PPV_ARGS(&DisplayPlane)));
-        g_DisplayPlane[i].CreateFromSwapChain(L"Primary SwapChain Buffer", DisplayPlane.Detach());
+		g_DisplayPlane[i] = pbe::Ref<ColorBuffer>::Create();
+        g_DisplayPlane[i]->CreateFromSwapChain(L"Primary SwapChain Buffer", DisplayPlane.Detach());
     }
 
     // Common state was moved to GraphicsCommon.*
@@ -343,7 +343,7 @@ void Graphics::Shutdown( void )
     DestroyCommonState();
 
     for (UINT i = 0; i < SWAP_CHAIN_BUFFER_COUNT; ++i)
-        g_DisplayPlane[i].Destroy();
+        g_DisplayPlane[i]->Destroy();
 
 #ifdef HZ_DEBUG
     ID3D12DebugDevice* debugInterface;
@@ -359,30 +359,16 @@ void Graphics::Shutdown( void )
 
 void Graphics::PreparePresentHDR(void)
 {
-	HZ_CORE_ASSERT(false);
     GraphicsContext& Context = GraphicsContext::Begin(L"Present");
 
-    Context.TransitionResource(g_DisplayPlane[g_CurrentBuffer], D3D12_RESOURCE_STATE_RENDER_TARGET);
-	 Context.ClearColor(g_DisplayPlane[g_CurrentBuffer]);
+	Context.TransitionResource(*GetCurrentBB(), D3D12_RESOURCE_STATE_PRESENT);
 
     Context.Finish();
 }
 
-void Graphics::PreparePresentLDR(void)
-{
-	GraphicsContext& Context = GraphicsContext::Begin(L"Present");
-
-	Context.TransitionResource(GetCurrentBB(), D3D12_RESOURCE_STATE_PRESENT);
-
-	Context.Finish();
-}
-
 void Graphics::Present(void)
 {
-    if (g_bEnableHDROutput)
-        PreparePresentHDR();
-    else
-        PreparePresentLDR();
+	PreparePresentHDR();
 
     g_CurrentBuffer = (g_CurrentBuffer + 1) % SWAP_CHAIN_BUFFER_COUNT;
 
@@ -438,6 +424,6 @@ float Graphics::GetFrameRate(void)
     return s_FrameTime == 0.0f ? 0.0f : 1.0f / s_FrameTime;
 }
 
-ColorBuffer& Graphics::GetCurrentBB() {
+pbe::Ref<ColorBuffer> Graphics::GetCurrentBB() {
 	return g_DisplayPlane[g_CurrentBuffer];
 }

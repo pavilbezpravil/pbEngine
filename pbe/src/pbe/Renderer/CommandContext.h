@@ -10,8 +10,10 @@
 #include "DynamicDescriptorHeap.h"
 #include "LinearAllocator.h"
 #include "CommandSignature.h"
-#include "GraphicsCore.h"
-#include <vector>
+#include "GraphicsCommon.h"
+#include "ColorBuffer.h"
+#include "DepthBuffer.h"
+#include "Shader.h"
 
 #include "pbe/Core/Utility.h"
 #include "pbe/Core/Math/Common.h"
@@ -93,9 +95,11 @@ protected:
 
 	static CommandContext& BeginAbstractContext(const std::wstring ID, ContextType type);
 
+	virtual void ResetState() {}
+	virtual void FlushState() {}
 public:
 
-    ~CommandContext(void);
+    virtual ~CommandContext(void);
 
     static void DestroyAllContexts(void);
 
@@ -154,7 +158,6 @@ public:
     void PIXEndEvent(void);
     void PIXSetMarker(const wchar_t* label);
 
-    void SetPipelineState(const PSO& PSO);
     void SetDescriptorHeap( D3D12_DESCRIPTOR_HEAP_TYPE Type, ID3D12DescriptorHeap* HeapPtr );
     void SetDescriptorHeaps( UINT HeapCount, D3D12_DESCRIPTOR_HEAP_TYPE Type[], ID3D12DescriptorHeap* HeapPtrs[] );
 
@@ -167,10 +170,6 @@ protected:
     CommandListManager* m_OwningManager;
     ID3D12GraphicsCommandList* m_CommandList;
     ID3D12CommandAllocator* m_CurrentAllocator;
-
-    ID3D12RootSignature* m_CurGraphicsRootSignature;
-    ID3D12PipelineState* m_CurPipelineState;
-    ID3D12RootSignature* m_CurComputeRootSignature;
 
     DynamicDescriptorHeap m_DynamicViewDescriptorHeap;        // HEAP_TYPE_CBV_SRV_UAV
     DynamicDescriptorHeap m_DynamicSamplerDescriptorHeap;    // HEAP_TYPE_SAMPLER
@@ -195,31 +194,34 @@ class GraphicsContext : public CommandContext
 {
 public:
 
-	GraphicsContext() : CommandContext(ContextType::Graphics) {}
+	GraphicsContext() : CommandContext(ContextType::Graphics) {
+		ResetState();
+	}
 
     static GraphicsContext& Begin(const std::wstring& ID = L"")
     {
-        return CommandContext::Begin(ID).GetGraphicsContext();
+        return CommandContext::BeginAbstractContext(ID, ContextType::Graphics).GetGraphicsContext();
     }
 
     void ClearUAV( GpuBuffer& Target );
     void ClearUAV( ColorBuffer& Target );
-    void ClearColor( ColorBuffer& Target );
-    void ClearDepth( DepthBuffer& Target );
+    void ClearColor(pbe::Ref<ColorBuffer>& Target );
+    void ClearDepth(pbe::Ref<DepthBuffer>& Target );
     void ClearStencil( DepthBuffer& Target );
-    void ClearDepthAndStencil( DepthBuffer& Target );
+    void ClearDepthAndStencil(pbe::Ref<DepthBuffer>& Target );
 
     void BeginQuery(ID3D12QueryHeap* QueryHeap, D3D12_QUERY_TYPE Type, UINT HeapIndex);
     void EndQuery(ID3D12QueryHeap* QueryHeap, D3D12_QUERY_TYPE Type, UINT HeapIndex);
     void ResolveQueryData(ID3D12QueryHeap* QueryHeap, D3D12_QUERY_TYPE Type, UINT StartIndex, UINT NumQueries, ID3D12Resource* DestinationBuffer, UINT64 DestinationBufferOffset);
 
-    void SetRootSignature( const RootSignature& RootSig );
+	void SetRootSignature(const pbe::Ref<RootSignature>& RootSig);
+	void SetPipelineState(const pbe::Ref<GraphicsPSO>& PSO);
 
-    void SetRenderTargets(UINT NumRTVs, const D3D12_CPU_DESCRIPTOR_HANDLE RTVs[]);
-    void SetRenderTargets(UINT NumRTVs, const D3D12_CPU_DESCRIPTOR_HANDLE RTVs[], D3D12_CPU_DESCRIPTOR_HANDLE DSV);
-    void SetRenderTarget(D3D12_CPU_DESCRIPTOR_HANDLE RTV ) { SetRenderTargets(1, &RTV); }
-    void SetRenderTarget(D3D12_CPU_DESCRIPTOR_HANDLE RTV, D3D12_CPU_DESCRIPTOR_HANDLE DSV ) { SetRenderTargets(1, &RTV, DSV); }
-    void SetDepthStencilTarget(D3D12_CPU_DESCRIPTOR_HANDLE DSV ) { SetRenderTargets(0, nullptr, DSV); }
+    void SetRenderTargets(UINT NumRTVs, const pbe::Ref<ColorBuffer> RTVs[], pbe::Ref<DepthBuffer> DSV);
+	void SetRenderTargets(UINT NumRTs, const pbe::Ref<ColorBuffer> RTs[]) { SetRenderTargets(NumRTs, RTs, nullptr); }
+    void SetRenderTarget(const pbe::Ref<ColorBuffer> RTV ) { SetRenderTargets(1, &RTV); }
+    void SetRenderTarget(pbe::Ref<ColorBuffer> RTV, pbe::Ref<DepthBuffer> DSV ) { SetRenderTargets(1, &RTV, DSV); }
+    void SetDepthStencilTarget(pbe::Ref<DepthBuffer> DSV ) { SetRenderTargets(0, nullptr, DSV); }
 
     void SetViewport( const D3D12_VIEWPORT& vp );
     void SetViewport( FLOAT x, FLOAT y, FLOAT w, FLOAT h, FLOAT minDepth = 0.0f, FLOAT maxDepth = 1.0f );
@@ -255,6 +257,22 @@ public:
     void SetDynamicIB( size_t IndexCount, const uint16_t* IBData );
     void SetDynamicSRV(UINT RootIndex, size_t BufferSize, const void* BufferData);
 
+	void SetBlendState(const D3D12_BLEND_DESC& BlendDesc);
+	void SetRasterizerState(const D3D12_RASTERIZER_DESC& RasterizerDesc);
+	void SetDepthStencilState(const D3D12_DEPTH_STENCIL_DESC& DepthStencilDesc);
+	void SetSampleMask(UINT SampleMask);
+	void SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE TopologyType);
+	void SetRenderTargetFormat(DXGI_FORMAT RTVFormat, DXGI_FORMAT DSVFormat, UINT MsaaCount = 1, UINT MsaaQuality = 0);
+	void SetRenderTargetFormats(UINT NumRTVs, const DXGI_FORMAT* RTVFormats, DXGI_FORMAT DSVFormat, UINT MsaaCount = 1, UINT MsaaQuality = 0);
+	void SetInputLayout(UINT NumElements, const D3D12_INPUT_ELEMENT_DESC* pInputElementDescs);
+	void SetPrimitiveRestart(D3D12_INDEX_BUFFER_STRIP_CUT_VALUE IBProps);
+
+	void SetVertexShader(const pbe::Ref<pbe::Shader>& shader);
+	void SetPixelShader(const pbe::Ref<pbe::Shader>& shader);
+	void SetGeometryShader(const pbe::Ref<pbe::Shader>& shader);
+	void SetHullShader(const pbe::Ref<pbe::Shader>& shader);
+	void SetDomainShader(const pbe::Ref<pbe::Shader>& shader);
+
     void Draw( UINT VertexCount, UINT VertexStartOffset = 0 );
     void DrawIndexed(UINT IndexCount, UINT StartIndexLocation = 0, INT BaseVertexLocation = 0);
     void DrawInstanced(UINT VertexCountPerInstance, UINT InstanceCount,
@@ -265,7 +283,14 @@ public:
     void ExecuteIndirect(CommandSignature& CommandSig, GpuBuffer& ArgumentBuffer, uint64_t ArgumentStartOffset = 0,
         uint32_t MaxCommands = 1, GpuBuffer* CommandCounterBuffer = nullptr, uint64_t CounterOffset = 0);
 
+protected:
+	void ResetState() override;
+	void FlushState() override;
+
 private:
+
+	pbe::Ref<RootSignature> m_CurRootSignature = nullptr;
+	pbe::Ref<GraphicsPSO> m_CurPSO = nullptr;
 };
 
 class ComputeContext : public CommandContext
@@ -279,7 +304,8 @@ public:
     void ClearUAV( GpuBuffer& Target );
     void ClearUAV( ColorBuffer& Target );
 
-    void SetRootSignature( const RootSignature& RootSig );
+	void SetRootSignature(const pbe::Ref<RootSignature>& RootSig);
+	void SetPipelineState(const pbe::Ref<ComputePSO>& PSO);
 
     void SetConstantArray( UINT RootIndex, UINT NumConstants, const void* pConstants );
     void SetConstant( UINT RootIndex, DWParam Val, UINT Offset = 0 );
@@ -307,7 +333,13 @@ public:
     void ExecuteIndirect(CommandSignature& CommandSig, GpuBuffer& ArgumentBuffer, uint64_t ArgumentStartOffset = 0,
         uint32_t MaxCommands = 1, GpuBuffer* CommandCounterBuffer = nullptr, uint64_t CounterOffset = 0);
 
+protected:
+	void ResetState() override;
+	void FlushState() override;
+
 private:
+	pbe::Ref<RootSignature> m_CurRootSignature = nullptr;
+	pbe::Ref<GraphicsPSO> m_CurPipelineState = nullptr;
 };
 
 inline void CommandContext::FlushResourceBarriers( void )
@@ -319,36 +351,31 @@ inline void CommandContext::FlushResourceBarriers( void )
     }
 }
 
-inline void GraphicsContext::SetRootSignature( const RootSignature& RootSig )
+inline void GraphicsContext::SetRootSignature( const pbe::Ref<RootSignature>& RootSig )
 {
-    if (RootSig.GetSignature() == m_CurGraphicsRootSignature)
+	HZ_CORE_ASSERT(RootSig);
+    if (RootSig == m_CurRootSignature)
         return;
 
-    m_CommandList->SetGraphicsRootSignature(m_CurGraphicsRootSignature = RootSig.GetSignature());
+	m_CurRootSignature = RootSig;
+	m_CurPSO->SetRootSignature(m_CurRootSignature);
+    m_CommandList->SetGraphicsRootSignature(m_CurRootSignature->GetSignature());
 
-    m_DynamicViewDescriptorHeap.ParseGraphicsRootSignature(RootSig);
-    m_DynamicSamplerDescriptorHeap.ParseGraphicsRootSignature(RootSig);
+    m_DynamicViewDescriptorHeap.ParseGraphicsRootSignature(*m_CurRootSignature);
+    m_DynamicSamplerDescriptorHeap.ParseGraphicsRootSignature(*m_CurRootSignature);
 }
 
-inline void ComputeContext::SetRootSignature( const RootSignature& RootSig )
+inline void ComputeContext::SetRootSignature( const pbe::Ref<RootSignature>& RootSig )
 {
-    if (RootSig.GetSignature() == m_CurComputeRootSignature)
-        return;
+	if (RootSig == m_CurRootSignature)
+		return;
 
-    m_CommandList->SetComputeRootSignature(m_CurComputeRootSignature = RootSig.GetSignature());
+	m_CurRootSignature = RootSig;
+	m_CurPipelineState->SetRootSignature(m_CurRootSignature);
+	m_CommandList->SetComputeRootSignature(m_CurRootSignature->GetSignature());
 
-    m_DynamicViewDescriptorHeap.ParseComputeRootSignature(RootSig);
-    m_DynamicSamplerDescriptorHeap.ParseComputeRootSignature(RootSig);
-}
-
-inline void CommandContext::SetPipelineState( const PSO& PSO )
-{
-    ID3D12PipelineState* PipelineState = PSO.GetPipelineStateObject();
-    if (PipelineState == m_CurPipelineState)
-        return;
-
-    m_CommandList->SetPipelineState(PipelineState);
-    m_CurPipelineState = PipelineState;
+	m_DynamicViewDescriptorHeap.ParseGraphicsRootSignature(*m_CurRootSignature);
+	m_DynamicSamplerDescriptorHeap.ParseGraphicsRootSignature(*m_CurRootSignature);
 }
 
 inline void GraphicsContext::SetViewportAndScissor( UINT x, UINT y, UINT w, UINT h )
@@ -374,6 +401,8 @@ inline void GraphicsContext::SetBlendFactor( Color BlendFactor )
 
 inline void GraphicsContext::SetPrimitiveTopology( D3D12_PRIMITIVE_TOPOLOGY Topology )
 {
+	HZ_CORE_ASSERT(Topology == D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
     m_CommandList->IASetPrimitiveTopology(Topology);
 }
 
@@ -697,6 +726,11 @@ inline void GraphicsContext::DrawInstanced(UINT VertexCountPerInstance, UINT Ins
 inline void GraphicsContext::DrawIndexedInstanced(UINT IndexCountPerInstance, UINT InstanceCount, UINT StartIndexLocation,
     INT BaseVertexLocation, UINT StartInstanceLocation)
 {
+	HZ_CORE_ASSERT(m_CurPSO);
+	// check PSO dirty
+	m_CurPSO->Finalize();
+	SetPipelineState(m_CurPSO);
+	
     FlushResourceBarriers();
     m_DynamicViewDescriptorHeap.CommitGraphicsRootDescriptorTables(m_CommandList);
     m_DynamicSamplerDescriptorHeap.CommitGraphicsRootDescriptorTables(m_CommandList);

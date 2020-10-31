@@ -71,6 +71,13 @@ namespace pbe {
 			ImGui::TreePop();
 		}
 
+		if (ImGui::TreeNodeEx("Descriptor allocator")) {
+			for (int i = 0; i < 4; ++i) {
+				ImGui::Text("Type %d: %d", i, Graphics::g_DescriptorAllocator[i].sm_TotalAllocatedHandlers);
+			}
+			ImGui::TreePop();
+		}
+
 		ImGui::End();
 	}
 }

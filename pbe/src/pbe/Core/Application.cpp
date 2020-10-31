@@ -75,7 +75,6 @@ namespace pbe {
 			// dx12
 			GraphicsContext& Context = GraphicsContext::Begin(L"Present");
 
-			Context.TransitionResource(Graphics::GetCurrentBB(), D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 			Context.ClearColor(Graphics::GetCurrentBB());
 
 			Context.Finish();

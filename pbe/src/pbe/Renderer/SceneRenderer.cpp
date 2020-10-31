@@ -10,15 +10,12 @@ namespace pbe {
 
 	void SceneRenderer::Init()
 	{
-		FVF fvf = FVF_POS | FVF_NORMAL;
-
 		vs = Shader::Get(L"base", NULL, "mainVS", ShaderType::Vertex);
 		ps = Shader::Get(L"base", NULL, "mainPS", ShaderType::Pixel);
 
-		auto inputLayout = fvfGetInputLayout(fvf);
-
 		InitBaseRootSignature();
 
+		/*
 		pso = Graphics::GraphicsPSODefault;
 
 		pso.SetRootSignature(BaseRootSignature);
@@ -28,6 +25,7 @@ namespace pbe {
 		pso.SetDepthStencilState(Graphics::DepthStateReadWrite);
 		pso.SetRenderTargetFormat(Renderer::Get().GetFullScreenColor()->GetFormat(), Renderer::Get().GetFullScreenDepth()->GetFormat());
 		pso.Finalize();
+		*/
 	}
 
 	void SceneRenderer::BeginScene(const Ref<Scene>& scene, const CameraInfo& cameraInfo)
@@ -54,21 +52,27 @@ namespace pbe {
 	{
 		GraphicsContext& context = GraphicsContext::Begin(L"Scene Renderer");
 
-		ColorBuffer& rt = *Renderer::Get().GetFullScreenColor();
-		DepthBuffer& depth = *Renderer::Get().GetFullScreenDepth();
+		auto& rt = Renderer::Get().GetFullScreenColor();
+		auto& depth = Renderer::Get().GetFullScreenDepth();
 
-		context.TransitionResource(rt, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 		context.ClearColor(rt);
-
-		context.TransitionResource(depth, D3D12_RESOURCE_STATE_DEPTH_WRITE, true);
-		context.ClearDepthAndStencil(depth);
+		context.ClearDepth(depth);
 		
-		context.SetRenderTarget(rt.GetRTV(), depth.GetDSV());
-		context.SetViewportAndScissor(0, 0, rt.GetWidth(), rt.GetHeight());
+		context.SetRenderTarget(rt, depth);
+		context.SetViewportAndScissor(0, 0, rt->GetWidth(), rt->GetHeight());
 
-		context.SetPipelineState(pso);
+		// context.SetPipelineState(pso);
 		context.SetRootSignature(BaseRootSignature);
 		context.SetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		context.SetDepthStencilState(Graphics::DepthStateReadWrite);
+		
+		context.SetVertexShader(vs);
+		context.SetPixelShader(ps);
+
+		FVF fvf = FVF_POS | FVF_NORMAL;
+		auto inputLayout = fvfGetInputLayout(fvf);
+		InitBaseRootSignature();
+		context.SetInputLayout((UINT)inputLayout.size(), inputLayout.data());
 
 		struct cbPass {
 			Mat4 gMVP;

@@ -34,6 +34,8 @@ ID3D12DescriptorHeap* DescriptorAllocator::RequestNewHeap(D3D12_DESCRIPTOR_HEAP_
 
 D3D12_CPU_DESCRIPTOR_HANDLE DescriptorAllocator::Allocate( uint32_t Count )
 {
+	sm_TotalAllocatedHandlers += Count;
+	
     if (m_CurrentHeap == nullptr || m_RemainingFreeHandles < Count)
     {
         m_CurrentHeap = RequestNewHeap(m_Type);

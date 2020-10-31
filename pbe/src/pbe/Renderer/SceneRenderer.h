@@ -43,13 +43,14 @@ namespace pbe {
 		Ref<Shader> vs;
 		Ref<Shader> ps;
 
-		RootSignature BaseRootSignature;
+		Ref<RootSignature> BaseRootSignature = nullptr;
 
 		void InitBaseRootSignature() {
-			BaseRootSignature.Reset(2);
-			BaseRootSignature[0].InitAsConstantBuffer(0);
-			BaseRootSignature[1].InitAsConstantBuffer(1);
-			BaseRootSignature.Finalize(L"Base", D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+			BaseRootSignature = Ref<RootSignature>::Create();
+			(*BaseRootSignature).Reset(2);
+			(*BaseRootSignature)[0].InitAsConstantBuffer(0);
+			(*BaseRootSignature)[1].InitAsConstantBuffer(1);
+			(*BaseRootSignature).Finalize(L"Base", D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 		}
 	};
 

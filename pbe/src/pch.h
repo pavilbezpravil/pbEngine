@@ -6,6 +6,8 @@
 
 #include <memory>
 #include <vector>
+#include <queue>
+#include <set>
 #include <string>
 #include <array>
 #include <unordered_map>

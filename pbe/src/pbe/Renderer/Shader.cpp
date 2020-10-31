@@ -121,7 +121,7 @@ namespace pbe {
 		_map.clear();
 	}
 
-	D3D12_SHADER_BYTECODE Shader::GetByteCode() {
+	D3D12_SHADER_BYTECODE Shader::GetByteCode() const {
 		return byteCode;
 	}
 

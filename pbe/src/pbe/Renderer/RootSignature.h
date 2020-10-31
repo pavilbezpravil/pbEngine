@@ -98,7 +98,7 @@ protected:
 // Root descriptor (CBV, SRV, or UAV) = 2 DWORDs each
 // Descriptor table pointer = 1 DWORD
 // Static samplers = 0 DWORDS (compiled into shader)
-class RootSignature
+class RootSignature : public pbe::RefCounted
 {
     friend class DynamicDescriptorHeap;
 

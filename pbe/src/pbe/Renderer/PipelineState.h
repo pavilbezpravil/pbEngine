@@ -2,8 +2,9 @@
 
 #include "pch.h"
 
+#include "RootSignature.h"
+
 class CommandContext;
-class RootSignature;
 class VertexShader;
 class GeometryShader;
 class HullShader;
@@ -11,7 +12,7 @@ class DomainShader;
 class PixelShader;
 class ComputeShader;
 
-class PSO
+class PSO : public pbe::RefCounted
 {
 public:
 
@@ -19,22 +20,22 @@ public:
 
     static void DestroyAll( void );
 
-    void SetRootSignature( const RootSignature& BindMappings )
+    void SetRootSignature( const pbe::Ref<RootSignature>& BindMappings )
     {
-        m_RootSignature = &BindMappings;
+        m_RootSignature = BindMappings;
     }
 
-    const RootSignature&  GetRootSignature( void ) const
+    const pbe::Ref<RootSignature>  GetRootSignature( void ) const
     {
-        ASSERT(m_RootSignature != nullptr);
-        return *m_RootSignature;
+        ASSERT(m_RootSignature);
+        return m_RootSignature;
     }
 
     ID3D12PipelineState* GetPipelineStateObject( void ) const { return m_PSO; }
 
 protected:
 
-    const RootSignature* m_RootSignature;
+    pbe::Ref<RootSignature> m_RootSignature;
 
     ID3D12PipelineState* m_PSO;
 };

@@ -1,11 +1,7 @@
 #pragma once
 
-#include "pbe_dx12.h"
 #include "pbe/Core/Math/Common.h"
 #include "GpuBuffer.h"
-#include <vector>
-#include <queue>
-#include <set>
 
 // Unfortunately the api restricts the minimum size of a placed buffer resource to 64k
 #define MIN_PLACED_BUFFER_SIZE (64 * 1024)
@@ -17,6 +13,7 @@
 #define INCREASE_BUDDY_COUNTER(A, B)
 #define DECREASE_BUDDY_COUNTER(A, B)
 #endif
+
 
 enum kBuddyAllocationStrategy
 {

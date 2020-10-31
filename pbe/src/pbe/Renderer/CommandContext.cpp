@@ -3,7 +3,7 @@
 #include "ColorBuffer.h"
 #include "DepthBuffer.h"
 #include "GraphicsCore.h"
-#include "DescriptorHeap.h"
+#include "Shader.h"
 
 #ifndef RELEASE
     #include <d3d11_2.h>
@@ -42,8 +42,7 @@ CommandContext* ContextManager::AllocateContext(ContextType Type)
     auto& AvailableContexts = sm_AvailableContexts[(int)Type];
 
     CommandContext* ret = nullptr;
-    if (AvailableContexts.empty())
-    {
+    if (AvailableContexts.empty()) {
 	    switch (Type) {
 	    case ContextType::Command: ret = new CommandContext(ContextType::Command); break;
 	    case ContextType::Graphics: ret = new GraphicsContext(); break;
@@ -54,9 +53,7 @@ CommandContext* ContextManager::AllocateContext(ContextType Type)
 
         sm_ContextPool[(int)Type].emplace_back(ret);
         ret->Initialize();
-    }
-    else
-    {
+    } else {
         ret = AvailableContexts.front();
         AvailableContexts.pop();
         ret->Reset();
@@ -97,6 +94,64 @@ CommandContext& CommandContext::Begin( const std::wstring ID )
 	return BeginAbstractContext(ID, ContextType::Command);
 }
 
+void GraphicsContext::SetDepthStencilState(const D3D12_DEPTH_STENCIL_DESC& DepthStencilDesc)
+{
+	m_CurPSO->SetDepthStencilState(DepthStencilDesc);
+}
+
+void GraphicsContext::SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE TopologyType)
+{
+	m_CurPSO->SetPrimitiveTopologyType(TopologyType);
+}
+
+void GraphicsContext::SetInputLayout(UINT NumElements, const D3D12_INPUT_ELEMENT_DESC* pInputElementDescs)
+{
+	m_CurPSO->SetInputLayout(NumElements, pInputElementDescs);
+}
+
+void GraphicsContext::SetVertexShader(const pbe::Ref<pbe::Shader>& shader)
+{
+	m_CurPSO->SetVertexShader(shader->GetByteCode());
+}
+
+void GraphicsContext::SetPixelShader(const pbe::Ref<pbe::Shader>& shader)
+{
+	m_CurPSO->SetPixelShader(shader->GetByteCode());
+}
+
+void GraphicsContext::ResetState()
+{
+	m_CurRootSignature = nullptr;
+	m_CurPSO = pbe::Ref<GraphicsPSO>::Create();
+	*m_CurPSO = GraphicsPSODefault;
+}
+
+void GraphicsContext::FlushState()
+{
+	if (m_CurRootSignature) {
+		m_CommandList->SetGraphicsRootSignature(m_CurRootSignature->GetSignature());
+	}
+	if (m_CurPSO) {
+		m_CommandList->SetPipelineState(m_CurPSO->GetPipelineStateObject());
+	}
+}
+
+void ComputeContext::ResetState()
+{
+	m_CurRootSignature = nullptr;
+	*m_CurPipelineState = GraphicsPSODefault;
+}
+
+void ComputeContext::FlushState()
+{
+	if (m_CurRootSignature) {
+		m_CommandList->SetComputeRootSignature(m_CurRootSignature->GetSignature());
+	}
+	if (m_CurPipelineState) {
+		m_CommandList->SetPipelineState(m_CurPipelineState->GetPipelineStateObject());
+	}
+}
+
 ComputeContext& ComputeContext::Begin(const std::wstring& ID, bool Async)
 {
     ComputeContext& NewContext = g_ContextManager.AllocateContext(
@@ -125,18 +180,7 @@ uint64_t CommandContext::Flush(bool WaitForCompletion)
 
     m_CommandList->Reset(m_CurrentAllocator, nullptr);
 
-    if (m_CurGraphicsRootSignature)
-    {
-        m_CommandList->SetGraphicsRootSignature(m_CurGraphicsRootSignature);
-    }
-    if (m_CurComputeRootSignature)
-    {
-        m_CommandList->SetComputeRootSignature(m_CurComputeRootSignature);    
-    }
-    if (m_CurPipelineState)
-    {
-        m_CommandList->SetPipelineState(m_CurPipelineState);
-    }
+	FlushState();
 
     BindDescriptorHeaps();
 
@@ -187,9 +231,6 @@ CommandContext::CommandContext(ContextType Type) :
     m_CurrentAllocator = nullptr;
     ZeroMemory(m_CurrentDescriptorHeaps, sizeof(m_CurrentDescriptorHeaps));
 
-    m_CurGraphicsRootSignature = nullptr;
-    m_CurPipelineState = nullptr;
-    m_CurComputeRootSignature = nullptr;
     m_NumBarriersToFlush = 0;
 }
 
@@ -212,9 +253,7 @@ void CommandContext::Reset( void )
     m_CurrentAllocator = g_CommandManager.GetQueue(m_CommandListType).RequestAllocator();
     m_CommandList->Reset(m_CurrentAllocator, nullptr);
 
-    m_CurGraphicsRootSignature = nullptr;
-    m_CurPipelineState = nullptr;
-    m_CurComputeRootSignature = nullptr;
+	ResetState();
     m_NumBarriersToFlush = 0;
 
     BindDescriptorHeaps();
@@ -235,14 +274,23 @@ void CommandContext::BindDescriptorHeaps( void )
         m_CommandList->SetDescriptorHeaps(NonNullHeaps, HeapsToBind);
 }
 
-void GraphicsContext::SetRenderTargets( UINT NumRTVs, const D3D12_CPU_DESCRIPTOR_HANDLE RTVs[], D3D12_CPU_DESCRIPTOR_HANDLE DSV )
+void GraphicsContext::SetRenderTargets( UINT NumRTs, const pbe::Ref<ColorBuffer> RTs[], pbe::Ref<DepthBuffer> DS )
 {
-    m_CommandList->OMSetRenderTargets( NumRTVs, RTVs, FALSE, &DSV );
+	D3D12_CPU_DESCRIPTOR_HANDLE RTVs[4];
+	DXGI_FORMAT formats[4];
+	for (int i = 0; i < NumRTs; ++i) {
+		RTVs[i] = RTs[i]->GetRTV();
+		formats[i] = RTs[i]->GetFormat();
+	}
+	m_CurPSO->SetRenderTargetFormats(NumRTs, formats, DS ? DS->GetFormat() : DXGI_FORMAT_UNKNOWN);
+
+    m_CommandList->OMSetRenderTargets( NumRTs, RTVs, FALSE, DS ? &DS->GetDSV() : nullptr);
 }
 
-void GraphicsContext::SetRenderTargets(UINT NumRTVs, const D3D12_CPU_DESCRIPTOR_HANDLE RTVs[])
+void GraphicsContext::SetPipelineState(const pbe::Ref<GraphicsPSO>& PSO)
 {
-    m_CommandList->OMSetRenderTargets(NumRTVs, RTVs, FALSE, nullptr);
+	// todo: check it already set
+	m_CommandList->SetPipelineState(m_CurPSO->GetPipelineStateObject());
 }
 
 void GraphicsContext::BeginQuery(ID3D12QueryHeap* QueryHeap, D3D12_QUERY_TYPE Type, UINT HeapIndex)
@@ -302,14 +350,15 @@ void ComputeContext::ClearUAV( ColorBuffer& Target )
     m_CommandList->ClearUnorderedAccessViewFloat(GpuVisibleHandle, Target.GetUAV(), Target.GetResource(), ClearColor, 1, &ClearRect);
 }
 
-void GraphicsContext::ClearColor( ColorBuffer& Target )
+void GraphicsContext::ClearColor( pbe::Ref<ColorBuffer>& Target )
 {
-    m_CommandList->ClearRenderTargetView(Target.GetRTV(), Target.GetClearColor().GetPtr(), 0, nullptr);
+	TransitionResource(*Target, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
+    m_CommandList->ClearRenderTargetView(Target->GetRTV(), Target->GetClearColor().GetPtr(), 0, nullptr);
 }
 
-void GraphicsContext::ClearDepth( DepthBuffer& Target )
+void GraphicsContext::ClearDepth(pbe::Ref<DepthBuffer>& Target )
 {
-    m_CommandList->ClearDepthStencilView(Target.GetDSV(), D3D12_CLEAR_FLAG_DEPTH, Target.GetClearDepth(), Target.GetClearStencil(), 0, nullptr );
+    m_CommandList->ClearDepthStencilView(Target->GetDSV(), D3D12_CLEAR_FLAG_DEPTH, Target->GetClearDepth(), Target->GetClearStencil(), 0, nullptr );
 }
 
 void GraphicsContext::ClearStencil( DepthBuffer& Target )
@@ -317,9 +366,10 @@ void GraphicsContext::ClearStencil( DepthBuffer& Target )
     m_CommandList->ClearDepthStencilView(Target.GetDSV(), D3D12_CLEAR_FLAG_STENCIL, Target.GetClearDepth(), Target.GetClearStencil(), 0, nullptr);
 }
 
-void GraphicsContext::ClearDepthAndStencil( DepthBuffer& Target )
+void GraphicsContext::ClearDepthAndStencil(pbe::Ref<DepthBuffer>& Target )
 {
-    m_CommandList->ClearDepthStencilView(Target.GetDSV(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, Target.GetClearDepth(), Target.GetClearStencil(), 0, nullptr);
+	TransitionResource(*Target, D3D12_RESOURCE_STATE_DEPTH_WRITE, true);
+    m_CommandList->ClearDepthStencilView(Target->GetDSV(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, Target->GetClearDepth(), Target->GetClearStencil(), 0, nullptr);
 }
 
 void GraphicsContext::SetViewportAndScissor( const D3D12_VIEWPORT& vp, const D3D12_RECT& rect )

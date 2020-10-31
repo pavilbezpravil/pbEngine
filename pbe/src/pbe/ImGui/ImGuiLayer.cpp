@@ -15,6 +15,7 @@
 #include "pbe/Renderer/ColorBuffer.h"
 #include "pbe/Renderer/DescriptorHeap.h"
 #include "pbe/Renderer/DynamicDescriptorHeap.h"
+#include "pbe/Renderer/GraphicsCore.h"
 
 #include "pbe/Renderer/Renderer.h"
 
@@ -150,8 +151,7 @@ namespace pbe {
 
 		GraphicsContext& context = GraphicsContext::Begin(L"ImGui");
 		context.SetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, pbeImGui::m_descHeap.GetHeapPointer());
-		context.TransitionResource(Graphics::GetCurrentBB(), D3D12_RESOURCE_STATE_RENDER_TARGET, true);
-		context.SetRenderTarget(Graphics::GetCurrentBB().GetRTV());
+		context.SetRenderTarget(Graphics::GetCurrentBB());
 
 		// Rendering
 		ImGui::Render();

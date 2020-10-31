@@ -1,16 +1,3 @@
-//
-// Copyright (c) Microsoft. All rights reserved.
-// This code is licensed under the MIT License (MIT).
-// THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
-// ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
-// IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
-// PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
-//
-// Developed by Minigraph
-//
-// Author:  James Stanard 
-//
-
 #pragma once
 
 #include <mutex>
@@ -19,11 +6,16 @@
 #include <string>
 
 
+namespace pbe {
+	class Renderer;
+}
+
 // This is an unbounded resource descriptor allocator.  It is intended to provide space for CPU-visible resource descriptors
 // as resources are created.  For those that need to be made shader-visible, they will need to be copied to a UserDescriptorHeap
 // or a DynamicDescriptorHeap.
 class DescriptorAllocator
 {
+	friend pbe::Renderer;
 public:
     DescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE Type) : m_Type(Type), m_CurrentHeap(nullptr) {}
 
@@ -37,6 +29,8 @@ protected:
     static std::mutex sm_AllocationMutex;
     static std::vector<Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>> sm_DescriptorHeapPool;
     static ID3D12DescriptorHeap* RequestNewHeap( D3D12_DESCRIPTOR_HEAP_TYPE Type );
+
+	pbe::uint sm_TotalAllocatedHandlers = 0;
 
     D3D12_DESCRIPTOR_HEAP_TYPE m_Type;
     ID3D12DescriptorHeap* m_CurrentHeap;

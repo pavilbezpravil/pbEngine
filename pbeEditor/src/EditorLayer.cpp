@@ -13,6 +13,7 @@
 #include "pbe/Allocator/Allocator.h"
 #include "pbe/Renderer/ColorBuffer.h"
 #include "pbe/Renderer/CommandContext.h"
+#include "pbe/Renderer/GraphicsCore.h"
 
 
 namespace pbe {

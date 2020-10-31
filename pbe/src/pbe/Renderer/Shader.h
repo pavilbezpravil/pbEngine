@@ -35,7 +35,7 @@ namespace pbe
 
 		operator bool() const { return blob; }
 
-		D3D12_SHADER_BYTECODE GetByteCode();
+		D3D12_SHADER_BYTECODE GetByteCode() const;
 
 	private:
 		static Ref<Shader> Compile(const std::wstring& filename,

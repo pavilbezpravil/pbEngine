@@ -3,7 +3,6 @@
 #include "PixelBuffer.h"
 #include "pbe/Core/Math/Color.h"
 
-class EsramAllocator;
 
 class ColorBuffer : public PixelBuffer
 {

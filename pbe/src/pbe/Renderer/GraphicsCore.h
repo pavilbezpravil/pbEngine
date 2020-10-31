@@ -1,11 +1,9 @@
-//
 #pragma once
 
 #include "PipelineState.h"
 #include "DescriptorHeap.h"
 #include "RootSignature.h"
-#include "SamplerManager.h"
-#include "GraphicsCommon.h"
+
 
 #include "pbe/Core/EngineVar.h"
 
@@ -42,7 +40,7 @@ namespace Graphics
     // The total number of frames per second
     float GetFrameRate(void);
 
-	 ColorBuffer& GetCurrentBB();
+	pbe::Ref<ColorBuffer> GetCurrentBB();
 
     extern ID3D12Device* g_Device;
     extern CommandListManager g_CommandManager;
@@ -57,8 +55,4 @@ namespace Graphics
     {
         return g_DescriptorAllocator[Type].Allocate(Count);
     }
-
-
-    extern BoolVar s_EnableVSync;
-    extern EnumVar TargetResolution;
 }
