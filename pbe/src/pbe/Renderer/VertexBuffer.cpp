@@ -5,16 +5,17 @@
 
 namespace pbe {
 
-	Ref<VertexBuffer> VertexBuffer::Create(void* data, uint32_t size, VertexBufferUsage usage)
+	Ref<VertexBuffer> VertexBuffer::CreateVB(const void* data, uint32_t size, FVF fvf)
 	{
-;
-		return nullptr;
+		auto vb = Ref<VertexBuffer>::Create();
+		vb->_fvf = fvf;
+		auto stride = fvfGetStride(fvf);
+		vb->Create(L"", size / stride, stride, data);
+		return vb;
 	}
 
-	Ref<VertexBuffer> VertexBuffer::Create(uint32_t size, VertexBufferUsage usage)
+	Ref<VertexBuffer> VertexBuffer::CreateVB(uint32_t size, FVF fvf)
 	{
-
-		return nullptr;
+		return CreateVB(nullptr, size, fvf);
 	}
-
 }

@@ -3,16 +3,12 @@
 
 namespace pbe {
 
-	ByteAddressBuffer GeomUtils::GeomCreateVertexBuffer(GeomBuffer& geomBuffer) {
-		ByteAddressBuffer ret;
-		ret.Create(L"GeomCreateVertexBuffer", geomBuffer.size, geomBuffer.stride, (void*)geomBuffer.data.data());
-		return ret;
+	Ref<VertexBuffer> GeomUtils::GeomCreateVertexBuffer(GeomBuffer& geomBuffer) {
+		return VertexBuffer::CreateVB(geomBuffer.GetRawVertexData(),geomBuffer.NumVertex() * geomBuffer.GetStride(), geomBuffer.GetFVF());
 	}
 
-	ByteAddressBuffer GeomUtils::GeomCreateIndexBuffer(GeomBuffer& geomBuffer) {
-		ByteAddressBuffer ret;
-		ret.Create(L"GeomCreateIndexBuffer", geomBuffer.faces.size(), sizeof(GeomFace), (void*)geomBuffer.faces.data());
-		return ret;
+	Ref<IndexBuffer> GeomUtils::GeomCreateIndexBuffer(GeomBuffer& geomBuffer) {
+		return IndexBuffer::CreateIB(geomBuffer.GetRawFaceData(), geomBuffer.NumFace() * sizeof(GeomFace));
 	}
 
 }

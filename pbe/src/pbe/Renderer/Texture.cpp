@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "Texture.h"
 
-#include "pbe/Renderer/RendererAPI.h"
 
 namespace pbe {
 

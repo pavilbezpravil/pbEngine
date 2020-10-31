@@ -21,6 +21,8 @@
 
 #include <filesystem>
 
+#include "pbe/Geom/GeomUtils.h"
+
 namespace pbe {
 
 #define MESH_DEBUG_LOG 0
@@ -83,12 +85,12 @@ namespace pbe {
 		m_Scene = scene;
 
 		m_IsAnimated = scene->mAnimations != nullptr;
-		m_BaseMaterial = Ref<Material>::Create(m_MeshShader);
-		// m_MaterialInstance = Ref<MaterialInstance>::Create(m_BaseMaterial);
 		m_InverseTransform = glm::inverse(Mat4FromAssimpMat4(scene->mRootNode->mTransformation));
 
 		uint32_t vertexCount = 0;
 		uint32_t indexCount = 0;
+
+		m_GeomData.Create(FVF_POS | FVF_NORMAL);
 
 		m_Submeshes.reserve(scene->mNumMeshes);
 		for (size_t m = 0; m < scene->mNumMeshes; m++)
@@ -111,51 +113,42 @@ namespace pbe {
 			// Vertices
 			if (m_IsAnimated)
 			{
-				for (size_t i = 0; i < mesh->mNumVertices; i++)
-				{
-					AnimatedVertex vertex;
-					vertex.Position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
-					vertex.Normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
-
-					if (mesh->HasTangentsAndBitangents())
-					{
-						vertex.Tangent = { mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z };
-						vertex.Binormal = { mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z };
-					}
-
-					if (mesh->HasTextureCoords(0))
-						vertex.Texcoord = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
-
-					m_AnimatedVertices.push_back(vertex);
-				}
+				// for (size_t i = 0; i < mesh->mNumVertices; i++)
+				// {
+				// 	AnimatedVertex vertex;
+				// 	vertex.Position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
+				// 	vertex.Normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
+				//
+				// 	if (mesh->HasTangentsAndBitangents())
+				// 	{
+				// 		vertex.Tangent = { mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z };
+				// 		vertex.Binormal = { mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z };
+				// 	}
+				//
+				// 	if (mesh->HasTextureCoords(0))
+				// 		vertex.Texcoord = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
+				//
+				// 	m_AnimatedVertices.push_back(vertex);
+				// }
 			}
-			else
-			{
-				auto& aabb = submesh.BoundingBox;
-				aabb.Min = { FLT_MAX, FLT_MAX, FLT_MAX };
-				aabb.Max = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
-				for (size_t i = 0; i < mesh->mNumVertices; i++)
-				{
-					Vertex vertex;
-					vertex.Position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
-					vertex.Normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
-					aabb.Min.x = glm::min(vertex.Position.x, aabb.Min.x);
-					aabb.Min.y = glm::min(vertex.Position.y, aabb.Min.y);
-					aabb.Min.z = glm::min(vertex.Position.z, aabb.Min.z);
-					aabb.Max.x = glm::max(vertex.Position.x, aabb.Max.x);
-					aabb.Max.y = glm::max(vertex.Position.y, aabb.Max.y);
-					aabb.Max.z = glm::max(vertex.Position.z, aabb.Max.z);
+			else {
+				for (size_t i = 0; i < mesh->mNumVertices; i++) {
+					m_GeomData.AddVertex();
 
-					if (mesh->HasTangentsAndBitangents())
-					{
-						vertex.Tangent = { mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z };
-						vertex.Binormal = { mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z };
-					}
+					m_GeomData.PosMut(m_GeomData.NumVertex() - 1) = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
+					m_GeomData.NormalMut(m_GeomData.NumVertex() - 1) = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
+					// Vertex vertex;
+					// vertex.Position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
+					// vertex.Normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
+					submesh.BoundingBox.AddPoint(m_GeomData.GetPos(m_GeomData.NumVertex() - 1));
 
-					if (mesh->HasTextureCoords(0))
-						vertex.Texcoord = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
-
-					m_StaticVertices.push_back(vertex);
+					// if (mesh->HasTangentsAndBitangents()) {
+					// 	vertex.Tangent = { mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z };
+					// 	vertex.Binormal = { mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z };
+					// }
+					//
+					// if (mesh->HasTextureCoords(0))
+					// 	vertex.Texcoord = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
 				}
 			}
 
@@ -163,14 +156,9 @@ namespace pbe {
 			for (size_t i = 0; i < mesh->mNumFaces; i++)
 			{
 				HZ_CORE_ASSERT(mesh->mFaces[i].mNumIndices == 3, "Must have 3 indices.");
-				Index index = { mesh->mFaces[i].mIndices[0], mesh->mFaces[i].mIndices[1], mesh->mFaces[i].mIndices[2] };
-				m_Indices.push_back(index);
-
-				if (!m_IsAnimated)
-					m_TriangleCache[m].emplace_back(m_StaticVertices[index.V1 + submesh.BaseVertex], m_StaticVertices[index.V2 + submesh.BaseVertex], m_StaticVertices[index.V3 + submesh.BaseVertex]);
+				m_GeomData.AddFace();
+				m_GeomData.FaceMut(i) = { mesh->mFaces[i].mIndices[0], mesh->mFaces[i].mIndices[1], mesh->mFaces[i].mIndices[2] };
 			}
-
-			
 		}
 
 		TraverseNodes(scene->mRootNode);
@@ -209,7 +197,8 @@ namespace pbe {
 					{
 						int VertexID = submesh.BaseVertex + bone->mWeights[j].mVertexId;
 						float Weight = bone->mWeights[j].mWeight;
-						m_AnimatedVertices[VertexID].AddBoneData(boneIndex, Weight);
+						// todo:
+						// m_AnimatedVertices[VertexID].AddBoneData(boneIndex, Weight);
 					}
 				}
 			}
@@ -221,14 +210,10 @@ namespace pbe {
 			HZ_MESH_LOG("---- Materials - {0} ----", filename);
 
 			m_Textures.resize(scene->mNumMaterials);
-			m_Materials.resize(scene->mNumMaterials);
 			for (uint32_t i = 0; i < scene->mNumMaterials; i++)
 			{
 				auto aiMaterial = scene->mMaterials[i];
 				auto aiMaterialName = aiMaterial->GetName();
-
-				auto mi = Ref<MaterialInstance>::Create(m_BaseMaterial, aiMaterialName.data);
-				m_Materials[i] = mi;
 
 				HZ_MESH_LOG("  {0} (Index = {1})", aiMaterialName.data, i);
 				aiString aiTexPath;
@@ -261,24 +246,18 @@ namespace pbe {
 					if (texture->Loaded())
 					{
 						m_Textures[i] = texture;
-						mi->Set("u_AlbedoTexture", m_Textures[i]);
-						mi->Set("u_AlbedoTexToggle", 1.0f);
 					}
 					else
 					{
 						HZ_CORE_ERROR("Could not load texture: {0}", texturePath);
-						// Fallback to albedo color
-						mi->Set("u_AlbedoColor", glm::vec3{ aiColor.r, aiColor.g, aiColor.b });
 					}
 				}
 				else
 				{
-					mi->Set("u_AlbedoColor", glm::vec3 { aiColor.r, aiColor.g, aiColor.b });
 					HZ_MESH_LOG("    No albedo map");
 				}
 
 				// Normal maps
-				mi->Set("u_NormalTexToggle", 0.0f);
 				if (aiMaterial->GetTexture(aiTextureType_NORMALS, 0, &aiTexPath) == AI_SUCCESS)
 				{
 					// TODO: Temp - this should be handled by pbe's filesystem
@@ -290,8 +269,6 @@ namespace pbe {
 					auto texture = Texture2D::Create(texturePath);
 					if (texture->Loaded())
 					{
-						mi->Set("u_NormalTexture", texture);
-						mi->Set("u_NormalTexToggle", 1.0f);
 					}
 					else
 					{
@@ -317,8 +294,7 @@ namespace pbe {
 					auto texture = Texture2D::Create(texturePath);
 					if (texture->Loaded())
 					{
-						mi->Set("u_RoughnessTexture", texture);
-						mi->Set("u_RoughnessTexToggle", 1.0f);
+
 					}
 					else
 					{
@@ -328,7 +304,6 @@ namespace pbe {
 				else
 				{
 					HZ_MESH_LOG("    No roughness map");
-					mi->Set("u_Roughness", roughness);
 				}
 
 #if 0
@@ -436,14 +411,10 @@ namespace pbe {
 							auto texture = Texture2D::Create(texturePath);
 							if (texture->Loaded())
 							{
-								mi->Set("u_MetalnessTexture", texture);
-								mi->Set("u_MetalnessTexToggle", 1.0f);
 							}
 							else
 							{
 								HZ_CORE_ERROR("    Could not load texture: {0}", texturePath);
-								mi->Set("u_Metalness", metalness);
-								mi->Set("u_MetalnessTexToggle", 0.0f);
 							}
 							break;
 						}
@@ -453,45 +424,13 @@ namespace pbe {
 				if (!metalnessTextureFound)
 				{
 					HZ_MESH_LOG("    No metalness map");
-
-					mi->Set("u_Metalness", metalness);
-					mi->Set("u_MetalnessTexToggle", 0.0f);
 				}
 			}
 			HZ_MESH_LOG("------------------------");
 		}
 
-		VertexBufferLayout vertexLayout;
-		if (m_IsAnimated)
-		{
-			m_VertexBuffer = VertexBuffer::Create(m_AnimatedVertices.data(), m_AnimatedVertices.size() * sizeof(AnimatedVertex));
-			vertexLayout = {
-				{ ShaderDataType::Float3, "a_Position" },
-				{ ShaderDataType::Float3, "a_Normal" },
-				{ ShaderDataType::Float3, "a_Tangent" },
-				{ ShaderDataType::Float3, "a_Binormal" },
-				{ ShaderDataType::Float2, "a_TexCoord" },
-				{ ShaderDataType::Int4, "a_BoneIDs" },
-				{ ShaderDataType::Float4, "a_BoneWeights" },
-			};
-		}
-		else
-		{
-			m_VertexBuffer = VertexBuffer::Create(m_StaticVertices.data(), m_StaticVertices.size() * sizeof(Vertex));
-			vertexLayout = {
-				{ ShaderDataType::Float3, "a_Position" },
-				{ ShaderDataType::Float3, "a_Normal" },
-				{ ShaderDataType::Float3, "a_Tangent" },
-				{ ShaderDataType::Float3, "a_Binormal" },
-				{ ShaderDataType::Float2, "a_TexCoord" },
-			};
-		}
-
-		m_IndexBuffer = IndexBuffer::Create(m_Indices.data(), m_Indices.size() * sizeof(Index));
-
-		PipelineSpecification pipelineSpecification;
-		pipelineSpecification.Layout = vertexLayout;
-		m_Pipeline = Pipeline::Create(pipelineSpecification);
+		m_VertexBuffer = GeomUtils::GeomCreateVertexBuffer(m_GeomData);
+		m_IndexBuffer = GeomUtils::GeomCreateIndexBuffer(m_GeomData);
 	}
 
 	Mesh::~Mesh()
@@ -713,30 +652,30 @@ namespace pbe {
 		HZ_MESH_LOG("Mesh: {0}", m_FilePath);
 		if (m_IsAnimated)
 		{
-			for (size_t i = 0; i < m_AnimatedVertices.size(); i++)
-			{
-				auto& vertex = m_AnimatedVertices[i];
-				HZ_MESH_LOG("Vertex: {0}", i);
-				HZ_MESH_LOG("Position: {0}, {1}, {2}", vertex.Position.x, vertex.Position.y, vertex.Position.z);
-				HZ_MESH_LOG("Normal: {0}, {1}, {2}", vertex.Normal.x, vertex.Normal.y, vertex.Normal.z);
-				HZ_MESH_LOG("Binormal: {0}, {1}, {2}", vertex.Binormal.x, vertex.Binormal.y, vertex.Binormal.z);
-				HZ_MESH_LOG("Tangent: {0}, {1}, {2}", vertex.Tangent.x, vertex.Tangent.y, vertex.Tangent.z);
-				HZ_MESH_LOG("TexCoord: {0}, {1}", vertex.Texcoord.x, vertex.Texcoord.y);
-				HZ_MESH_LOG("--");
-			}
+			// for (size_t i = 0; i < m_AnimatedVertices.size(); i++)
+			// {
+			// 	auto& vertex = m_AnimatedVertices[i];
+			// 	HZ_MESH_LOG("Vertex: {0}", i);
+			// 	HZ_MESH_LOG("Position: {0}, {1}, {2}", vertex.Position.x, vertex.Position.y, vertex.Position.z);
+			// 	HZ_MESH_LOG("Normal: {0}, {1}, {2}", vertex.Normal.x, vertex.Normal.y, vertex.Normal.z);
+			// 	HZ_MESH_LOG("Binormal: {0}, {1}, {2}", vertex.Binormal.x, vertex.Binormal.y, vertex.Binormal.z);
+			// 	HZ_MESH_LOG("Tangent: {0}, {1}, {2}", vertex.Tangent.x, vertex.Tangent.y, vertex.Tangent.z);
+			// 	HZ_MESH_LOG("TexCoord: {0}, {1}", vertex.Texcoord.x, vertex.Texcoord.y);
+			// 	HZ_MESH_LOG("--");
+			// }
 		}
 		else
 		{
-			for (size_t i = 0; i < m_StaticVertices.size(); i++)
+			for (size_t i = 0; i < m_GeomData.NumVertex(); i++)
 			{
-				auto& vertex = m_StaticVertices[i];
-				HZ_MESH_LOG("Vertex: {0}", i);
-				HZ_MESH_LOG("Position: {0}, {1}, {2}", vertex.Position.x, vertex.Position.y, vertex.Position.z);
-				HZ_MESH_LOG("Normal: {0}, {1}, {2}", vertex.Normal.x, vertex.Normal.y, vertex.Normal.z);
-				HZ_MESH_LOG("Binormal: {0}, {1}, {2}", vertex.Binormal.x, vertex.Binormal.y, vertex.Binormal.z);
-				HZ_MESH_LOG("Tangent: {0}, {1}, {2}", vertex.Tangent.x, vertex.Tangent.y, vertex.Tangent.z);
-				HZ_MESH_LOG("TexCoord: {0}, {1}", vertex.Texcoord.x, vertex.Texcoord.y);
-				HZ_MESH_LOG("--");
+				// auto& vertex = m_StaticVertices[i];
+				// HZ_MESH_LOG("Vertex: {0}", i);
+				// HZ_MESH_LOG("Position: {0}, {1}, {2}", vertex.Position.x, vertex.Position.y, vertex.Position.z);
+				// HZ_MESH_LOG("Normal: {0}, {1}, {2}", vertex.Normal.x, vertex.Normal.y, vertex.Normal.z);
+				// HZ_MESH_LOG("Binormal: {0}, {1}, {2}", vertex.Binormal.x, vertex.Binormal.y, vertex.Binormal.z);
+				// HZ_MESH_LOG("Tangent: {0}, {1}, {2}", vertex.Tangent.x, vertex.Tangent.y, vertex.Tangent.z);
+				// HZ_MESH_LOG("TexCoord: {0}, {1}", vertex.Texcoord.x, vertex.Texcoord.y);
+				// HZ_MESH_LOG("--");
 			}
 		}
 		HZ_MESH_LOG("------------------------------------------------------");

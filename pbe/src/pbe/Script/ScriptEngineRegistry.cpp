@@ -67,21 +67,8 @@ namespace pbe {
 		mono_add_internal_call("pbe.Texture2D::Destructor_Native", pbe::Script::pbe_Texture2D_Destructor);
 		mono_add_internal_call("pbe.Texture2D::SetData_Native", pbe::Script::pbe_Texture2D_SetData);
 
-		mono_add_internal_call("pbe.Material::Destructor_Native", pbe::Script::pbe_Material_Destructor);
-		mono_add_internal_call("pbe.Material::SetFloat_Native", pbe::Script::pbe_Material_SetFloat);
-		mono_add_internal_call("pbe.Material::SetTexture_Native", pbe::Script::pbe_Material_SetTexture);
-
-		mono_add_internal_call("pbe.MaterialInstance::Destructor_Native", pbe::Script::pbe_MaterialInstance_Destructor);
-		mono_add_internal_call("pbe.MaterialInstance::SetFloat_Native", pbe::Script::pbe_MaterialInstance_SetFloat);
-		mono_add_internal_call("pbe.MaterialInstance::SetVector3_Native", pbe::Script::pbe_MaterialInstance_SetVector3);
-		mono_add_internal_call("pbe.MaterialInstance::SetVector4_Native", pbe::Script::pbe_MaterialInstance_SetVector4);
-		mono_add_internal_call("pbe.MaterialInstance::SetTexture_Native", pbe::Script::pbe_MaterialInstance_SetTexture);
-
 		mono_add_internal_call("pbe.Mesh::Constructor_Native", pbe::Script::pbe_Mesh_Constructor);
 		mono_add_internal_call("pbe.Mesh::Destructor_Native", pbe::Script::pbe_Mesh_Destructor);
-		mono_add_internal_call("pbe.Mesh::GetMaterial_Native", pbe::Script::pbe_Mesh_GetMaterial);
-		mono_add_internal_call("pbe.Mesh::GetMaterialByIndex_Native", pbe::Script::pbe_Mesh_GetMaterialByIndex);
-		mono_add_internal_call("pbe.Mesh::GetMaterialCount_Native", pbe::Script::pbe_Mesh_GetMaterialCount);
 
 		mono_add_internal_call("pbe.MeshFactory::CreatePlane_Native", pbe::Script::pbe_MeshFactory_CreatePlane);
 

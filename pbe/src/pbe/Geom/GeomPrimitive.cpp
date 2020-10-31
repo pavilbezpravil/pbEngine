@@ -35,23 +35,22 @@ namespace pbe {
 			Vec2 TexC;
 		};
 
-		void SetVertexes(GeomAccessor& acces, const Vertex* v, int size, FVF fvf) {
+		void SetVertexes(GeomBuffer& meshData, const Vertex* v, int size, FVF fvf) {
 			for (int i = 0; i < size; ++i) {
 				if (fvf & FVF_POS) {
-					acces.PosMut(i) = v->Position;
+					meshData.PosMut(i) = v->Position;
 				}
 				if (fvf & FVF_NORMAL) {
-					acces.NormalMut(i) = v->Normal;
+					meshData.NormalMut(i) = v->Normal;
 				}
 
 				++v;
 			}
 		}
 
-		void SetFaces(GeomAccessor& acces, const uint* idxs, int size) {
+		void SetFaces(GeomBuffer& meshData, const uint* idxs, int size) {
 			for (int i = 0; i < size; ++i) {
-				auto face = GeomFace{ uint16(idxs[0]), (uint16)idxs[1], (uint16)idxs[2] };
-				acces.FaceMut(i) = face;
+				meshData.FaceMut(i) = { idxs[0], idxs[1], idxs[2] };
 				idxs += 3;
 			}
 		}
@@ -59,8 +58,6 @@ namespace pbe {
 
 	GeomBuffer GeomPrimitive::CreateBox(FVF fvf, float width, float height, float depth, uint numSubdivisions) {
 		GeomBuffer meshData;
-
-		auto acces = meshData.GetAccessor();
 
 		//
 		// Create the vertices.
@@ -110,7 +107,7 @@ namespace pbe {
 		v[22] = Vertex(+w2, +h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
 		v[23] = Vertex(+w2, -h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
 
-		SetVertexes(acces, v, 24, fvf);
+		SetVertexes(meshData, v, 24, fvf);
 
 		//
 		// Create the indices.
@@ -143,7 +140,7 @@ namespace pbe {
 		i[33] = 20; i[34] = 22; i[35] = 23;
 
 		// meshData.Indices32.assign(&i[0], &i[36]);
-		SetFaces(acces, i, 36 / 3);
+		SetFaces(meshData, i, 36 / 3);
 
 		// Put a cap on the number of subdivisions.
 		numSubdivisions = std::min<uint>(numSubdivisions, 6u);

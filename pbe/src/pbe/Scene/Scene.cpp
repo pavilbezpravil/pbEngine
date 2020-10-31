@@ -8,8 +8,6 @@
 #include "pbe/Renderer/SceneRenderer.h"
 #include "pbe/Script/ScriptEngine.h"
 
-#include "pbe/Renderer/Renderer2D.h"
-
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
@@ -210,92 +208,45 @@ namespace pbe {
 		/////////////////////////////////////////////////////////////////////
 		// RENDER 3D SCENE
 		/////////////////////////////////////////////////////////////////////
-		Entity cameraEntity = GetMainCameraEntity();
-		if (!cameraEntity)
-			return;
+		//
+		// Entity cameraEntity = GetMainCameraEntity();
+		// if (!cameraEntity)
+		// 	return;
+		//
+		// glm::mat4 cameraViewMatrix = glm::inverse(cameraEntity.GetComponent<TransformComponent>().Transform);
+		// HZ_CORE_ASSERT(cameraEntity, "Scene does not contain any cameras!");
+		// SceneCamera& camera = cameraEntity.GetComponent<CameraComponent>();
+		// camera.SetViewportSize(m_ViewportWidth, m_ViewportHeight);
+		//
+		// auto group = m_Registry.group<MeshComponent>(entt::get<TransformComponent>);
+		// SceneRenderer::Get().BeginScene(this, { camera, cameraViewMatrix });
+		// for (auto entity : group)
+		// {
+		// 	auto [transformComponent, meshComponent] = group.get<TransformComponent, MeshComponent>(entity);
+		// 	if (meshComponent.Mesh)
+		// 	{
+		// 		meshComponent.Mesh->OnUpdate(ts);
+		//
+		// 		SceneRenderer::SubmitMesh(meshComponent, transformComponent, nullptr);
+		// 	}
+		// }
+		// SceneRenderer::Get().EndScene();
 
-		glm::mat4 cameraViewMatrix = glm::inverse(cameraEntity.GetComponent<TransformComponent>().Transform);
-		HZ_CORE_ASSERT(cameraEntity, "Scene does not contain any cameras!");
-		SceneCamera& camera = cameraEntity.GetComponent<CameraComponent>();
-		camera.SetViewportSize(m_ViewportWidth, m_ViewportHeight);
-
-		auto group = m_Registry.group<MeshComponent>(entt::get<TransformComponent>);
-		SceneRenderer::BeginScene(this, { camera, cameraViewMatrix });
-		for (auto entity : group)
-		{
-			auto [transformComponent, meshComponent] = group.get<TransformComponent, MeshComponent>(entity);
-			if (meshComponent.Mesh)
-			{
-				meshComponent.Mesh->OnUpdate(ts);
-
-				// TODO: Should we render (logically)
-				SceneRenderer::SubmitMesh(meshComponent, transformComponent, nullptr);
-			}
-		}
-		SceneRenderer::EndScene();
 		/////////////////////////////////////////////////////////////////////
-
-#if 0
-		// Render all sprites
-		Renderer2D::BeginScene(*camera);
-		{
-			auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRenderer>);
-			for (auto entity : group)
-			{
-				auto [transformComponent, spriteRendererComponent] = group.get<TransformComponent, SpriteRenderer>(entity);
-				if (spriteRendererComponent.Texture)
-					Renderer2D::DrawQuad(transformComponent.Transform, spriteRendererComponent.Texture, spriteRendererComponent.TilingFactor);
-				else
-					Renderer2D::DrawQuad(transformComponent.Transform, spriteRendererComponent.Color);
-			}
-		}
-
-		Renderer2D::EndScene();
-#endif
 	}
 
 	void Scene::OnRenderEditor(Timestep ts, const EditorCamera& editorCamera)
 	{
-		/////////////////////////////////////////////////////////////////////
-		// RENDER 3D SCENE
-		/////////////////////////////////////////////////////////////////////
 		auto group = m_Registry.group<MeshComponent>(entt::get<TransformComponent>);
-		SceneRenderer::BeginScene(this, { editorCamera, editorCamera.GetViewMatrix() });
-		for (auto entity : group)
-		{
+		SceneRenderer::Get().BeginScene(this, { editorCamera.GetViewProjection() });
+		for (auto entity : group) {
 			auto& [meshComponent, transformComponent] = group.get<MeshComponent, TransformComponent>(entity);
-			if (meshComponent.Mesh)
-			{
+			if (meshComponent.Mesh) {
 				meshComponent.Mesh->OnUpdate(ts);
-
-				// TODO: Should we render (logically)
-
-				if (m_SelectedEntity == entity)
-					SceneRenderer::SubmitSelectedMesh(meshComponent, transformComponent);
-				else
-					SceneRenderer::SubmitMesh(meshComponent, transformComponent);
+				SceneRenderer::Get().SubmitMesh(meshComponent, transformComponent);
 			}
 		}
-		SceneRenderer::EndScene();
-		/////////////////////////////////////////////////////////////////////
-
-#if 0
-		// Render all sprites
-		Renderer2D::BeginScene(*camera);
-		{
-			auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRenderer>);
-			for (auto entity : group)
-			{
-				auto [transformComponent, spriteRendererComponent] = group.get<TransformComponent, SpriteRenderer>(entity);
-				if (spriteRendererComponent.Texture)
-					Renderer2D::DrawQuad(transformComponent.Transform, spriteRendererComponent.Texture, spriteRendererComponent.TilingFactor);
-				else
-					Renderer2D::DrawQuad(transformComponent.Transform, spriteRendererComponent.Color);
-			}
-		}
-
-		Renderer2D::EndScene();
-#endif
+		SceneRenderer::Get().EndScene();
 	}
 
 	void Scene::OnEvent(Event& e)

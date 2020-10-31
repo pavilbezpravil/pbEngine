@@ -89,51 +89,6 @@ namespace pbe {
 
 		EditorCamera m_EditorCamera;
 
-		Ref<Shader> m_BrushShader;
-		Ref<Material> m_SphereBaseMaterial;
-
-		Ref<Material> m_MeshMaterial;
-		std::vector<Ref<MaterialInstance>> m_MetalSphereMaterialInstances;
-		std::vector<Ref<MaterialInstance>> m_DielectricSphereMaterialInstances;
-
-		struct AlbedoInput
-		{
-			glm::vec3 Color = { 0.972f, 0.96f, 0.915f }; // Silver, from https://docs.unrealengine.com/en-us/Engine/Rendering/Materials/PhysicallyBased
-			Ref<Texture2D> TextureMap;
-			bool SRGB = true;
-			bool UseTexture = false;
-		};
-		//AlbedoInput m_AlbedoInput;
-
-		struct NormalInput
-		{
-			Ref<Texture2D> TextureMap;
-			bool UseTexture = false;
-		};
-		//NormalInput m_NormalInput;
-
-		struct MetalnessInput
-		{
-			float Value = 1.0f;
-			Ref<Texture2D> TextureMap;
-			bool UseTexture = false;
-		};
-		//MetalnessInput m_MetalnessInput;
-
-		struct RoughnessInput
-		{
-			float Value = 0.2f;
-			Ref<Texture2D> TextureMap;
-			bool UseTexture = false;
-		};
-		//RoughnessInput m_RoughnessInput;
-
-		enum class SceneType : uint32_t
-		{
-			Spheres = 0, Model = 1
-		};
-		SceneType m_SceneType;
-
 		// Editor resources
 		Ref<Texture2D> m_PlayButtonTex;
 
@@ -142,10 +97,6 @@ namespace pbe {
 		float m_SnapValue = 0.5f;
 		float m_RotationSnapValue = 45.0f;
 		bool m_AllowViewportCameraEvents = false;
-		bool m_DrawOnTopBoundingBoxes = false;
-
-		bool m_UIShowBoundingBoxes = false;
-		bool m_UIShowBoundingBoxesOnTop = false;
 
 		bool m_ViewportPanelMouseOver = false;
 		bool m_ViewportPanelFocused = false;

@@ -38,23 +38,9 @@ namespace pbe { namespace Script {
 	void pbe_Texture2D_Destructor(Ref<Texture2D>* _this);
 	void pbe_Texture2D_SetData(Ref<Texture2D>* _this, MonoArray* inData, int32_t count);
 
-	// Material
-	void pbe_Material_Destructor(Ref<Material>* _this);
-	void pbe_Material_SetFloat(Ref<Material>* _this, MonoString* uniform, float value);
-	void pbe_Material_SetTexture(Ref<Material>* _this, MonoString* uniform, Ref<Texture2D>* texture);
-
-	void pbe_MaterialInstance_Destructor(Ref<MaterialInstance>* _this);
-	void pbe_MaterialInstance_SetFloat(Ref<MaterialInstance>* _this, MonoString* uniform, float value);
-	void pbe_MaterialInstance_SetVector3(Ref<MaterialInstance>* _this, MonoString* uniform, glm::vec3* value);
-	void pbe_MaterialInstance_SetVector4(Ref<MaterialInstance>* _this, MonoString* uniform, glm::vec4* value);
-	void pbe_MaterialInstance_SetTexture(Ref<MaterialInstance>* _this, MonoString* uniform, Ref<Texture2D>* texture);
-
 	// Mesh
 	Ref<Mesh>* pbe_Mesh_Constructor(MonoString* filepath);
 	void pbe_Mesh_Destructor(Ref<Mesh>* _this);
-	Ref<Material>* pbe_Mesh_GetMaterial(Ref<Mesh>* inMesh);
-	Ref<MaterialInstance>* pbe_Mesh_GetMaterialByIndex(Ref<Mesh>* inMesh, int index);
-	int pbe_Mesh_GetMaterialCount(Ref<Mesh>* inMesh);
 
 	void* pbe_MeshFactory_CreatePlane(float width, float height);
 } }

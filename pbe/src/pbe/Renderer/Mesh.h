@@ -3,15 +3,16 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+
+#include "Texture.h"
 #include "pbe/Core/Timestep.h"
 
-#include "pbe/Renderer/Pipeline.h"
 #include "pbe/Renderer/IndexBuffer.h"
 #include "pbe/Renderer/VertexBuffer.h"
 #include "pbe/Renderer/Shader.h"
-#include "pbe/Renderer/Material.h"
 
 #include "pbe/Core/Math/AABB.h"
+#include "pbe/Geom/GeomBuffer.h"
 
 struct aiNode;
 struct aiAnimation;
@@ -61,15 +62,6 @@ namespace pbe {
 		}
 	};
 
-	static const int NumAttributes = 5;
-
-	struct Index
-	{
-		uint32_t V1, V2, V3;
-	};
-
-	static_assert(sizeof(Index) == 3 * sizeof(uint32_t));
-
 	struct BoneInfo
 	{
 		glm::mat4 BoneOffset;
@@ -104,14 +96,6 @@ namespace pbe {
 		}
 	};
 
-	struct Triangle
-	{
-		Vertex V0, V1, V2;
-
-		Triangle(const Vertex& v0, const Vertex& v1, const Vertex& v2)
-			: V0(v0), V1(v1), V2(v2) {}
-	};
-
 	class Submesh
 	{
 	public:
@@ -139,12 +123,8 @@ namespace pbe {
 		const std::vector<Submesh>& GetSubmeshes() const { return m_Submeshes; }
 
 		Ref<Shader> GetMeshShader() { return m_MeshShader; }
-		Ref<Material> GetMaterial() { return m_BaseMaterial; }
-		std::vector<Ref<MaterialInstance>> GetMaterials() { return m_Materials; }
 		const std::vector<Ref<Texture2D>>& GetTextures() const { return m_Textures; }
 		const std::string& GetFilePath() const { return m_FilePath; }
-
-		const std::vector<Triangle> GetTriangleCache(uint32_t index) const { return m_TriangleCache.at(index); }
 	private:
 		void BoneTransform(float time);
 		void ReadNodeHierarchy(float AnimationTime, const aiNode* pNode, const glm::mat4& ParentTransform);
@@ -167,25 +147,18 @@ namespace pbe {
 		uint32_t m_BoneCount = 0;
 		std::vector<BoneInfo> m_BoneInfo;
 
-		Ref<Pipeline> m_Pipeline;
 		Ref<VertexBuffer> m_VertexBuffer;
 		Ref<IndexBuffer> m_IndexBuffer;
 
-		std::vector<Vertex> m_StaticVertices;
-		std::vector<AnimatedVertex> m_AnimatedVertices;
-		std::vector<Index> m_Indices;
+		GeomBuffer m_GeomData;
 		std::unordered_map<std::string, uint32_t> m_BoneMapping;
 		std::vector<glm::mat4> m_BoneTransforms;
 		const aiScene* m_Scene;
 
 		// Materials
 		Ref<Shader> m_MeshShader;
-		Ref<Material> m_BaseMaterial;
 		std::vector<Ref<Texture2D>> m_Textures;
 		std::vector<Ref<Texture2D>> m_NormalMaps;
-		std::vector<Ref<MaterialInstance>> m_Materials;
-
-		std::unordered_map<uint32_t, std::vector<Triangle>> m_TriangleCache;
 
 		// Animation
 		bool m_IsAnimated = false;

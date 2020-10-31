@@ -12,44 +12,50 @@ namespace pbe {
 		this->faces.resize(faces);
 	}
 
-	GeomAccessor& GeomBuffer::GetAccessor() {
-		return GeomAccessor{ *this };
+	void GeomBuffer::AddVertex()
+	{
+		data.resize(data.size() + stride);
 	}
 
-	const BYTE* GeomAccessor::GetRaw(int i, FVF type, int typeIdx) const {
-		return &buffer.data[i * buffer.stride + fvfGetOffset(buffer.fvf, type << typeIdx)];
+	void GeomBuffer::AddFace()
+	{
+		data.resize(data.size() + 1);
 	}
 
-	BYTE* GeomAccessor::GetRaw(int i, FVF type, int typeIdx) {
-		return &buffer.data[i * buffer.stride + fvfGetOffset(buffer.fvf, type << typeIdx)];
+	const BYTE* GeomBuffer::GetRaw(int i, FVF type, int typeIdx) const {
+		return &data[i * stride + fvfGetOffset(fvf, type << typeIdx)];
 	}
 
-	const Vec3& GeomAccessor::GetPos(int i) const {
+	BYTE* GeomBuffer::GetRaw(int i, FVF type, int typeIdx) {
+		return &data[i * stride + fvfGetOffset(fvf, type << typeIdx)];
+	}
+
+	const Vec3& GeomBuffer::GetPos(int i) const {
 		return *(const Vec3*)(GetRaw(i, FVF_POS));
 	}
 
-	Vec3& GeomAccessor::PosMut(int i) {
+	Vec3& GeomBuffer::PosMut(int i) {
 		return *(Vec3*)(GetRaw(i, FVF_POS));
 	}
 
-	const Vec3& GeomAccessor::GetNormal(int i) const {
+	const Vec3& GeomBuffer::GetNormal(int i) const {
 		return *(const Vec3*)(GetRaw(i, FVF_NORMAL));
 	}
 
-	Vec3& GeomAccessor::NormalMut(int i) {
+	Vec3& GeomBuffer::NormalMut(int i) {
 		return *(Vec3*)(GetRaw(i, FVF_NORMAL));
 	}
 
-	int GeomAccessor::NumFace() const {
-		return buffer.faces.size();
+	int GeomBuffer::NumFace() const {
+		return faces.size();
 	}
 
-	const GeomFace& GeomAccessor::GetFace(int face) const {
-		return buffer.faces[face];
+	const GeomFace& GeomBuffer::GetFace(int face) const {
+		return faces[face];
 	}
 
-	GeomFace& GeomAccessor::FaceMut(int face) {
-		return buffer.faces[face];
+	GeomFace& GeomBuffer::FaceMut(int face) {
+		return faces[face];
 	}
 
 }

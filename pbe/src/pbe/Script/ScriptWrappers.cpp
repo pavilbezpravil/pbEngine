@@ -199,28 +199,6 @@ namespace pbe { namespace Script {
 		delete _this;
 	}
 
-	Ref<Material>* pbe_Mesh_GetMaterial(Ref<Mesh>* inMesh)
-	{
-		Ref<Mesh>& mesh = *(Ref<Mesh>*)inMesh;
-		return new Ref<Material>(mesh->GetMaterial());
-	}
-
-	Ref<MaterialInstance>* pbe_Mesh_GetMaterialByIndex(Ref<Mesh>* inMesh, int index)
-	{
-		Ref<Mesh>& mesh = *(Ref<Mesh>*)inMesh;
-		const auto& materials = mesh->GetMaterials();
-		
-		HZ_CORE_ASSERT(index < materials.size());
-		return new Ref<MaterialInstance>(materials[index]);
-	}
-
-	int pbe_Mesh_GetMaterialCount(Ref<Mesh>* inMesh)
-	{
-		Ref<Mesh>& mesh = *(Ref<Mesh>*)inMesh;
-		const auto& materials = mesh->GetMaterials();
-		return materials.size();
-	}
-
 	void* pbe_Texture2D_Constructor(uint32_t width, uint32_t height)
 	{
 		auto result = Texture2D::Create(TextureFormat::RGBA, width, height);
@@ -254,52 +232,6 @@ namespace pbe { namespace Script {
 		}
 
 		instance->Unlock();
-	}
-
-	void pbe_Material_Destructor(Ref<Material>* _this)
-	{
-		delete _this;
-	}
-
-	void pbe_Material_SetFloat(Ref<Material>* _this, MonoString* uniform, float value)
-	{
-		Ref<Material>& instance = *(Ref<Material>*)_this;
-		instance->Set(mono_string_to_utf8(uniform), value);
-	}
-
-	void pbe_Material_SetTexture(Ref<Material>* _this, MonoString* uniform, Ref<Texture2D>* texture)
-	{
-		Ref<Material>& instance = *(Ref<Material>*)_this;
-		instance->Set(mono_string_to_utf8(uniform), *texture);
-	}
-
-	void pbe_MaterialInstance_Destructor(Ref<MaterialInstance>* _this)
-	{
-		delete _this;
-	}
-
-	void pbe_MaterialInstance_SetFloat(Ref<MaterialInstance>* _this, MonoString* uniform, float value)
-	{
-		Ref<MaterialInstance>& instance = *(Ref<MaterialInstance>*)_this;
-		instance->Set(mono_string_to_utf8(uniform), value);
-	}
-
-	void pbe_MaterialInstance_SetVector3(Ref<MaterialInstance>* _this, MonoString* uniform, glm::vec3* value)
-	{
-		Ref<MaterialInstance>& instance = *(Ref<MaterialInstance>*)_this;
-		instance->Set(mono_string_to_utf8(uniform), *value);
-	}
-
-	void pbe_MaterialInstance_SetVector4(Ref<MaterialInstance>* _this, MonoString* uniform, glm::vec4* value)
-	{
-		Ref<MaterialInstance>& instance = *(Ref<MaterialInstance>*)_this;
-		instance->Set(mono_string_to_utf8(uniform), *value);
-	}
-
-	void pbe_MaterialInstance_SetTexture(Ref<MaterialInstance>* _this, MonoString* uniform, Ref<Texture2D>* texture)
-	{
-		Ref<MaterialInstance>& instance = *(Ref<MaterialInstance>*)_this;
-		instance->Set(mono_string_to_utf8(uniform), *texture);
 	}
 
 	void* pbe_MeshFactory_CreatePlane(float width, float height)

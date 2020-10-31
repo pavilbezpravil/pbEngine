@@ -1,7 +1,6 @@
 #include "EditorLayer.h"
 
 #include "pbe/ImGui/ImGuizmo.h"
-#include "pbe/Renderer/Renderer2D.h"
 #include "pbe/Script/ScriptEngine.h"
 
 #include <filesystem>
@@ -50,7 +49,7 @@ namespace pbe {
 	}
 
 	EditorLayer::EditorLayer()
-		: m_SceneType(SceneType::Model), m_EditorCamera(glm::perspectiveFov(glm::radians(45.0f), 1280.0f, 720.0f, 0.1f, 10000.0f))
+		: m_EditorCamera(glm::perspectiveFov(glm::radians(45.0f), 1280.0f, 720.0f, 0.1f, 10000.0f))
 	{
 	}
 
@@ -62,8 +61,8 @@ namespace pbe {
 	Ref<Shader> vs;
 	Ref<Shader> ps;
 
-	ByteAddressBuffer vb;
-	ByteAddressBuffer ib;
+	Ref<VertexBuffer> vb;
+	Ref<IndexBuffer> ib;
 
 	RootSignature BaseRootSignature;
 
@@ -148,14 +147,14 @@ namespace pbe {
 		auto inputLayout = fvfGetInputLayout(fvf);
 
 		InitBaseRootSignature();
-		
+
 		pso = Graphics::GraphicsPSODefault;
 
 		pso.SetRootSignature(BaseRootSignature);
 		pso.SetInputLayout((UINT)inputLayout.size(), inputLayout.data());
 		pso.SetVertexShader(vs->GetByteCode());
 		pso.SetPixelShader(ps->GetByteCode());
-		pso.SetRenderTargetFormat(Renderer::GetFinalRT()->GetFormat(), DXGI_FORMAT_UNKNOWN);
+		pso.SetRenderTargetFormat(Renderer::Get().GetFinalRT()->GetFormat(), DXGI_FORMAT_UNKNOWN);
 		pso.Finalize();
 	}
 
@@ -243,13 +242,10 @@ namespace pbe {
 
 	void EditorLayer::OnImGuiRendererInfo() {
 		ImGui::Begin("Renderer");
-		auto& caps = RendererAPI::GetCapabilities();
-		ImGui::Text("Vendor: %s", caps.Vendor.c_str());
-		ImGui::Text("Renderer: %s", caps.Renderer.c_str());
-		ImGui::Text("Version: %s", caps.Version.c_str());
 		ImGui::Text("Frame Time: %.2fms\n", Application::Get().GetTimeStep().GetMilliseconds());
 		ImGui::End();
 	}
+
 	void EditorLayer::OnImGuiViewport() {
 		ImGui::Begin("Viewport");
 
@@ -259,14 +255,14 @@ namespace pbe {
 		auto viewportOffset = ImGui::GetCursorPos(); // includes tab bar
 		auto viewportSize = ImGui::GetContentRegionAvail();
 		
-		Renderer::Resize((uint)viewportSize.x, (uint)viewportSize.y);
+		Renderer::Get().Resize((uint)viewportSize.x, (uint)viewportSize.y);
 		m_EditorScene->SetViewportSize((uint32_t)viewportSize.x, (uint32_t)viewportSize.y);
 		if (m_RuntimeScene)
 			m_RuntimeScene->SetViewportSize((uint32_t)viewportSize.x, (uint32_t)viewportSize.y);
 		m_EditorCamera.SetProjectionMatrix(glm::perspectiveFov(glm::radians(45.0f), viewportSize.x, viewportSize.y, 0.1f, 1000.0f));
 		m_EditorCamera.SetViewportSize((uint32_t)viewportSize.x, (uint32_t)viewportSize.y);
 		// ImGui::Image(pbeImGui::ImageDesc(Renderer::GetFinalRT()->GetSRV()), viewportSize, { 0, 1 }, { 1, 0 });
-		ImGui::Image(pbeImGui::ImageDesc(Renderer::GetFinalRT()->GetSRV()), viewportSize);
+		ImGui::Image(pbeImGui::ImageDesc(Renderer::Get().GetFinalRT()->GetSRV()), viewportSize);
 
 		auto windowSize = ImGui::GetWindowSize();
 		ImVec2 minBound = ImGui::GetWindowPos();
@@ -327,7 +323,7 @@ namespace pbe {
 	{
 		GraphicsContext& context = GraphicsContext::Begin(L"Triangle");
 
-		ColorBuffer& rt = *Renderer::GetFinalRT();
+		ColorBuffer& rt = *Renderer::Get().GetFinalRT();
 
 		context.TransitionResource(rt, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 		context.ClearColor(rt);
@@ -338,8 +334,8 @@ namespace pbe {
 		context.SetRootSignature(BaseRootSignature);
 		context.SetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		context.SetVertexBuffer(0, vb.VertexBufferView());
-		context.SetIndexBuffer(ib.IndexBufferView());
+		context.SetVertexBuffer(0, vb->VertexBufferView());
+		context.SetIndexBuffer(ib->IndexBufferView());
 
 		struct cbPass {
 			Mat4 gMVP;
@@ -347,10 +343,9 @@ namespace pbe {
 		
 		cbPass pass;
 		pass.gMVP = m_EditorCamera.GetViewProjection();
-		// pass.gMVP = Mat4(1.f);
 		context.SetDynamicConstantBufferView(0, sizeof(cbPass), &pass);
 
-		context.DrawIndexed(ib.GetElementCount() * 3, 0, 0);
+		context.DrawIndexed(ib->GetElementCount(), 0, 0);
 
 		context.Finish();
 
@@ -362,45 +357,6 @@ namespace pbe {
 					m_EditorCamera.OnUpdate(ts);
 
 				m_EditorScene->OnRenderEditor(ts, m_EditorCamera);
-
-				if (m_DrawOnTopBoundingBoxes)
-				{
-					auto viewProj = m_EditorCamera.GetViewProjection();
-					Renderer2D::BeginScene(viewProj, false);
-					// TODO: Renderer::DrawAABB(m_MeshEntity.GetComponent<MeshComponent>(), m_MeshEntity.GetComponent<TransformComponent>());
-					Renderer2D::EndScene();
-				}
-
-				if (m_SelectionContext.size() && false)
-				{
-					auto& selection = m_SelectionContext[0];
-
-					if (selection.Mesh && selection.Entity.HasComponent<MeshComponent>())
-					{
-						auto viewProj = m_EditorCamera.GetViewProjection();
-						Renderer2D::BeginScene(viewProj, false);
-						glm::vec4 color = (m_SelectionMode == SelectionMode::Entity) ? glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f } : glm::vec4{ 0.2f, 0.9f, 0.2f, 1.0f };
-						Renderer::DrawAABB(selection.Mesh->BoundingBox, selection.Entity.GetComponent<TransformComponent>().Transform * selection.Mesh->Transform, color);
-						Renderer2D::EndScene();
-					}
-				}
-
-				if (m_SelectionContext.size())
-				{
-					auto& selection = m_SelectionContext[0];
-
-					if (selection.Entity.HasComponent<BoxCollider2DComponent>())
-					{
-						const auto& size = selection.Entity.GetComponent<BoxCollider2DComponent>().Size;
-						auto [translation, rotationQuat, scale] = GetTransformDecomposition(selection.Entity.GetComponent<TransformComponent>().Transform);
-						glm::vec3 rotation = glm::eulerAngles(rotationQuat);
-
-						auto viewProj = m_EditorCamera.GetViewProjection();
-						Renderer2D::BeginScene(viewProj, false);
-						Renderer2D::DrawRotatedQuad({ translation.x, translation.y }, size * 2.0f, glm::degrees(rotation.z), { 1.0f, 0.0f, 1.0f, 1.0f });
-						Renderer2D::EndScene();
-					}
-				}
 
 				break;
 			}
@@ -697,20 +653,12 @@ namespace pbe {
 		{
 			switch (e.GetKeyCode())
 			{
-				case KeyCode::B:
-					// Toggle bounding boxes 
-					m_UIShowBoundingBoxes = !m_UIShowBoundingBoxes;
-					break;
 				case KeyCode::D:
 					if (m_SelectionContext.size())
 					{
 						Entity selectedEntity = m_SelectionContext[0].Entity;
 						m_EditorScene->DuplicateEntity(selectedEntity);
 					}
-					break;
-				case KeyCode::G:
-					// Toggle grid
-					SceneRenderer::GetOptions().ShowGrid = !SceneRenderer::GetOptions().ShowGrid;
 					break;
 				case KeyCode::O:
 					OpenScene();
@@ -756,8 +704,7 @@ namespace pbe {
 
 					auto& submeshes = mesh->GetSubmeshes();
 					float lastT = std::numeric_limits<float>::max();
-					for (uint32_t i = 0; i < submeshes.size(); i++)
-					{
+					for (uint32_t i = 0; i < submeshes.size(); i++) {
 						auto& submesh = submeshes[i];
 						Ray ray = {
 							glm::inverse(entity.Transform() * submesh.Transform) * glm::vec4(origin, 1.0f),
@@ -766,18 +713,8 @@ namespace pbe {
 
 						float t;
 						bool intersects = ray.IntersectsAABB(submesh.BoundingBox, t);
-						if (intersects)
-						{
-							const auto& triangleCache = mesh->GetTriangleCache(i);
-							for (const auto& triangle : triangleCache)
-							{
-								if (ray.IntersectsTriangle(triangle.V0.Position, triangle.V1.Position, triangle.V2.Position, t))
-								{
-									HZ_WARN("INTERSECTION: {0}, t={1}", submesh.NodeName, t);
-									m_SelectionContext.push_back({ entity, &submesh, t });
-									break;
-								}
-							}
+						if (intersects) {
+							m_SelectionContext.push_back({ entity, &submesh, t });
 						}
 					}
 				}

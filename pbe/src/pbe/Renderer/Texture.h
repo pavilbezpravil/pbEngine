@@ -2,7 +2,6 @@
 
 #include "pbe/Core/Base.h"
 #include "pbe/Core/Buffer.h"
-#include "RendererAPI.h"
 
 namespace pbe {
 
@@ -33,8 +32,6 @@ namespace pbe {
 		virtual uint32_t GetWidth() const = 0;
 		virtual uint32_t GetHeight() const = 0;
 		virtual uint32_t GetMipLevelCount() const = 0;
-
-		virtual RendererID GetRendererID() const = 0;
 
 		static uint32_t GetBPP(TextureFormat format);
 		static uint32_t CalculateMipMapCount(uint32_t width, uint32_t height);

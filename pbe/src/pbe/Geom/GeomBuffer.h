@@ -7,33 +7,23 @@
 
 namespace pbe {
 
-
-	struct GeomAccessor;
-
 	struct GeomFace {
-		uint16_t i0, i1, i2;
+		uint i0, i1, i2;
 	};
 
+	static_assert(sizeof(GeomFace) == 3 * sizeof(uint));
 
 	struct GeomBuffer {
-		FVF fvf = FVF_UNKNOWN;
-		int size = 0;
-		std::vector<BYTE> data;
-		int stride = 0;
-		std::vector<GeomFace> faces;
+		void Create(FVF fvf, int size = 0, int faces = 0);
 
-		void Create(FVF fvf, int size, int faces);
+		void AddVertex();
+		void AddFace();
 
-		GeomAccessor& GetAccessor();
-	};
-
-
-	struct GeomAccessor {
-		GeomBuffer& buffer;
-
-		explicit GeomAccessor(GeomBuffer& buffer)
-			: buffer(buffer) {
-		}
+		FVF GetFVF() const { return fvf; }
+		int NumVertex() const { return size; }
+		int GetStride() const { return stride; }
+		const void* GetRawVertexData() const { return data.data(); }
+		const void* GetRawFaceData() const { return faces.data(); }
 
 		const BYTE* GetRaw(int i, FVF type, int typeIdx = 0) const;
 		BYTE* GetRaw(int i, FVF type, int typeIdx = 0);
@@ -45,8 +35,16 @@ namespace pbe {
 		Vec3& NormalMut(int i);
 
 		int NumFace() const;
+
 		const GeomFace& GetFace(int face) const;
 		GeomFace& FaceMut(int face);
+
+	private:
+		FVF fvf = FVF_UNKNOWN;
+		int size = 0;
+		std::vector<byte> data;
+		int stride = 0;
+		std::vector<GeomFace> faces;
 	};
 
 }

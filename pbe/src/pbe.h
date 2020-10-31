@@ -25,12 +25,10 @@
 #include "pbe/Renderer/SceneRenderer.h"
 #include "pbe/Renderer/VertexBuffer.h"
 #include "pbe/Renderer/IndexBuffer.h"
-#include "pbe/Renderer/Pipeline.h"
 #include "pbe/Renderer/Texture.h"
 #include "pbe/Renderer/Shader.h"
 #include "pbe/Renderer/Mesh.h"
 #include "pbe/Renderer/Camera.h"
-#include "pbe/Renderer/Material.h"
 // ---------------------------------------------------
 
 // Scenes

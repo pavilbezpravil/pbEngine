@@ -3,7 +3,6 @@
 #include "pbe/Core/Base.h"
 #include "pbe/Core/Buffer.h"
 
-#include "pbe/Renderer/RendererAPI.h"
 #include "pbe/Renderer/ShaderUniform.h"
 
 #include <string>

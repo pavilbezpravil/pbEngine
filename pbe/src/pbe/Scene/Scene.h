@@ -4,12 +4,9 @@
 #include "pbe/Core/Timestep.h"
 
 #include "pbe/Renderer/Camera.h"
-#include "pbe/Renderer/Texture.h"
-#include "pbe/Renderer/Material.h"
 
 #include "entt/entt.hpp"
 
-#include "SceneCamera.h"
 #include "pbe/Editor/EditorCamera.h"
 
 namespace pbe {

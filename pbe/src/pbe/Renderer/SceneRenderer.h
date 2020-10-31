@@ -1,46 +1,39 @@
 #pragma once
 
+#include "pbe/Core/Singleton.h"
 #include "pbe/Scene/Scene.h"
 #include "pbe/Renderer/Mesh.h"
+#include "pbe/Scene/SceneCamera.h"
 
 
 namespace pbe {
 
-	struct SceneRendererOptions
-	{
-		bool ShowGrid = true;
-		bool ShowBoundingBoxes = false;
-	};
-
-	struct SceneRendererCamera
-	{
-		pbe::Camera Camera;
-		glm::mat4 ViewMatrix;
-	};
-
-	class SceneRenderer
+	class SceneRenderer : public Singleton<SceneRenderer>
 	{
 	public:
-		static void Init();
-
-		static void BeginScene(const Scene* scene, const SceneRendererCamera& camera);
-		static void EndScene();
-
-		static void SubmitMesh(Ref<Mesh> mesh, const glm::mat4& transform = glm::mat4(1.0f), Ref<MaterialInstance> overrideMaterial = nullptr);
-		static void SubmitSelectedMesh(Ref<Mesh> mesh, const glm::mat4& transform = glm::mat4(1.0f));
-
-		static std::pair<Ref<TextureCube>, Ref<TextureCube>> CreateEnvironmentMap(const std::string& filepath);
-
-		static Ref<Texture2D> GetFinalColorBuffer();
+		struct CameraInfo
+		{
+			Mat4 viewProj;
+		};
 		
-		// TODO: Temp
-		static uint32_t GetFinalColorBufferRendererID();
+		void Init();
 
-		static SceneRendererOptions& GetOptions();
+		void BeginScene(const Ref<Scene>& scene, const CameraInfo& cameraInfo);
+		void EndScene();
+
+		void SubmitMesh(Ref<Mesh> mesh, const glm::mat4& transform = glm::mat4(1.0f));
 	private:
-		static void FlushDrawList();
-		static void GeometryPass();
-		static void CompositePass();
+		void FlushDrawList();
+
+		Ref<Scene> _scene;
+		CameraInfo _cameraInfo;
+		
+		struct DrawCommand
+		{
+			Ref<Mesh> mesh;
+			glm::mat4 transform;
+		};
+		std::vector<DrawCommand> _drawList;
 	};
 
 }

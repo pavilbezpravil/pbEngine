@@ -30,8 +30,8 @@ namespace pbe {
 		m_Window->SetEventCallback(BIND_EVENT_FN(OnEvent));
 		m_Window->SetVSync(true);
 
-		Renderer::Init();
-		Renderer::WaitAndRender();
+		Renderer::Instantiate();
+		Renderer::Get().Init();
 
 		m_ImGuiLayer = new ImGuiLayer("ImGui");
 		PushOverlay(m_ImGuiLayer);
@@ -42,7 +42,7 @@ namespace pbe {
 	Application::~Application()
 	{
 		ScriptEngine::Shutdown();
-		Renderer::Shutdown();
+		Renderer::Get().Shutdown();
 	}
 
 	void Application::PushLayer(Layer* layer)
@@ -85,11 +85,8 @@ namespace pbe {
 				for (Layer* layer : m_LayerStack)
 					layer->OnUpdate(m_TimeStep);
 
-				// Render ImGui on render thread
-				Application* app = this;
-				Renderer::Submit([app]() { app->RenderImGui(); });
-
-				Renderer::WaitAndRender();
+				// todo: Render ImGui on render thread
+				RenderImGui();
 			}
 			m_Window->OnUpdate();
 
