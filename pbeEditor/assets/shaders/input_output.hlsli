@@ -10,5 +10,10 @@ struct VS_OUT {
 };
 
 struct PS_OUT {
-	float4 color0 : SV_TARGET0;
+	#ifdef PS_OUT_COLOR0
+		float4 color0 : SV_TARGET0;
+	#endif
+	#ifdef PS_OUT_COLOR1
+		float4 color1 : SV_TARGET1;
+	#endif
 };

@@ -78,6 +78,10 @@ namespace pbe {
 			ImGui::TreePop();
 		}
 
+		ImGui::Begin("Shadow Buffer");
+		ImGui::Image(pbeImGui::ImageDesc(SceneRenderer::Get()._shadowBuffer->GetDepthSRV()), ImGui::GetContentRegionAvail());
+		ImGui::End();
+
 		ImGui::End();
 	}
 }

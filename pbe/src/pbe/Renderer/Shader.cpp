@@ -86,6 +86,7 @@ namespace pbe {
 				ret.emplace_back(*defines);
 				++defines;
 			}
+			ret.push_back({0, 0});
 			return ret;
 		}
 	}

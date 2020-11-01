@@ -9,6 +9,7 @@ namespace pbe {
 	{
 		auto vb = Ref<VertexBuffer>::Create();
 		vb->_fvf = fvf;
+		vb->_inputLayout = fvfGetInputLayout(vb->_fvf);
 		auto stride = fvfGetStride(fvf);
 		vb->Create(L"", size / stride, stride, data);
 		return vb;

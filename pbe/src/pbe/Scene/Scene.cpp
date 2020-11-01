@@ -141,8 +141,8 @@ namespace pbe {
 		if (directionLightEntity) {
 			auto& dl = directionLightEntity.GetComponent<DirectionLightComponent>();
 			environment.directionLight.directionLightComponent = dl;
-			environment.directionLight.Direction = { 1.2f, -1, -0.3f };
 			environment.directionLight.Direction = directionLightEntity.GetComponent<TransformComponent>().Transform * Vec4(0, 1, 0, 0);
+			environment.directionLight.Up = directionLightEntity.GetComponent<TransformComponent>().Transform * Vec4(0, 0, 1, 0);
 		} else {
 			environment.directionLight.directionLightComponent.Enable = false;
 		}
