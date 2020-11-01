@@ -13,8 +13,6 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-// Box2D
-#include <box2d/box2d.h>
 
 namespace pbe {
 
@@ -25,73 +23,6 @@ namespace pbe {
 	struct SceneComponent
 	{
 		UUID SceneID;
-	};
-
-	// TODO: MOVE TO PHYSICS FILE!
-	class ContactListener : public b2ContactListener
-	{
-	public:
-		virtual void BeginContact(b2Contact* contact) override
-		{
-			Entity& a = *(Entity*)contact->GetFixtureA()->GetBody()->GetUserData();
-			Entity& b = *(Entity*)contact->GetFixtureB()->GetBody()->GetUserData();
-
-			// TODO: improve these if checks
-			if (a.HasComponent<ScriptComponent>() && ScriptEngine::ModuleExists(a.GetComponent<ScriptComponent>().ModuleName))
-				ScriptEngine::OnCollision2DBegin(a);
-
-			if (b.HasComponent<ScriptComponent>() && ScriptEngine::ModuleExists(b.GetComponent<ScriptComponent>().ModuleName))
-				ScriptEngine::OnCollision2DBegin(b);
-		}
-
-		/// Called when two fixtures cease to touch.
-		virtual void EndContact(b2Contact* contact) override
-		{
-			Entity& a = *(Entity*)contact->GetFixtureA()->GetBody()->GetUserData();
-			Entity& b = *(Entity*)contact->GetFixtureB()->GetBody()->GetUserData();
-
-			// TODO: improve these if checks
-			if (a.HasComponent<ScriptComponent>() && ScriptEngine::ModuleExists(a.GetComponent<ScriptComponent>().ModuleName))
-				ScriptEngine::OnCollision2DEnd(a);
-
-			if (b.HasComponent<ScriptComponent>() && ScriptEngine::ModuleExists(b.GetComponent<ScriptComponent>().ModuleName))
-				ScriptEngine::OnCollision2DEnd(b);
-		}
-
-		/// This is called after a contact is updated. This allows you to inspect a
-		/// contact before it goes to the solver. If you are careful, you can modify the
-		/// contact manifold (e.g. disable contact).
-		/// A copy of the old manifold is provided so that you can detect changes.
-		/// Note: this is called only for awake bodies.
-		/// Note: this is called even when the number of contact points is zero.
-		/// Note: this is not called for sensors.
-		/// Note: if you set the number of contact points to zero, you will not
-		/// get an EndContact callback. However, you may get a BeginContact callback
-		/// the next step.
-		virtual void PreSolve(b2Contact* contact, const b2Manifold* oldManifold) override
-		{
-			B2_NOT_USED(contact);
-			B2_NOT_USED(oldManifold);
-		}
-
-		/// This lets you inspect a contact after the solver is finished. This is useful
-		/// for inspecting impulses.
-		/// Note: the contact manifold does not include time of impact impulses, which can be
-		/// arbitrarily large if the sub-step is small. Hence the impulse is provided explicitly
-		/// in a separate data structure.
-		/// Note: this is only called for contacts that are touching, solid, and awake.
-		virtual void PostSolve(b2Contact* contact, const b2ContactImpulse* impulse) override
-		{
-			B2_NOT_USED(contact);
-			B2_NOT_USED(impulse);
-		}
-	};
-
-	static ContactListener s_Box2DContactListener;
-
-	struct Box2DWorldComponent
-	{
-		std::unique_ptr<b2World> World;
 	};
 
 	static void OnScriptComponentConstruct(entt::registry& registry, entt::entity entity)
@@ -125,10 +56,6 @@ namespace pbe {
 
 		m_SceneEntity = m_Registry.create();
 		m_Registry.emplace<SceneComponent>(m_SceneEntity, m_SceneID);
-
-		// TODO: Obviously not necessary in all cases
-		Box2DWorldComponent& b2dWorld = m_Registry.emplace<Box2DWorldComponent>(m_SceneEntity, std::make_unique<b2World>(b2Vec2{ 0.0f, -9.8f }));
-		b2dWorld.World->SetContactListener(&s_Box2DContactListener);
 
 		s_ActiveScenes[m_SceneID] = this;
 
@@ -170,32 +97,6 @@ namespace pbe {
 				Entity e = { entity, this };
 				if (ScriptEngine::ModuleExists(e.GetComponent<ScriptComponent>().ModuleName))
 					ScriptEngine::OnUpdateEntity(m_SceneID, entityID, ts);
-			}
-		}
-
-		// Box2D physics
-		auto sceneView = m_Registry.view<Box2DWorldComponent>();
-		auto& box2DWorld = m_Registry.get<Box2DWorldComponent>(sceneView.front()).World;
-		int32_t velocityIterations = 6;
-		int32_t positionIterations = 2;
-		box2DWorld->Step(ts, velocityIterations, positionIterations);
-
-		{
-			auto view = m_Registry.view<RigidBody2DComponent>();
-			for (auto entity : view)
-			{
-				Entity e = { entity, this };
-				auto& transform = e.Transform();
-				auto& rb2d = e.GetComponent<RigidBody2DComponent>();
-				b2Body* body = static_cast<b2Body*>(rb2d.RuntimeBody);
-
-				auto& position = body->GetPosition();
-				auto [translation, rotationQuat, scale] = GetTransformDecomposition(transform);
-				glm::vec3 rotation = glm::eulerAngles(rotationQuat);
-
-				transform = glm::translate(glm::mat4(1.0f), { position.x, position.y, transform[3].z }) *
-					glm::toMat4(glm::quat({ rotation.x, rotation.y, body->GetAngle() })) *
-					glm::scale(glm::mat4(1.0f), scale);
 			}
 		}
 	}
@@ -261,95 +162,6 @@ namespace pbe {
 				Entity e = { entity, this };
 				if (ScriptEngine::ModuleExists(e.GetComponent<ScriptComponent>().ModuleName))
 					ScriptEngine::InstantiateEntityClass(e);
-			}
-		}
-
-		// Box2D physics
-		auto sceneView = m_Registry.view<Box2DWorldComponent>();
-		auto& world = m_Registry.get<Box2DWorldComponent>(sceneView.front()).World;
-		
-		{
-			auto view = m_Registry.view<RigidBody2DComponent>();
-			m_PhysicsBodyEntityBuffer = new Entity[view.size()];
-			uint32_t physicsBodyEntityBufferIndex = 0;
-			for (auto entity : view)
-			{
-				Entity e = { entity, this };
-				UUID entityID = e.GetComponent<IDComponent>().ID;
-				auto& transform = e.Transform();
-				auto& rigidBody2D = m_Registry.get<RigidBody2DComponent>(entity);
-
-				b2BodyDef bodyDef;
-				if (rigidBody2D.BodyType == RigidBody2DComponent::Type::Static)
-					bodyDef.type = b2_staticBody;
-				else if (rigidBody2D.BodyType == RigidBody2DComponent::Type::Dynamic)
-					bodyDef.type = b2_dynamicBody;
-				else if (rigidBody2D.BodyType == RigidBody2DComponent::Type::Kinematic)
-					bodyDef.type = b2_kinematicBody;
-				bodyDef.position.Set(transform[3].x, transform[3].y);
-				
-				auto [translation, rotationQuat, scale] = GetTransformDecomposition(transform);
-				glm::vec3 rotation = glm::eulerAngles(rotationQuat);
-				bodyDef.angle = rotation.z;
-
-				b2Body* body = world->CreateBody(&bodyDef);
-				body->SetFixedRotation(rigidBody2D.FixedRotation);
-				Entity* entityStorage = &m_PhysicsBodyEntityBuffer[physicsBodyEntityBufferIndex++];
-				*entityStorage = e;
-				body->SetUserData((void*)entityStorage);
-				rigidBody2D.RuntimeBody = body;
-			}
-		}
-
-		{
-			auto view = m_Registry.view<BoxCollider2DComponent>();
-			for (auto entity : view)
-			{
-				Entity e = { entity, this };
-				auto& transform = e.Transform();
-
-				auto& boxCollider2D = m_Registry.get<BoxCollider2DComponent>(entity);
-				if (e.HasComponent<RigidBody2DComponent>())
-				{
-					auto& rigidBody2D = e.GetComponent<RigidBody2DComponent>();
-					HZ_CORE_ASSERT(rigidBody2D.RuntimeBody);
-					b2Body* body = static_cast<b2Body*>(rigidBody2D.RuntimeBody);
-
-					b2PolygonShape polygonShape;
-					polygonShape.SetAsBox(boxCollider2D.Size.x, boxCollider2D.Size.y);
-
-					b2FixtureDef fixtureDef;
-					fixtureDef.shape = &polygonShape;
-					fixtureDef.density = boxCollider2D.Density;
-					fixtureDef.friction = boxCollider2D.Friction;
-					body->CreateFixture(&fixtureDef);
-				}
-			}
-		}
-
-		{
-			auto view = m_Registry.view<CircleCollider2DComponent>();
-			for (auto entity : view)
-			{
-				Entity e = { entity, this };
-				auto& transform = e.Transform();
-
-				auto& circleCollider2D = m_Registry.get<CircleCollider2DComponent>(entity);
-				if (e.HasComponent<RigidBody2DComponent>())
-				{
-					auto& rigidBody2D = e.GetComponent<RigidBody2DComponent>();
-					HZ_CORE_ASSERT(rigidBody2D.RuntimeBody);
-					b2Body* body = static_cast<b2Body*>(rigidBody2D.RuntimeBody);
-
-					b2CircleShape circleShape;
-					circleShape.m_radius = circleCollider2D.Radius;
-
-					b2FixtureDef fixtureDef;
-					fixtureDef.shape = &circleShape;
-					fixtureDef.density = circleCollider2D.Density;
-					fixtureDef.friction = circleCollider2D.Friction;
-					body->CreateFixture(&fixtureDef);
-				}
 			}
 		}
 
@@ -453,9 +265,6 @@ namespace pbe {
 		CopyComponentIfExists<ScriptComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<CameraComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<SpriteRendererComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
-		CopyComponentIfExists<RigidBody2DComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
-		CopyComponentIfExists<BoxCollider2DComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
-		CopyComponentIfExists<CircleCollider2DComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 	}
 
 	Entity Scene::FindEntityByTag(const std::string& tag)
@@ -494,15 +303,10 @@ namespace pbe {
 		CopyComponent<ScriptComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<CameraComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<SpriteRendererComponent>(target->m_Registry, m_Registry, enttMap);
-		CopyComponent<RigidBody2DComponent>(target->m_Registry, m_Registry, enttMap);
-		CopyComponent<BoxCollider2DComponent>(target->m_Registry, m_Registry, enttMap);
-		CopyComponent<CircleCollider2DComponent>(target->m_Registry, m_Registry, enttMap);
 
 		const auto& entityInstanceMap = ScriptEngine::GetEntityInstanceMap();
 		if (entityInstanceMap.find(target->GetUUID()) != entityInstanceMap.end())
 			ScriptEngine::CopyEntityScriptData(target->GetUUID(), m_SceneID);
-
-		target->SetPhysics2DGravity(GetPhysics2DGravity());
 	}
 
 	Ref<Scene> Scene::GetScene(UUID uuid)
@@ -511,16 +315,6 @@ namespace pbe {
 			return s_ActiveScenes.at(uuid);
 
 		return {};
-	}
-
-	float Scene::GetPhysics2DGravity() const
-	{
-		return m_Registry.get<Box2DWorldComponent>(m_SceneEntity).World->GetGravity().y;
-	}
-
-	void Scene::SetPhysics2DGravity(float gravity)
-	{
-		m_Registry.get<Box2DWorldComponent>(m_SceneEntity).World->SetGravity({ 0.0f, gravity });
 	}
 
 }

@@ -84,47 +84,4 @@ namespace pbe {
 		SpriteRendererComponent(const SpriteRendererComponent& other) = default;
 	};
 
-	struct RigidBody2DComponent
-	{
-		enum class Type { Static, Dynamic, Kinematic };
-		Type BodyType;
-		bool FixedRotation = false;
-
-		// Storage for runtime
-		void* RuntimeBody = nullptr;
-
-		RigidBody2DComponent() = default;
-		RigidBody2DComponent(const RigidBody2DComponent& other) = default;
-	};
-
-	struct BoxCollider2DComponent
-	{
-		glm::vec2 Offset = { 0.0f,0.0f };
-		glm::vec2 Size = { 1.0f, 1.0f };
-
-		float Density = 1.0f;
-		float Friction = 1.0f;
-
-		// Storage for runtime
-		void* RuntimeFixture = nullptr;
-
-		BoxCollider2DComponent() = default;
-		BoxCollider2DComponent(const BoxCollider2DComponent& other) = default;
-	};
-
-	struct CircleCollider2DComponent
-	{
-		glm::vec2 Offset = { 0.0f,0.0f };
-		float Radius = 1.0f;
-
-		float Density = 1.0f;
-		float Friction = 1.0f;
-
-		// Storage for runtime
-		void* RuntimeFixture = nullptr;
-
-		CircleCollider2DComponent() = default;
-		CircleCollider2DComponent(const CircleCollider2DComponent& other) = default;
-	};
-
 }

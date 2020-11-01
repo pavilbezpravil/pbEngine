@@ -12,8 +12,6 @@
 #include "pbe/Core/Input.h"
 #include <mono/jit/jit.h>
 
-#include <box2d/box2d.h>
-
 namespace pbe {
 	extern std::unordered_map<MonoType*, std::function<bool(Entity&)>> s_HasComponentFuncs;
 	extern std::unordered_map<MonoType*, std::function<void(Entity&)>> s_CreateComponentFuncs;
@@ -141,51 +139,6 @@ namespace pbe { namespace Script {
 		Entity entity = entityMap.at(entityID);
 		auto& meshComponent = entity.GetComponent<MeshComponent>();
 		meshComponent.Mesh = inMesh ? *inMesh : nullptr;
-	}
-
-	void pbe_RigidBody2DComponent_ApplyLinearImpulse(uint64_t entityID, glm::vec2* impulse, glm::vec2* offset, bool wake)
-	{
-		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
-		HZ_CORE_ASSERT(scene, "No active scene!");
-		const auto& entityMap = scene->GetEntityMap();
-		HZ_CORE_ASSERT(entityMap.find(entityID) != entityMap.end(), "Invalid entity ID or entity doesn't exist in scene!");
-
-		Entity entity = entityMap.at(entityID);
-		HZ_CORE_ASSERT(entity.HasComponent<RigidBody2DComponent>());
-		auto& component = entity.GetComponent<RigidBody2DComponent>();
-		b2Body* body = (b2Body*)component.RuntimeBody;
-		body->ApplyLinearImpulse(*(const b2Vec2*)impulse, body->GetWorldCenter() + *(const b2Vec2*)offset, wake);
-	}
-
-	void pbe_RigidBody2DComponent_GetLinearVelocity(uint64_t entityID, glm::vec2* outVelocity)
-	{
-		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
-		HZ_CORE_ASSERT(scene, "No active scene!");
-		const auto& entityMap = scene->GetEntityMap();
-		HZ_CORE_ASSERT(entityMap.find(entityID) != entityMap.end(), "Invalid entity ID or entity doesn't exist in scene!");
-
-		Entity entity = entityMap.at(entityID);
-		HZ_CORE_ASSERT(entity.HasComponent<RigidBody2DComponent>());
-		auto& component = entity.GetComponent<RigidBody2DComponent>();
-		b2Body* body = (b2Body*)component.RuntimeBody;
-		const auto& velocity = body->GetLinearVelocity();
-		HZ_CORE_ASSERT(outVelocity);
-		*outVelocity = { velocity.x, velocity.y };
-	}
-
-	void pbe_RigidBody2DComponent_SetLinearVelocity(uint64_t entityID, glm::vec2* velocity)
-	{
-		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
-		HZ_CORE_ASSERT(scene, "No active scene!");
-		const auto& entityMap = scene->GetEntityMap();
-		HZ_CORE_ASSERT(entityMap.find(entityID) != entityMap.end(), "Invalid entity ID or entity doesn't exist in scene!");
-
-		Entity entity = entityMap.at(entityID);
-		HZ_CORE_ASSERT(entity.HasComponent<RigidBody2DComponent>());
-		auto& component = entity.GetComponent<RigidBody2DComponent>();
-		b2Body* body = (b2Body*)component.RuntimeBody;
-		HZ_CORE_ASSERT(velocity);
-		body->SetLinearVelocity({velocity->x, velocity->y});
 	}
 
 	Ref<Mesh>* pbe_Mesh_Constructor(MonoString* filepath)

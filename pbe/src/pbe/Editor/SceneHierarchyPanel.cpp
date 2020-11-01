@@ -108,30 +108,6 @@ namespace pbe {
 							ImGui::CloseCurrentPopup();
 						}
 					}
-					if (!m_SelectionContext.HasComponent<RigidBody2DComponent>())
-					{
-						if (ImGui::Button("Rigidbody 2D"))
-						{
-							m_SelectionContext.AddComponent<RigidBody2DComponent>();
-							ImGui::CloseCurrentPopup();
-						}
-					}
-					if (!m_SelectionContext.HasComponent<BoxCollider2DComponent>())
-					{
-						if (ImGui::Button("Box Collider 2D"))
-						{
-							m_SelectionContext.AddComponent<BoxCollider2DComponent>();
-							ImGui::CloseCurrentPopup();
-						}
-					}
-					if (!m_SelectionContext.HasComponent<CircleCollider2DComponent>())
-					{
-						if (ImGui::Button("Circle Collider 2D"))
-						{
-							m_SelectionContext.AddComponent<CircleCollider2DComponent>();
-							ImGui::CloseCurrentPopup();
-						}
-					}
 					ImGui::EndPopup();
 				}
 			}
@@ -770,59 +746,6 @@ namespace pbe {
 				ScriptEngine::OnCreateEntity(entity);
 			}
 #endif
-		});
-
-		DrawComponent<RigidBody2DComponent>("Rigidbody 2D", entity, [](RigidBody2DComponent& rb2dc)
-		{
-			// Rigidbody2D Type
-			const char* rb2dTypeStrings[] = { "Static", "Dynamic", "Kinematic" };
-			const char* currentType = rb2dTypeStrings[(int)rb2dc.BodyType];
-			if (ImGui::BeginCombo("Type", currentType))
-			{
-				for (int type = 0; type < 3; type++)
-				{
-					bool is_selected = (currentType == rb2dTypeStrings[type]);
-					if (ImGui::Selectable(rb2dTypeStrings[type], is_selected))
-					{
-						currentType = rb2dTypeStrings[type];
-						rb2dc.BodyType = (RigidBody2DComponent::Type)type;
-					}
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
-
-			if (rb2dc.BodyType == RigidBody2DComponent::Type::Dynamic)
-			{
-				BeginPropertyGrid();
-				Property("Fixed Rotation", rb2dc.FixedRotation);
-				EndPropertyGrid();
-			}
-		});
-
-		DrawComponent<BoxCollider2DComponent>("Box Collider 2D", entity, [](BoxCollider2DComponent& bc2dc)
-		{
-			BeginPropertyGrid();
-
-			Property("Offset", bc2dc.Offset);
-			Property("Size", bc2dc.Size);
-			Property("Density", bc2dc.Density);
-			Property("Friction", bc2dc.Friction);
-
-			EndPropertyGrid();
-		});
-	
-		DrawComponent<CircleCollider2DComponent>("Circle Collider 2D", entity, [](CircleCollider2DComponent& cc2dc)
-		{
-			BeginPropertyGrid();
-
-			Property("Offset", cc2dc.Offset);
-			Property("Radius", cc2dc.Radius);
-			Property("Density", cc2dc.Density);
-			Property("Friction", cc2dc.Friction);
-
-			EndPropertyGrid();
 		});
 
 	}

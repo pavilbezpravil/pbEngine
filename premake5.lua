@@ -23,7 +23,6 @@ IncludeDir = {}
 IncludeDir["GLFW"] = "pbe/vendor/GLFW/include"
 IncludeDir["ImGui"] = "pbe/vendor/ImGui"
 IncludeDir["glm"] = "pbe/vendor/glm"
-IncludeDir["Box2D"] = "pbe/vendor/Box2D/include"
 IncludeDir["entt"] = "pbe/vendor/entt/single_include"
 IncludeDir["FastNoise"] = "pbe/vendor/FastNoise/Cpp"
 IncludeDir["mono"] = "pbe/vendor/mono/include"
@@ -37,7 +36,6 @@ LibraryDir["WinPixEventRuntime"] = "vendor/WinPixEventRuntime/bin/WinPixEventRun
 group "Dependencies"
 include "pbe/vendor/GLFW"
 include "pbe/vendor/ImGui"
-include "pbe/vendor/Box2D"
 group ""
 
 group "Core"
@@ -75,7 +73,6 @@ project "pbe"
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.ImGui}",
-		"%{IncludeDir.Box2D}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.mono}",
 		"%{IncludeDir.spdlog}",
@@ -90,7 +87,6 @@ project "pbe"
 	{ 
 		"GLFW",
 		"ImGui",
-		"Box2D",
 		"d3d12",
 		"dxgi",
 		"%{LibraryDir.mono}",

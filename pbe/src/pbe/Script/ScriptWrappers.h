@@ -28,10 +28,6 @@ namespace pbe { namespace Script {
 	void* pbe_MeshComponent_GetMesh(uint64_t entityID);
 	void pbe_MeshComponent_SetMesh(uint64_t entityID, Ref<Mesh>* inMesh);
 
-	void pbe_RigidBody2DComponent_ApplyLinearImpulse(uint64_t entityID, glm::vec2* impulse, glm::vec2* offset, bool wake);
-	void pbe_RigidBody2DComponent_GetLinearVelocity(uint64_t entityID, glm::vec2* outVelocity);
-	void pbe_RigidBody2DComponent_SetLinearVelocity(uint64_t entityID, glm::vec2* velocity);
-
 	// Renderer
 	// Texture2D
 	void* pbe_Texture2D_Constructor(uint32_t width, uint32_t height);

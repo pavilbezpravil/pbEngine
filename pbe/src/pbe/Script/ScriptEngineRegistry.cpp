@@ -38,8 +38,6 @@ namespace pbe {
 		Component_RegisterType(ScriptComponent);
 		Component_RegisterType(CameraComponent);
 		Component_RegisterType(SpriteRendererComponent);
-		Component_RegisterType(RigidBody2DComponent);
-		Component_RegisterType(BoxCollider2DComponent);
 	}
 
 	void ScriptEngineRegistry::RegisterAll()
@@ -56,10 +54,6 @@ namespace pbe {
 
 		mono_add_internal_call("pbe.MeshComponent::GetMesh_Native", pbe::Script::pbe_MeshComponent_GetMesh);
 		mono_add_internal_call("pbe.MeshComponent::SetMesh_Native", pbe::Script::pbe_MeshComponent_SetMesh);
-
-		mono_add_internal_call("pbe.RigidBody2DComponent::ApplyLinearImpulse_Native", pbe::Script::pbe_RigidBody2DComponent_ApplyLinearImpulse);
-		mono_add_internal_call("pbe.RigidBody2DComponent::GetLinearVelocity_Native", pbe::Script::pbe_RigidBody2DComponent_GetLinearVelocity);
-		mono_add_internal_call("pbe.RigidBody2DComponent::SetLinearVelocity_Native", pbe::Script::pbe_RigidBody2DComponent_SetLinearVelocity);
 
 		mono_add_internal_call("pbe.Input::IsKeyPressed_Native", pbe::Script::pbe_Input_IsKeyPressed);
 
