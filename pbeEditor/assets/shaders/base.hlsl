@@ -4,7 +4,12 @@ cbuffer cbPass : register(b0) {
 	float4x4 gVP;
 }
 
-cbuffer cbModel : register(b1) {
+cbuffer cbDirectionLight : register(b1) {
+	float3 gDirection;
+	float3 gColor;
+}
+
+cbuffer cbModel : register(b2) {
 	float4x4 gTransform;
 	float4x4 gNormalTransform;
 }
@@ -35,7 +40,8 @@ PS_OUT mainPS(VS_OUT input) {
 
 	float3 normalW = normalize(input.normalW);
 
-	const float3 L = normalize(float3(-1.2f, 1, 0.3f));
+	// const float3 L = normalize(float3(-1.2f, 1, 0.3f));
+	const float3 L = normalize(-gDirection);
 	float3 diffuse = float3(177, 227, 199) / 256.f;
 	float nDotL = max(dot(L, normalW), 0.1f);
 	output.color0 = float4(diffuse * nDotL, 1);

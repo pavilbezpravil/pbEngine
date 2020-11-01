@@ -7,21 +7,33 @@
 #include "pbe/Renderer/Mesh.h"
 #include "pbe/Renderer/PipelineState.h"
 #include "pbe/Scene/SceneCamera.h"
+#include "pbe/Scene/Components.h"
 
 
 namespace pbe {
+	struct DirectionLight
+	{
+		DirectionLightComponent directionLightComponent;
+		Vec3 Direction;
+	};
 
 	class SceneRenderer : public Singleton<SceneRenderer>
 	{
 	public:
+		struct Environment
+		{
+			DirectionLight directionLight;
+		};
+
 		struct CameraInfo
 		{
 			Mat4 viewProj;
+			Vec3 position;
 		};
 		
 		void Init();
 
-		void BeginScene(const Ref<Scene>& scene, const CameraInfo& cameraInfo);
+		void BeginScene(const Ref<Scene>& scene, const CameraInfo& cameraInfo, const Environment& environment);
 		void EndScene();
 
 		void SubmitMesh(Ref<Mesh> mesh, const glm::mat4& transform = glm::mat4(1.0f));
@@ -30,6 +42,7 @@ namespace pbe {
 
 		Ref<Scene> _scene;
 		CameraInfo _cameraInfo;
+		Environment _environment;
 		
 		struct DrawCommand
 		{
@@ -43,13 +56,7 @@ namespace pbe {
 
 		Ref<RootSignature> BaseRootSignature = nullptr;
 
-		void InitBaseRootSignature() {
-			BaseRootSignature = Ref<RootSignature>::Create();
-			(*BaseRootSignature).Reset(2);
-			(*BaseRootSignature)[0].InitAsConstantBuffer(0);
-			(*BaseRootSignature)[1].InitAsConstantBuffer(1);
-			(*BaseRootSignature).Finalize(L"Base", D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-		}
+		void InitBaseRootSignature();
 	};
 
 }

@@ -74,14 +74,14 @@ namespace pbe {
 		operator const SceneCamera& () const { return Camera; }
 	};
 
-	struct SpriteRendererComponent
+	struct DirectionLightComponent
 	{
-		glm::vec4 Color = { 1.0f, 1.0f, 1.0f, 1.0f };
-		Ref<Texture2D> Texture;
-		float TilingFactor = 1.0f;
+		bool Enable = true;
+		bool CastShadow = true;
+		Vec3 Color = { 1.0f, 1.0f, 1.0f};
 
-		SpriteRendererComponent() = default;
-		SpriteRendererComponent(const SpriteRendererComponent& other) = default;
+		DirectionLightComponent() = default;
+		DirectionLightComponent(const DirectionLightComponent& other) = default;
 	};
 
 }

@@ -16,11 +16,13 @@ namespace pbe {
 		InitBaseRootSignature();
 	}
 
-	void SceneRenderer::BeginScene(const Ref<Scene>& scene, const CameraInfo& cameraInfo)
+	void SceneRenderer::BeginScene(const Ref<Scene>& scene, const CameraInfo& cameraInfo,
+		const Environment& environment)
 	{
 		HZ_CORE_ASSERT(!_scene);
 		_scene = scene;
 		_cameraInfo = cameraInfo;
+		_environment = environment;
 	}
 
 	void SceneRenderer::EndScene()
@@ -69,8 +71,20 @@ namespace pbe {
 		pass.gMVP = _cameraInfo.viewProj;
 		context.SetDynamicConstantBufferView(0, sizeof(cbPass), &pass);
 
+		struct cbDirectionLight {
+			Vec3 gDireciton;
+			float _pad0 = 0;
+			Vec3 gColor;
+			float _pad1 = 0;
+		};
+
+		// todo: handle dirLight disable
+		cbDirectionLight directionLight;
+		directionLight.gDireciton = _environment.directionLight.Direction;
+		directionLight.gColor = _environment.directionLight.directionLightComponent.Color;
+		context.SetDynamicConstantBufferView(1, sizeof(directionLight), &directionLight);
+
 		for (auto& drawCmd : _drawList) {
-			// todo: transform
 			auto& mesh = drawCmd.mesh;
 			for (auto& submesh : mesh->GetSubmeshes()) {
 				struct cbModel {
@@ -81,7 +95,7 @@ namespace pbe {
 				cbModel model;
 				model.gTransform = drawCmd.transform * submesh.Transform;
 				model.gNormalTransform = glm::transpose(glm::inverse(model.gTransform));
-				context.SetDynamicConstantBufferView(1, sizeof(model), &model);
+				context.SetDynamicConstantBufferView(2, sizeof(model), &model);
 
 				context.SetVertexBuffer(0, mesh->GetVertexBuffer()->VertexBufferView(submesh.BaseVertex));
 				context.SetIndexBuffer(mesh->GetIndexBuffer()->IndexBufferView(submesh.BaseIndex));
@@ -94,4 +108,13 @@ namespace pbe {
 		_drawList = {};
 	}
 
+	void SceneRenderer::InitBaseRootSignature()
+	{
+		BaseRootSignature = Ref<RootSignature>::Create();
+		(*BaseRootSignature).Reset(3);
+		(*BaseRootSignature)[0].InitAsConstantBuffer(0);
+		(*BaseRootSignature)[1].InitAsConstantBuffer(1);
+		(*BaseRootSignature)[2].InitAsConstantBuffer(2);
+		(*BaseRootSignature).Finalize(L"Base", D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	}
 }

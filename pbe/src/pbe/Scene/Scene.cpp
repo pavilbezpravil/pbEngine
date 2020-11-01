@@ -135,8 +135,20 @@ namespace pbe {
 
 	void Scene::OnRenderEditor(Timestep ts, const EditorCamera& editorCamera)
 	{
+		SceneRenderer::Environment environment;
+
+		Entity directionLightEntity = GetDirectionLightEntity();
+		if (directionLightEntity) {
+			auto& dl = directionLightEntity.GetComponent<DirectionLightComponent>();
+			environment.directionLight.directionLightComponent = dl;
+			environment.directionLight.Direction = { 1.2f, -1, -0.3f };
+			environment.directionLight.Direction = directionLightEntity.GetComponent<TransformComponent>().Transform * Vec4(0, 1, 0, 0);
+		} else {
+			environment.directionLight.directionLightComponent.Enable = false;
+		}
+
 		auto group = m_Registry.group<MeshComponent>(entt::get<TransformComponent>);
-		SceneRenderer::Get().BeginScene(this, { editorCamera.GetViewProjection() });
+		SceneRenderer::Get().BeginScene(this, { editorCamera.GetViewProjection(), editorCamera.GetPosition() }, environment);
 		for (auto entity : group) {
 			auto& [meshComponent, transformComponent] = group.get<MeshComponent, TransformComponent>(entity);
 			if (meshComponent.Mesh) {
@@ -188,6 +200,17 @@ namespace pbe {
 			auto& comp = view.get<CameraComponent>(entity);
 			if (comp.Primary)
 				return { entity, this };
+		}
+		return {};
+	}
+
+	Entity Scene::GetDirectionLightEntity()
+	{
+		auto view = m_Registry.view<DirectionLightComponent>();
+		for (auto entity : view)
+		{
+			auto& comp = view.get<DirectionLightComponent>(entity);
+			return { entity, this };
 		}
 		return {};
 	}
@@ -264,7 +287,7 @@ namespace pbe {
 		CopyComponentIfExists<MeshComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<ScriptComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<CameraComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
-		CopyComponentIfExists<SpriteRendererComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<DirectionLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 	}
 
 	Entity Scene::FindEntityByTag(const std::string& tag)
@@ -302,7 +325,7 @@ namespace pbe {
 		CopyComponent<MeshComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<ScriptComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<CameraComponent>(target->m_Registry, m_Registry, enttMap);
-		CopyComponent<SpriteRendererComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<DirectionLightComponent>(target->m_Registry, m_Registry, enttMap);
 
 		const auto& entityInstanceMap = ScriptEngine::GetEntityInstanceMap();
 		if (entityInstanceMap.find(target->GetUUID()) != entityInstanceMap.end())

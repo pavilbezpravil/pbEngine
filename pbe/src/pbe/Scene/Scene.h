@@ -45,6 +45,7 @@ namespace pbe {
 		const Light& GetLight() const { return m_Light; }
 
 		Entity GetMainCameraEntity();
+		Entity GetDirectionLightEntity();
 
 		Entity CreateEntity(const std::string& name = "");
 		Entity CreateEntityWithID(UUID uuid, const std::string& name = "", bool runtimeMap = false);

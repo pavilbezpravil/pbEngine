@@ -268,18 +268,17 @@ namespace pbe {
 			out << YAML::EndMap; // CameraComponent
 		}
 
-		if (entity.HasComponent<SpriteRendererComponent>())
+		if (entity.HasComponent<DirectionLightComponent>())
 		{
-			out << YAML::Key << "SpriteRendererComponent";
-			out << YAML::BeginMap; // SpriteRendererComponent
+			out << YAML::Key << "DirectionLightComponent";
+			out << YAML::BeginMap; // DirectionLightComponent
 
-			auto& spriteRendererComponent = entity.GetComponent<SpriteRendererComponent>();
-			out << YAML::Key << "Color" << YAML::Value << spriteRendererComponent.Color;
-			if (spriteRendererComponent.Texture)
-				out << YAML::Key << "TextureAssetPath" << YAML::Value << "path/to/asset";
-			out << YAML::Key << "TilingFactor" << YAML::Value << spriteRendererComponent.TilingFactor;
+			auto& dirLightComponent = entity.GetComponent<DirectionLightComponent>();
+			out << YAML::Key << "Enable" << YAML::Value << dirLightComponent.Enable;
+			out << YAML::Key << "Cast Shadow" << YAML::Value << dirLightComponent.CastShadow;
+			out << YAML::Key << "Color" << YAML::Value << dirLightComponent.Color;
 
-			out << YAML::EndMap; // SpriteRendererComponent
+			out << YAML::EndMap; // DirectionLightComponent
 		}
 
 		out << YAML::EndMap; // Entity
@@ -467,12 +466,11 @@ namespace pbe {
 					HZ_CORE_INFO("  Primary Camera: {0}", component.Primary);
 				}
 
-				auto spriteRendererComponent = entity["SpriteRendererComponent"];
-				if (spriteRendererComponent)
+				auto directionLightComponent = entity["DirectionLightComponent"];
+				if (directionLightComponent)
 				{
-					auto& component = deserializedEntity.AddComponent<SpriteRendererComponent>();
-					component.Color = spriteRendererComponent["Color"].as<glm::vec4>();
-					component.TilingFactor = spriteRendererComponent["TilingFactor"].as<float>();
+					auto& component = deserializedEntity.AddComponent<DirectionLightComponent>();
+					component.Color = directionLightComponent["Color"].as<glm::vec3>();
 				}
 
 			}

@@ -44,6 +44,17 @@ namespace pbe {
 		m_SelectionContext = entity;
 	}
 
+	template<typename T>
+	static void AddComponent(Entity m_SelectionContext, const char* name)
+	{
+		if (!m_SelectionContext.HasComponent<T>()) {
+			if (ImGui::Button(name)) {
+				m_SelectionContext.AddComponent<T>();
+				ImGui::CloseCurrentPopup();
+			}
+		}
+	}
+	
 	void SceneHierarchyPanel::OnImGuiRender()
 	{
 		ImGui::Begin("Scene Hierarchy");
@@ -56,8 +67,7 @@ namespace pbe {
 			});
 
 			if (ImGui::BeginPopupContextWindow(0, 1, false)) {
-				if (ImGui::MenuItem("Create Empty Entity"))
-				{
+				if (ImGui::MenuItem("Create Empty Entity")) {
 					m_Context->CreateEntity("Empty Entity");
 				}
 				ImGui::EndPopup();
@@ -67,47 +77,18 @@ namespace pbe {
 
 			ImGui::Begin("Properties");
 
-			if (m_SelectionContext)
-			{
+			if (m_SelectionContext) {
 				DrawComponents(m_SelectionContext);
 
 				if (ImGui::Button("Add Component"))
 					ImGui::OpenPopup("AddComponentPanel");
 
-				if (ImGui::BeginPopup("AddComponentPanel"))
-				{
-					if (!m_SelectionContext.HasComponent<CameraComponent>())
-					{
-						if (ImGui::Button("Camera"))
-						{
-							m_SelectionContext.AddComponent<CameraComponent>();
-							ImGui::CloseCurrentPopup();
-						}
-					}
-					if (!m_SelectionContext.HasComponent<MeshComponent>())
-					{
-						if (ImGui::Button("Mesh"))
-						{
-							m_SelectionContext.AddComponent<MeshComponent>();
-							ImGui::CloseCurrentPopup();
-						}
-				}
-					if (!m_SelectionContext.HasComponent<ScriptComponent>())
-					{
-						if (ImGui::Button("Script"))
-						{
-							m_SelectionContext.AddComponent<ScriptComponent>();
-							ImGui::CloseCurrentPopup();
-						}
-					}
-					if (!m_SelectionContext.HasComponent<SpriteRendererComponent>())
-					{
-						if (ImGui::Button("Sprite Renderer"))
-						{
-							m_SelectionContext.AddComponent<SpriteRendererComponent>();
-							ImGui::CloseCurrentPopup();
-						}
-					}
+				if (ImGui::BeginPopup("AddComponentPanel")) {
+					AddComponent<CameraComponent>(m_SelectionContext ,"Camera");
+					AddComponent<MeshComponent>(m_SelectionContext ,"Mesh");
+					AddComponent<ScriptComponent>(m_SelectionContext ,"Script");
+					AddComponent<DirectionLightComponent>(m_SelectionContext ,"Direction Light");
+
 					ImGui::EndPopup();
 				}
 			}
@@ -643,8 +624,11 @@ namespace pbe {
 			EndPropertyGrid();
 		});
 
-		DrawComponent<SpriteRendererComponent>("Sprite Renderer", entity, [](SpriteRendererComponent& mc)
+		DrawComponent<DirectionLightComponent>("Direction Light", entity, [](DirectionLightComponent& dl)
 		{
+			ImGui::Checkbox("Enable", &dl.Enable);
+			ImGui::Checkbox("Cast Shadow", &dl.CastShadow);
+			ImGui::InputFloat3("Color", glm::value_ptr(dl.Color));
 		});
 
 		DrawComponent<ScriptComponent>("Script", entity, [=](ScriptComponent& sc) mutable
