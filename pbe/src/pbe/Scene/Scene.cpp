@@ -16,9 +16,6 @@
 // Box2D
 #include <box2d/box2d.h>
 
-// TEMP
-#include "pbe/Core/Input.h"
-
 namespace pbe {
 
 	static const std::string DefaultEntityName = "Entity";

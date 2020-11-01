@@ -14,18 +14,6 @@ namespace pbe {
 		ps = Shader::Get(L"base", NULL, "mainPS", ShaderType::Pixel);
 
 		InitBaseRootSignature();
-
-		/*
-		pso = Graphics::GraphicsPSODefault;
-
-		pso.SetRootSignature(BaseRootSignature);
-		pso.SetInputLayout((UINT)inputLayout.size(), inputLayout.data());
-		pso.SetVertexShader(vs->GetByteCode());
-		pso.SetPixelShader(ps->GetByteCode());
-		pso.SetDepthStencilState(Graphics::DepthStateReadWrite);
-		pso.SetRenderTargetFormat(Renderer::Get().GetFullScreenColor()->GetFormat(), Renderer::Get().GetFullScreenDepth()->GetFormat());
-		pso.Finalize();
-		*/
 	}
 
 	void SceneRenderer::BeginScene(const Ref<Scene>& scene, const CameraInfo& cameraInfo)
@@ -61,7 +49,6 @@ namespace pbe {
 		context.SetRenderTarget(rt, depth);
 		context.SetViewportAndScissor(0, 0, rt->GetWidth(), rt->GetHeight());
 
-		// context.SetPipelineState(pso);
 		context.SetRootSignature(BaseRootSignature);
 		context.SetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		context.SetDepthStencilState(Graphics::DepthStateReadWrite);
@@ -91,7 +78,7 @@ namespace pbe {
 				};
 
 				cbModel model;
-				model.gTransform = submesh.Transform;
+				model.gTransform = drawCmd.transform * submesh.Transform;
 				context.SetDynamicConstantBufferView(1, sizeof(model), &model);
 
 				context.SetVertexBuffer(0, mesh->GetVertexBuffer()->VertexBufferView(submesh.BaseVertex));

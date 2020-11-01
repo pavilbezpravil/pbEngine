@@ -38,8 +38,6 @@ namespace pbe {
 		};
 		std::vector<DrawCommand> _drawList;
 
-		// todo:
-		GraphicsPSO pso;
 		Ref<Shader> vs;
 		Ref<Shader> ps;
 

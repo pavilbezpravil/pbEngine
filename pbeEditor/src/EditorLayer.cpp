@@ -238,6 +238,8 @@ namespace pbe {
 		m_ViewportBounds[1] = { maxBound.x, maxBound.y };
 		m_AllowViewportCameraEvents = ImGui::IsMouseHoveringRect(minBound, maxBound);
 
+		OnImGuiGizmo();
+
 		ImGui::End();
 	}
 	void EditorLayer::OnImGuiSceneHierarchy() {
@@ -245,7 +247,6 @@ namespace pbe {
 	}
 
 	void EditorLayer::OnImGuiGizmo() {
-		// Gizmos
 		if (m_GizmoType != -1 && m_SelectionContext.size()) {
 			auto& selection = m_SelectionContext[0];
 
@@ -530,7 +531,6 @@ namespace pbe {
 		OnImGuiRendererInfo();
 		OnImGuiAllocatorInfo();
 		OnImGuiViewport();
-		OnImGuiGizmo();
 		ScriptEngine::OnImGuiRender();
 
 		ImGui::End();
