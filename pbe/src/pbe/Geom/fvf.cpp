@@ -45,10 +45,10 @@ namespace pbe {
 		std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
 
 		if (fvf & FVF_POS) {
-			inputLayout.push_back({ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT     , 0, fvfGetOffset(fvf, FVF_POS), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+			inputLayout.push_back({ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT     , 0, fvfGetOffset(fvf, FVF_POS), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
 		}
 		if (fvf & FVF_NORMAL) {
-			inputLayout.push_back({ "NORMAL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT     , 0, fvfGetOffset(fvf, FVF_NORMAL), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+			inputLayout.push_back({ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT     , 0, fvfGetOffset(fvf, FVF_NORMAL), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
 		}
 
 		return inputLayout;

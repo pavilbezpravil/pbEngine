@@ -75,10 +75,12 @@ namespace pbe {
 			for (auto& submesh : mesh->GetSubmeshes()) {
 				struct cbModel {
 					Mat4 gTransform;
+					Mat4 gNormalTransform;
 				};
 
 				cbModel model;
 				model.gTransform = drawCmd.transform * submesh.Transform;
+				model.gNormalTransform = glm::transpose(glm::inverse(model.gTransform));
 				context.SetDynamicConstantBufferView(1, sizeof(model), &model);
 
 				context.SetVertexBuffer(0, mesh->GetVertexBuffer()->VertexBufferView(submesh.BaseVertex));

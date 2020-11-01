@@ -23,7 +23,7 @@ namespace pbe {
 		g_fullScrennColorFormat = SwapChainFormat;
 		g_fullScrennDepthFormat = DXGI_FORMAT_D32_FLOAT;
 		g_fullScreenColor = Ref<ColorBuffer>::Create();
-		g_fullScreenDepth = Ref<DepthBuffer>::Create(1.0f);
+		g_fullScreenDepth = Ref<DepthBuffer>::Create(1.0f, 0);
 
 		Renderer::Resize(window.GetWidth(), window.GetHeight());
 

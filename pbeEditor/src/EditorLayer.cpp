@@ -110,8 +110,8 @@ namespace pbe {
 		m_SceneHierarchyPanel->SetEntityDeletedCallback(std::bind(&EditorLayer::OnEntityDeleted, this, std::placeholders::_1));
 
 		// todo: add custom scene deserialize on start
-		// SceneSerializer serializer(m_EditorScene);
-		// serializer.Deserialize("assets/scenes/levels/Physics2D-Game.hsc");
+		SceneSerializer serializer(m_EditorScene);
+		serializer.Deserialize("assets/scenes/TestScene.hsc");
 	}
 
 	void EditorLayer::OnDetach()

@@ -135,8 +135,8 @@ namespace pbe {
 				for (size_t i = 0; i < mesh->mNumVertices; i++) {
 					m_GeomData.AddVertex();
 
-					m_GeomData.PosMut(m_GeomData.NumVertex() - 1) = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
-					m_GeomData.NormalMut(m_GeomData.NumVertex() - 1) = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
+					m_GeomData.PosMut(i) = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
+					m_GeomData.NormalMut(i) = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
 					// Vertex vertex;
 					// vertex.Position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
 					// vertex.Normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
