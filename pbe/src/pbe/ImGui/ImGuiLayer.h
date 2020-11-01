@@ -22,6 +22,8 @@ namespace pbe {
 		virtual void OnDetach() override;
 		virtual void OnImGuiRender() override;
 	private:
+		void SetupKeyMap();
+		
 		float m_Time = 0.0f;
 	};
 

@@ -2,7 +2,7 @@ Scene: Scene Name
 Entities:
   - Entity: 12894662300611892503
     TagComponent:
-      Tag: Empty Entity
+      Tag: Sphere
     TransformComponent:
       Position: [0, 0, 0]
       Rotation: [1, 0, 0, 0]

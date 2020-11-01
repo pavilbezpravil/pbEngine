@@ -11,6 +11,7 @@
 
 #include "pbe/Core/Application.h"
 #include "pbe/Core/Events/MouseEvent.h"
+#include "pbe/Core/Events/KeyEvent.h"
 #include "pbe/Renderer/CommandContext.h"
 #include "pbe/Renderer/ColorBuffer.h"
 #include "pbe/Renderer/DescriptorHeap.h"
@@ -64,18 +65,33 @@ namespace pbe {
 		EventDispatcher d(event);
 		d.Dispatch<MouseButtonPressedEvent>([](MouseButtonPressedEvent& e) {
 			ImGuiIO& io = ImGui::GetIO();
-			Application& app = Application::Get();
 			io.MouseDown[e.GetMouseButton()] = true;
-
-			return true;
+			return false;
 		});
 		d.Dispatch<MouseButtonReleasedEvent>([](MouseButtonReleasedEvent& e) {
 			ImGuiIO& io = ImGui::GetIO();
-			Application& app = Application::Get();
 			io.MouseDown[e.GetMouseButton()] = false;
-
-			return true;
+			return false;
 		});
+
+		d.Dispatch<KeyPressedEvent>([](KeyPressedEvent& e) {
+			ImGuiIO& io = ImGui::GetIO();
+			io.KeysDown[(int)e.GetKeyCode()] = true;
+			return false;
+		});
+		
+		d.Dispatch<KeyReleasedEvent>([](KeyReleasedEvent& e) {
+			ImGuiIO& io = ImGui::GetIO();
+			io.KeysDown[(int)e.GetKeyCode()] = false;
+			return false;
+		});
+
+		d.Dispatch<KeyTypedEvent>([](KeyTypedEvent& e) {
+			ImGuiIO& io = ImGui::GetIO();
+			io.AddInputCharacter((uint)e.GetKeyCode());
+			return false;
+		});
+
 	}
 
 	void ImGuiLayer::OnAttach()
@@ -125,6 +141,8 @@ namespace pbe {
 			SwapChainFormat,  srvDescHeap,
 			fontHandle.GetCpuHandle(),
 			fontHandle.GetGpuHandle());
+
+		SetupKeyMap();
 	}
 
 	void ImGuiLayer::OnDetach()
@@ -170,4 +188,23 @@ namespace pbe {
 	{
 	}
 
+	void ImGuiLayer::SetupKeyMap()
+	{
+		ImGuiIO& io = ImGui::GetIO();
+
+		io.KeyMap[ImGuiKey_Space] = (int)HZ_KEY_SPACE;
+		io.KeyMap[ImGuiKey_Backspace] = (int)HZ_KEY_BACKSPACE;
+		io.KeyMap[ImGuiKey_Escape] = (int)HZ_KEY_ESCAPE;
+		io.KeyMap[ImGuiKey_Delete] = (int)HZ_KEY_DELETE;
+		io.KeyMap[ImGuiKey_LeftArrow] = (int)HZ_KEY_LEFT;
+		io.KeyMap[ImGuiKey_RightArrow] = (int)HZ_KEY_RIGHT;
+		io.KeyMap[ImGuiKey_UpArrow] = (int)HZ_KEY_UP;
+		io.KeyMap[ImGuiKey_DownArrow] = (int)HZ_KEY_DOWN;
+		io.KeyMap[ImGuiKey_Enter] = (int)HZ_KEY_ENTER;
+		io.KeyMap[ImGuiKey_Tab] = (int)HZ_KEY_TAB;
+		io.KeyMap[ImGuiKeyModFlags_Alt] = (int)HZ_KEY_LEFT_ALT;
+		io.KeyMap[ImGuiKeyModFlags_Ctrl] = (int)HZ_KEY_LEFT_CONTROL;
+		io.KeyMap[ImGuiKeyModFlags_Shift] = (int)HZ_KEY_LEFT_SHIFT;
+		io.KeyMap[ImGuiKeyModFlags_Super] = (int)HZ_KEY_LEFT_SUPER;
+	}
 }
