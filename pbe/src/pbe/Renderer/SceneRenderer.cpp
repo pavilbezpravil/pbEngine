@@ -22,6 +22,7 @@ namespace pbe {
 		struct cbPass {
 			Mat4 gVP;
 			Mat4 gWorldToShadowMap;
+			Vec3 gCamPos;
 		};
 
 		struct cbDirectionLight {
@@ -186,6 +187,7 @@ namespace pbe {
 		pass.gWorldToShadowMap = glm::translate(Mat4(1.f), {0.5f, 0.5f, 0.f})
 								* glm::scale(Mat4(1.f), { 0.5f, -0.5f, 1.f })
 								* GetShadowViewProj();
+		pass.gCamPos = _cameraInfo.position;
 		
 		context.SetDynamicConstantBufferView((uint)BaseDescriptor::cbPass, sizeof(cbPass), &pass);
 
