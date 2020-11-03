@@ -52,7 +52,7 @@ float GetShadowFactor(float3 posW, float3 normalW) {
 	}
 
 	float bias = max(0.007 * (1 - dot(normalW, -gDirection)), 0.0015f);
-	return 1 - (gShadowMap.Sample(gPointSampler, shadowMapUV) < pixelShadowMapDepth - bias);
+	return gShadowMap.Sample(gPointSampler, shadowMapUV) > pixelShadowMapDepth - bias;
 }
 
 PS_OUT mainPS(VS_OUT input) {
