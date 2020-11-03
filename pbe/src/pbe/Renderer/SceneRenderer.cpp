@@ -183,7 +183,10 @@ namespace pbe {
 
 		cbPass pass;
 		pass.gVP = _cameraInfo.viewProj;
-		pass.gWorldToShadowMap = GetShadowViewProj();
+		pass.gWorldToShadowMap = glm::translate(Mat4(1.f), {0.5f, 0.5f, 0.f})
+								* glm::scale(Mat4(1.f), { 0.5f, -0.5f, 1.f })
+								* GetShadowViewProj();
+		
 		context.SetDynamicConstantBufferView((uint)BaseDescriptor::cbPass, sizeof(cbPass), &pass);
 
 		// todo: handle dirLight disable

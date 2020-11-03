@@ -47,8 +47,6 @@ float GetShadowFactor(float3 posW, float3 normalW) {
 	float3 shadowMapNDC = mul(gWorldToShadowMap, float4(posW, 1)).xyz; 
 	float2 shadowMapUV = shadowMapNDC.xy;
 	float pixelShadowMapDepth = shadowMapNDC.z;
-	shadowMapUV *= float2(0.5, -0.5); // todo: make it in c++
-	shadowMapUV = (shadowMapUV + 0.5);
 	if (any(shadowMapUV < 0) || any(shadowMapUV > 1) || pixelShadowMapDepth > 1) {
 		return 1;
 	}
