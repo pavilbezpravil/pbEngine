@@ -32,6 +32,9 @@ namespace pbe {
 	}
 
 	void Renderer::Shutdown() {
+		SceneRenderer::Get().Shutdown();
+		SceneRenderer::Deinstantiate();
+		Shader::Deinit();
 		g_fullScreenColor = nullptr;
 		g_fullScreenDepth = nullptr;
 		Graphics::Shutdown();

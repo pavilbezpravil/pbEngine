@@ -89,15 +89,26 @@ namespace pbe {
 			ret.push_back({0, 0});
 			return ret;
 		}
+
+		std::string MakeStrFromDefines(const D3D_SHADER_MACRO* defines)
+		{
+			std::string ret;
+			while (defines && defines->Name) {
+				ret += defines->Name;
+				ret += defines->Definition;
+				++defines;
+			}
+			return ret;
+		}
 	}
 
-	std::unordered_map<std::wstring, Ref<Shader>> Shader::_map;
+	std::unordered_map<std::string, Ref<Shader>> Shader::_map;
 
 	Ref<Shader> Shader::Get(const std::wstring& filename, const D3D_SHADER_MACRO* defines, const std::string& entrypoint,
 		ShaderType type) {
 		Ref<Shader> shader;
 
-		std::wstring shaderIdentifier = filename + MakeWStr(entrypoint);
+		std::string shaderIdentifier = MakeStr(filename) + entrypoint + MakeStrFromDefines(defines);
 		if (!_map.count(shaderIdentifier)) {
 			shader = Shader::Compile(filename, defines, entrypoint, type);
 			_map[shaderIdentifier] = shader;
@@ -119,6 +130,10 @@ namespace pbe {
 	}
 
 	void Shader::Deinit() {
+		// todo:
+		for (const auto& shader : _map) {
+			HZ_CORE_ASSERT(shader.second->GetRefCount() == 1);
+		}
 		_map.clear();
 	}
 

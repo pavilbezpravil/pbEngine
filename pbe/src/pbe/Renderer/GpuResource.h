@@ -1,5 +1,7 @@
 #pragma once
 
+#include "pbe/Core/Ref.h"
+
 class GpuResource : public pbe::RefCounted
 {
     friend class CommandContext;

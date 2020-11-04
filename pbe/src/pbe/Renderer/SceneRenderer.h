@@ -25,6 +25,7 @@ namespace pbe {
 	class SceneRenderer : public Singleton<SceneRenderer>
 	{
 		friend Renderer;
+
 	public:
 		struct Environment
 		{
@@ -38,6 +39,7 @@ namespace pbe {
 		};
 		
 		void Init();
+		void Shutdown();
 
 		void BeginScene(const Ref<Scene>& scene, const CameraInfo& cameraInfo, const Environment& environment);
 		void EndScene();

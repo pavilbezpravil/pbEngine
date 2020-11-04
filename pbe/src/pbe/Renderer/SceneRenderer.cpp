@@ -76,8 +76,13 @@ namespace pbe {
 		InitBaseRootSignature();
 	}
 
+	void SceneRenderer::Shutdown()
+	{
+		
+	}
+
 	void SceneRenderer::BeginScene(const Ref<Scene>& scene, const CameraInfo& cameraInfo,
-		const Environment& environment)
+	                               const Environment& environment)
 	{
 		HZ_CORE_ASSERT(!_scene);
 		_scene = scene;
@@ -125,7 +130,7 @@ namespace pbe {
 				model.gNormalTransform = glm::transpose(glm::inverse(model.gTransform));
 				context.SetDynamicConstantBufferView((uint)BaseDescriptor::cbModel, sizeof(model), &model);
 
-				auto inputLayout = mesh->GetVertexBuffer()->GetInputLayout();
+				auto& inputLayout = mesh->GetVertexBuffer()->GetInputLayout();
 				context.SetInputLayout((UINT)inputLayout.size(), inputLayout.data());
 
 				context.SetVertexBuffer(0, mesh->GetVertexBuffer()->VertexBufferView(submesh.BaseVertex));

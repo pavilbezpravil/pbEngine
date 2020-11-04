@@ -1,6 +1,8 @@
 #pragma once
 
+#include <assert.h>
 #include <stdint.h>
+
 
 namespace pbe {
 
@@ -13,6 +15,7 @@ namespace pbe {
 		}
 		void DecRefCount() const
 		{
+			assert(m_RefCount > 0);
 			m_RefCount--;
 		}
 

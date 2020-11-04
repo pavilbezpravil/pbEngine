@@ -124,6 +124,7 @@ void GraphicsContext::ResetState()
 	m_CurRootSignature = nullptr;
 	m_CurPSO = pbe::Ref<GraphicsPSO>::Create();
 	*m_CurPSO = GraphicsPSODefault;
+	m_CurPSO->IncRefCount(); // todo:
 }
 
 void GraphicsContext::FlushState()

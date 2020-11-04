@@ -1,12 +1,7 @@
 #pragma once
 
-#include "pbe/Core/Base.h"
-#include "pbe/Core/Buffer.h"
-
-#include "pbe/Renderer/ShaderUniform.h"
-
+#include "pbe/Core/Ref.h"
 #include <string>
-#include <glm/glm.hpp>
 
 namespace pbe
 {
@@ -45,7 +40,7 @@ namespace pbe
 
 		void CompileBlobInternal();
 
-		static std::unordered_map<std::wstring, Ref<Shader>> _map;
+		static std::unordered_map<std::string, Ref<Shader>> _map;
 
 		D3D12_SHADER_BYTECODE byteCode;
 		Microsoft::WRL::ComPtr<ID3DBlob> blob;

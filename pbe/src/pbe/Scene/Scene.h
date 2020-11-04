@@ -4,6 +4,7 @@
 #include "pbe/Core/Timestep.h"
 
 #include "pbe/Renderer/Camera.h"
+#include "pbe/Core/Ref.h"
 
 #include "entt/entt.hpp"
 

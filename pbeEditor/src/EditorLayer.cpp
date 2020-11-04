@@ -203,10 +203,16 @@ namespace pbe {
 	void EditorLayer::OnImGuiAllocatorInfo()
 	{
 		ImGui::Begin("Allocator");
-		ImGui::Text("Total alloc count: %ld", pbeAllocator.TotalAllocCount());
-		ImGui::Text("Total alloc bytes: %ld Kb", pbeAllocator.TotalAllocBytes() >> 10);
-		ImGui::Text("Cur alloc count: %ld", pbeAllocator.CurAllocCount());
-		ImGui::Text("Cur alloc bytes: %ld Kb", pbeAllocator.CurAllocBytes() >> 10);
+		if (ImGui::TreeNodeEx("Total alloc")){
+			ImGui::Text("count: %ld", pbeAllocator.TotalAllocCount());
+			ImGui::Text("bytes: %ld Kb", pbeAllocator.TotalAllocBytes() >> 10);
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNodeEx("Cur alloc", ImGuiTreeNodeFlags_DefaultOpen)) {
+			ImGui::Text("count: %ld", pbeAllocator.CurAllocCount());
+			ImGui::Text("bytes: %ld Kb", pbeAllocator.CurAllocBytes() >> 10);
+			ImGui::TreePop();
+		}
 		ImGui::End();
 	}
 

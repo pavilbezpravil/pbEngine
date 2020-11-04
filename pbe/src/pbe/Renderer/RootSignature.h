@@ -2,6 +2,7 @@
 
 #include "pch.h"
 #include "pbe_dx12.h"
+#include "pbe/Core/Ref.h"
 
 class DescriptorCache;
 

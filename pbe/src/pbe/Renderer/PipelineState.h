@@ -2,6 +2,7 @@
 
 #include "pch.h"
 
+#include "pbe/Core/Ref.h"
 #include "RootSignature.h"
 
 class CommandContext;
