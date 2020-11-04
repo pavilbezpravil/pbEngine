@@ -95,6 +95,7 @@ namespace pbe {
 
 		glm::vec2 m_ViewportBounds[2];
 		int m_GizmoType = 0; // -1 = no gizmo
+		int m_GizmoTranslationSpace = 1; // 0 - local, 1 = world
 		float m_SnapValue = 0.5f;
 		float m_RotationSnapValue = 45.0f;
 		bool m_AllowViewportCameraEvents = false;

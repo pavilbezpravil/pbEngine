@@ -219,6 +219,13 @@ namespace pbe {
 	void EditorLayer::OnImGuiViewport() {
 		ImGui::Begin("Viewport");
 
+		ImGui::SetNextItemWidth(30);
+		ImGui::Button("Play");
+		ImGui::SameLine();
+
+		ImGui::SetNextItemWidth(80);
+		ImGui::Combo("Translate mode", &m_GizmoTranslationSpace, "Local\0World\0");
+
 		m_ViewportPanelMouseOver = ImGui::IsWindowHovered();
 		m_ViewportPanelFocused = ImGui::IsWindowFocused();
 
@@ -231,7 +238,6 @@ namespace pbe {
 			m_RuntimeScene->SetViewportSize((uint32_t)viewportSize.x, (uint32_t)viewportSize.y);
 		m_EditorCamera.SetProjectionMatrix(glm::perspectiveFov(glm::radians(45.0f), viewportSize.x, viewportSize.y, 0.1f, 1000.0f));
 		m_EditorCamera.SetViewportSize((uint32_t)viewportSize.x, (uint32_t)viewportSize.y);
-		// ImGui::Image(pbeImGui::ImageDesc(Renderer::GetFullScreenColor()->GetSRV()), viewportSize, { 0, 1 }, { 1, 0 });
 		ImGui::Image(pbeImGui::ImageDesc(Renderer::Get().GetFullScreenColor()->GetSRV()), viewportSize);
 
 		auto windowSize = ImGui::GetWindowSize();
@@ -271,7 +277,7 @@ namespace pbe {
 				ImGuizmo::Manipulate(glm::value_ptr(m_EditorCamera.GetViewMatrix()),
 					glm::value_ptr(m_EditorCamera.GetProjectionMatrix()),
 					(ImGuizmo::OPERATION)m_GizmoType,
-					ImGuizmo::LOCAL,
+					(ImGuizmo::MODE)m_GizmoTranslationSpace,
 					glm::value_ptr(entityTransform),
 					nullptr,
 					snap ? snapValues : nullptr);
@@ -280,7 +286,7 @@ namespace pbe {
 				ImGuizmo::Manipulate(glm::value_ptr(m_EditorCamera.GetViewMatrix()),
 					glm::value_ptr(m_EditorCamera.GetProjectionMatrix()),
 					(ImGuizmo::OPERATION)m_GizmoType,
-					ImGuizmo::LOCAL,
+					(ImGuizmo::MODE)m_GizmoTranslationSpace,
 					glm::value_ptr(transformBase),
 					nullptr,
 					snap ? snapValues : nullptr);
@@ -539,6 +545,9 @@ namespace pbe {
 		OnImGuiViewport();
 		ScriptEngine::OnImGuiRender();
 
+		// static bool showDemoWindow = true;
+		// ImGui::ShowDemoWindow(&showDemoWindow);
+
 		ImGui::End();
 	}
 
@@ -580,14 +589,14 @@ namespace pbe {
 					m_GizmoType = ImGuizmo::OPERATION::SCALE;
 					break;
 				case KeyCode::Escape:
-					if (m_SelectionContext.size()) {
+					if (!m_SelectionContext.empty()) {
 						m_SelectionContext.clear();
 						m_EditorScene->SetSelectedEntity({});
 						m_SceneHierarchyPanel->SetSelected({});
 					}
 					break;
 				case KeyCode::Delete:
-					if (m_SelectionContext.size())
+					if (!m_SelectionContext.empty())
 					{
 						Entity selectedEntity = m_SelectionContext[0].Entity;
 						m_EditorScene->DestroyEntity(selectedEntity);

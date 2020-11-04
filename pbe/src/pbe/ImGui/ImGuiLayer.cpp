@@ -92,6 +92,12 @@ namespace pbe {
 			return false;
 		});
 
+		d.Dispatch<MouseScrolledEvent>([](MouseScrolledEvent& e) {
+			ImGuiIO& io = ImGui::GetIO();
+			io.MouseWheel = e.GetYOffset();
+			io.MouseWheelH = e.GetXOffset();
+			return false;
+		});
 	}
 
 	void ImGuiLayer::OnAttach()
