@@ -7,18 +7,11 @@
 #include "pbe/Core/Ref.h"
 
 #include "entt/entt.hpp"
+#include "pbe/Core/Math/Common.h"
 
 #include "pbe/Editor/EditorCamera.h"
 
 namespace pbe {
-
-	struct Light
-	{
-		glm::vec3 Direction = { 0.0f, 0.0f, 0.0f };
-		glm::vec3 Radiance = { 0.0f, 0.0f, 0.0f };
-
-		float Multiplier = 1.0f;
-	};
 
 	class Entity;
 	using EntityMap = std::unordered_map<UUID, Entity>;
@@ -42,11 +35,7 @@ namespace pbe {
 
 		void SetViewportSize(uint32_t width, uint32_t height);
 
-		Light& GetLight() { return m_Light; }
-		const Light& GetLight() const { return m_Light; }
-
 		Entity GetMainCameraEntity();
-		Entity GetDirectionLightEntity();
 
 		Entity CreateEntity(const std::string& name = "");
 		Entity CreateEntityWithID(UUID uuid, const std::string& name = "", bool runtimeMap = false);
@@ -80,9 +69,6 @@ namespace pbe {
 		uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
 
 		EntityMap m_EntityIDMap;
-
-		Light m_Light;
-		float m_LightMultiplier = 0.3f;
 
 		entt::entity m_SelectedEntity;
 

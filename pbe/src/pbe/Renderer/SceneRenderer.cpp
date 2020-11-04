@@ -14,22 +14,16 @@ namespace pbe {
 		enum class BaseDescriptor : uint
 		{
 			cbPass = 0,
-			cbDirectionLight = 1,
-			cbModel = 2,
-			texDepth = 3,
+			cbModel = 1,
+			texDepth = 2,
+			gLights = 3,
 		};
 		
 		struct cbPass {
 			Mat4 gVP;
 			Mat4 gWorldToShadowMap;
 			Vec3 gCamPos;
-		};
-
-		struct cbDirectionLight {
-			Vec3 gDireciton;
-			float _pad0 = 0;
-			Vec3 gColor;
-			float _pad1 = 0;
+			int gNumLights;
 		};
 
 		struct cbModel {
@@ -43,10 +37,10 @@ namespace pbe {
 		BaseRootSignature = Ref<RootSignature>::Create();
 		(*BaseRootSignature).Reset(4, 1);
 		(*BaseRootSignature).InitStaticSampler(0, Graphics::SamplerPointBorderDesc);
-		(*BaseRootSignature)[0].InitAsConstantBuffer(0);
-		(*BaseRootSignature)[1].InitAsConstantBuffer(1);
-		(*BaseRootSignature)[2].InitAsConstantBuffer(2);
-		(*BaseRootSignature)[3].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 0, 1);
+		(*BaseRootSignature)[(int)BaseDescriptor::cbPass].InitAsConstantBuffer(0);
+		(*BaseRootSignature)[(int)BaseDescriptor::cbModel].InitAsConstantBuffer(1);
+		(*BaseRootSignature)[(int)BaseDescriptor::texDepth].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 0, 1);
+		(*BaseRootSignature)[(int)BaseDescriptor::gLights].InitAsBufferSRV(1);
 		(*BaseRootSignature).Finalize(L"Base", D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	}
 
@@ -88,6 +82,10 @@ namespace pbe {
 		_scene = scene;
 		_cameraInfo = cameraInfo;
 		_environment = environment;
+
+		if (environment.lights.size() > _lightsGPUBuffer.GetElementCount()) {
+			_lightsGPUBuffer.Create(L"Scene Lights", environment.lights.size(), sizeof(Light));
+		}
 	}
 
 	void SceneRenderer::EndScene()
@@ -105,14 +103,29 @@ namespace pbe {
 
 	Mat4 SceneRenderer::GetShadowViewProj()
 	{
+		int directLightIdx = -1;
+
+		for (int i = 0; i < _environment.lights.size(); ++i) {
+			if (_environment.lights[i].type == Light::Direction) {
+				directLightIdx = i;
+				break;
+			}
+		}
+		
+		if (directLightIdx == -1) {
+			return Mat4(1.f);
+		}
+
+		Light directLight = _environment.lights[directLightIdx];
+		
 		const float shadowHalfBounds = 20;
 		const float shadowDepth = 40;
 		auto shadowProj = glm::orthoRH_ZO(-shadowHalfBounds, shadowHalfBounds,
 			-shadowHalfBounds, shadowHalfBounds,
 			0.f, shadowDepth);
 
-		Vec3 center = _cameraInfo.position - _environment.directionLight.Direction * shadowDepth / 2.f;
-		auto shadowView = glm::lookAtRH(center, center + _environment.directionLight.Direction, _environment.directionLight.Up);
+		Vec3 center = _cameraInfo.position - directLight.positionOrDirection * shadowDepth / 2.f;
+		auto shadowView = glm::lookAtRH(center, center + directLight.positionOrDirection, directLight.up);
 
 		return shadowProj * shadowView;
 	}
@@ -193,16 +206,16 @@ namespace pbe {
 								* glm::scale(Mat4(1.f), { 0.5f, -0.5f, 1.f })
 								* GetShadowViewProj();
 		pass.gCamPos = _cameraInfo.position;
-		
+		pass.gNumLights = _environment.lights.size();
+
 		context.SetDynamicConstantBufferView((uint)BaseDescriptor::cbPass, sizeof(cbPass), &pass);
 
-		// todo: handle dirLight disable
-		cbDirectionLight directionLight;
-		directionLight.gDireciton = _environment.directionLight.Direction;
-		directionLight.gColor = _environment.directionLight.directionLightComponent.Color;
-		context.SetDynamicConstantBufferView((uint)BaseDescriptor::cbDirectionLight, sizeof(directionLight), &directionLight);
-
 		context.SetDynamicDescriptor((uint)BaseDescriptor::texDepth, 0, _shadowBuffer->GetDepthSRV());
+
+		context.WriteBuffer(_lightsGPUBuffer, 0, _environment.lights.data(), _environment.lights.size() * sizeof(Light));
+		context.TransitionResource(_lightsGPUBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		context.SetBufferSRV((uint)BaseDescriptor::gLights, _lightsGPUBuffer);
+		// context.SetDynamicSRV((uint)BaseDescriptor::gLights, _environment.lights.size() * sizeof(Light), _environment.lights.data());
 
 		DrawAllMesh(context);
 

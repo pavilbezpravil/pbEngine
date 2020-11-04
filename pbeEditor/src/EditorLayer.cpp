@@ -563,7 +563,7 @@ namespace pbe {
 
 	bool EditorLayer::OnKeyPressedEvent(KeyPressedEvent& e)
 	{
-		if (m_ViewportPanelFocused)
+		if (m_ViewportPanelFocused || m_ViewportPanelMouseOver)
 		{
 			switch (e.GetKeyCode())
 			{
@@ -578,6 +578,13 @@ namespace pbe {
 					break;
 				case KeyCode::R:
 					m_GizmoType = ImGuizmo::OPERATION::SCALE;
+					break;
+				case KeyCode::Escape:
+					if (m_SelectionContext.size()) {
+						m_SelectionContext.clear();
+						m_EditorScene->SetSelectedEntity({});
+						m_SceneHierarchyPanel->SetSelected({});
+					}
 					break;
 				case KeyCode::Delete:
 					if (m_SelectionContext.size())

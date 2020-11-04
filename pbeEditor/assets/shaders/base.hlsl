@@ -11,14 +11,10 @@ cbuffer cbPass : register(b0) {
 	float4x4 gVP;
 	float4x4 gWorldToShadowMap;
 	float3 gCamPos;
+	int gNumLights;
 }
 
-cbuffer cbDirectionLight : register(b1) {
-	float3 gDirection;
-	float3 gColor;
-}
-
-cbuffer cbModel : register(b2) {
+cbuffer cbModel : register(b1) {
 	float4x4 gTransform;
 	float4x4 gNormalTransform;
 }
@@ -47,7 +43,7 @@ VS_OUT mainVS(in VS_IN input) {
 	return output;
 }
 
-float GetShadowFactor(float3 posW, float3 normalW) {
+float GetShadowFactor(float3 posW, float3 normalW, float3 L) {
 	float3 shadowMapNDC = mul(gWorldToShadowMap, float4(posW, 1)).xyz; 
 	float2 shadowMapUV = shadowMapNDC.xy;
 	float pixelShadowMapDepth = shadowMapNDC.z;
@@ -55,9 +51,24 @@ float GetShadowFactor(float3 posW, float3 normalW) {
 		return 1;
 	}
 
-	float bias = max(0.007 * (1 - dot(normalW, -gDirection)), 0.0015f);
+	float bias = max(0.007 * (1 - dot(normalW, L)), 0.0015f);
 	return gShadowMap.Sample(gPointSampler, shadowMapUV) > pixelShadowMapDepth - bias;
 }
+
+static const int LIGHT_TYPE_DIRECT = 0;
+static const int LIGHT_TYPE_POINT = 1;
+static const int LIGHT_TYPE_SPOT = 2;
+
+struct Light {
+    float3 position;
+	float radius;
+    float3 color;
+	float cutOff;
+	int type;
+	float3 up;
+};
+
+StructuredBuffer<Light> gLights : register(t1);
 
 PS_OUT mainPS(VS_OUT input) {
 	PS_OUT output;
@@ -81,14 +92,32 @@ PS_OUT mainPS(VS_OUT input) {
 		
 		// reflectance equation
 		float3 Lo = 0.0;
-		for(int i = 0; i < 1; ++i) {
-			// calculate per-light radiance
-			// float3 L = normalize(lightPositions[i] - WorldPos);
-			float3 L = normalize(-gDirection);
-			// float distance = length(lightPositions[i] - WorldPos);
-			// float attenuation = 1.0 / (distance * distance);
-			float attenuation = 1.0 * GetShadowFactor(posW, normalW);
-			float3 radiance = gColor * attenuation;
+		for(int i = 0; i < gNumLights; ++i) {
+			Light light = gLights[i];
+			
+			float3 L = normalize(-light.position);
+			float attenuation = 1.0;
+
+			if (light.type == LIGHT_TYPE_DIRECT) {
+				L = normalize(-light.position);
+				attenuation = 1.0 * GetShadowFactor(posW, normalW, L);
+			} else if (light.type == LIGHT_TYPE_POINT) {
+				L = normalize(light.position - posW);
+				float distance = length(light.position - posW);
+				attenuation = 1.0 / (distance * distance);
+			} else if (light.type == LIGHT_TYPE_SPOT) {
+				L = normalize(light.position - posW);
+				float distance = length(light.position - posW);
+				attenuation = 1.0 / (distance * distance);
+
+				float3 lightDirection = normalize(light.up);
+				float cutOffValue = dot(lightDirection, -L);
+				float cutOffAttenuation = smoothstep(0, 1, saturate((cutOffValue - light.cutOff) / (1.0 - light.cutOff) * 3.0));
+
+				attenuation *= cutOffAttenuation;
+			}
+
+			float3 radiance = light.color * attenuation;
 
 			Lo += SurfacePBRShade(surf, V, L, radiance);
 		}

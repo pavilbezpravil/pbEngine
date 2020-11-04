@@ -88,6 +88,8 @@ namespace pbe {
 					AddComponent<MeshComponent>(m_SelectionContext ,"Mesh");
 					AddComponent<ScriptComponent>(m_SelectionContext ,"Script");
 					AddComponent<DirectionLightComponent>(m_SelectionContext ,"Direction Light");
+					AddComponent<PointLightComponent>(m_SelectionContext ,"Point Light");
+					AddComponent<SpotLightComponent>(m_SelectionContext ,"Spot Light");
 
 					ImGui::EndPopup();
 				}
@@ -624,11 +626,30 @@ namespace pbe {
 			EndPropertyGrid();
 		});
 
-		DrawComponent<DirectionLightComponent>("Direction Light", entity, [](DirectionLightComponent& dl)
+		auto DrawLightBase = [](LightComponentBase& l)
 		{
-			ImGui::Checkbox("Enable", &dl.Enable);
-			ImGui::Checkbox("Cast Shadow", &dl.CastShadow);
-			ImGui::InputFloat3("Color", glm::value_ptr(dl.Color));
+			ImGui::Checkbox("Enable", &l.Enable);
+			ImGui::Checkbox("Cast Shadow", &l.CastShadow);
+			ImGui::ColorEdit3("Color", glm::value_ptr(l.Color));
+			ImGui::DragFloat("Multiplier", &l.Multiplier, 0.1, 0, 1000);
+		};
+		
+		DrawComponent<DirectionLightComponent>("Direction Light", entity, [&](DirectionLightComponent& dl)
+		{
+			DrawLightBase(dl);
+		});
+
+		DrawComponent<PointLightComponent>("Point Light", entity, [&](PointLightComponent& dl)
+		{
+			DrawLightBase(dl);
+			ImGui::DragFloat("Radius", &dl.Radius, 0.5, 0, 1000);
+		});
+
+		DrawComponent<SpotLightComponent>("Spot Light", entity, [&](SpotLightComponent& dl)
+		{
+			DrawLightBase(dl);
+			ImGui::DragFloat("Radius", &dl.Radius, 0.5, 0, 1000);
+			ImGui::DragFloat("CutOff", &dl.CutOff, 1, 0, 360);
 		});
 
 		DrawComponent<ScriptComponent>("Script", entity, [=](ScriptComponent& sc) mutable

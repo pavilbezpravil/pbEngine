@@ -13,13 +13,51 @@
 
 
 namespace pbe {
+
 	class Renderer;
-	
-	struct DirectionLight
+
+	struct Light
 	{
-		DirectionLightComponent directionLightComponent;
-		Vec3 Direction;
-		Vec3 Up;
+		enum Type
+		{
+			Direction,
+			Point,
+			Spot,
+		};
+
+		Vec3 positionOrDirection = { 0.0f, 0.0f, 0.0f };
+		float radius;
+		Vec3 radiance = { 0.0f, 0.0f, 0.0f };
+		float cutOff;
+		Type type;
+
+		Vec3 up; // in case spot light is direction
+
+		void InitAsDirectLight(const Vec3& direction, const Vec3& up, const Vec3& radiance)
+		{
+			type = Light::Direction;
+			positionOrDirection = direction;
+			this->up = up;
+			this->radiance = radiance;
+		}
+
+		void InitAsPointLight(const Vec3& position, const Vec3& radiance, float radius)
+		{
+			type = Light::Point;
+			positionOrDirection = position;
+			this->radiance = radiance;
+			this->radius = radius;
+		}
+
+		void InitAsSpotLight(const Vec3& position, const Vec3& direction, const Vec3& radiance, float radius, float cutOff)
+		{
+			type = Light::Spot;
+			positionOrDirection = position;
+			this->radiance = radiance;
+			this->radius = radius;
+			this->cutOff = cutOff;
+			up = direction;
+		}
 	};
 
 	class SceneRenderer : public Singleton<SceneRenderer>
@@ -29,7 +67,7 @@ namespace pbe {
 	public:
 		struct Environment
 		{
-			DirectionLight directionLight;
+			std::vector<Light> lights;
 		};
 
 		struct CameraInfo
@@ -72,6 +110,8 @@ namespace pbe {
 		Ref<Shader> ps_shadow;
 
 		Ref<DepthBuffer> _shadowBuffer;
+
+		StructuredBuffer _lightsGPUBuffer;
 
 		Ref<RootSignature> BaseRootSignature = nullptr;
 

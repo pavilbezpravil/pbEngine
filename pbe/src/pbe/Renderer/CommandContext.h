@@ -217,9 +217,9 @@ public:
 	void SetRootSignature(const pbe::Ref<RootSignature>& RootSig);
 	void SetPipelineState(const pbe::Ref<GraphicsPSO>& PSO);
 
-    void SetRenderTargets(UINT NumRTVs, const pbe::Ref<ColorBuffer> RTVs[], pbe::Ref<DepthBuffer> DSV);
-	void SetRenderTargets(UINT NumRTs, const pbe::Ref<ColorBuffer> RTs[]) { SetRenderTargets(NumRTs, RTs, nullptr); }
-    void SetRenderTarget(const pbe::Ref<ColorBuffer> RTV ) { SetRenderTargets(1, &RTV); }
+    void SetRenderTargets(UINT NumRTVs, pbe::Ref<ColorBuffer> RTVs[], pbe::Ref<DepthBuffer> DSV);
+	void SetRenderTargets(UINT NumRTs, pbe::Ref<ColorBuffer> RTs[]) { SetRenderTargets(NumRTs, RTs, nullptr); }
+    void SetRenderTarget(pbe::Ref<ColorBuffer> RTV ) { SetRenderTargets(1, &RTV); }
     void SetRenderTarget(pbe::Ref<ColorBuffer> RTV, pbe::Ref<DepthBuffer> DSV ) { SetRenderTargets(1, &RTV, DSV); }
     void SetDepthStencilTarget(pbe::Ref<DepthBuffer> DSV ) { SetRenderTargets(0, nullptr, DSV); }
 
@@ -542,9 +542,10 @@ inline void GraphicsContext::SetDynamicIB( size_t IndexCount, const uint16_t* In
 
 inline void GraphicsContext::SetDynamicSRV(UINT RootIndex, size_t BufferSize, const void* BufferData)
 {
-    ASSERT(BufferData != nullptr && Math::IsAligned(BufferData, 16));
+    // ASSERT(BufferData != nullptr && Math::IsAligned(BufferData, 16));
     DynAlloc cb = m_CpuLinearAllocator.Allocate(BufferSize);
-    SIMDMemCopy(cb.DataPtr, BufferData, Math::AlignUp(BufferSize, 16) >> 4);
+    // SIMDMemCopy(cb.DataPtr, BufferData, Math::AlignUp(BufferSize, 16) >> 4);
+    memcpy(cb.DataPtr, BufferData, BufferSize);
     m_CommandList->SetGraphicsRootShaderResourceView(RootIndex, cb.GpuAddress);
 }
 

@@ -74,14 +74,39 @@ namespace pbe {
 		operator const SceneCamera& () const { return Camera; }
 	};
 
-	struct DirectionLightComponent
+	struct LightComponentBase
 	{
 		bool Enable = true;
 		bool CastShadow = true;
-		Vec3 Color = { 1.0f, 1.0f, 1.0f};
+		Vec3 Color = { 1.0f, 1.0f, 1.0f };
+		float Multiplier = 1.0f;
 
+	protected:
+		LightComponentBase() = default;
+		LightComponentBase(const LightComponentBase& other) = default;
+	};
+	
+	struct DirectionLightComponent : LightComponentBase
+	{
 		DirectionLightComponent() = default;
 		DirectionLightComponent(const DirectionLightComponent& other) = default;
+	};
+
+	struct PointLightComponent : LightComponentBase
+	{
+		float Radius = 10.0f;
+
+		PointLightComponent() = default;
+		PointLightComponent(const PointLightComponent& other) = default;
+	};
+
+	struct SpotLightComponent : LightComponentBase
+	{
+		float Radius = 10.0f;
+		float CutOff = 45.0f;
+
+		SpotLightComponent() = default;
+		SpotLightComponent(const SpotLightComponent& other) = default;
 	};
 
 }

@@ -137,14 +137,35 @@ namespace pbe {
 	{
 		SceneRenderer::Environment environment;
 
-		Entity directionLightEntity = GetDirectionLightEntity();
-		if (directionLightEntity) {
-			auto& dl = directionLightEntity.GetComponent<DirectionLightComponent>();
-			environment.directionLight.directionLightComponent = dl;
-			environment.directionLight.Direction = directionLightEntity.GetComponent<TransformComponent>().Transform * Vec4(0, 1, 0, 0);
-			environment.directionLight.Up = directionLightEntity.GetComponent<TransformComponent>().Transform * Vec4(0, 0, 1, 0);
-		} else {
-			environment.directionLight.directionLightComponent.Enable = false;
+		{
+			m_Registry.view<TransformComponent, DirectionLightComponent>().each([&environment](TransformComponent &trans, DirectionLightComponent &l) {
+				if (l.Enable) {
+					environment.lights.push_back({});
+					environment.lights.back().InitAsDirectLight(trans.Transform * Vec4(0, -1, 0, 0)
+						, trans.Transform * Vec4(0, 0, 1, 0)
+						, l.Color * l.Multiplier);
+				}
+			});
+
+			m_Registry.view<TransformComponent, PointLightComponent>().each([&environment](TransformComponent &trans, PointLightComponent &l) {
+				if (l.Enable) {
+					environment.lights.push_back({});
+					environment.lights.back().InitAsPointLight(trans.Transform[3]
+						, l.Color * l.Multiplier
+						, l.Radius);
+				}
+			});
+
+			m_Registry.view<TransformComponent, SpotLightComponent>().each([&environment](TransformComponent &trans, SpotLightComponent &l) {
+				if (l.Enable) {
+					environment.lights.push_back({});
+					environment.lights.back().InitAsSpotLight(trans.Transform[3]
+						,trans.Transform * Vec4(0, -1, 0, 0)
+						, l.Color * l.Multiplier
+						, l.Radius
+						, glm::cos(glm::radians(l.CutOff)));
+				}
+				});
 		}
 
 		auto group = m_Registry.group<MeshComponent>(entt::get<TransformComponent>);
@@ -200,17 +221,6 @@ namespace pbe {
 			auto& comp = view.get<CameraComponent>(entity);
 			if (comp.Primary)
 				return { entity, this };
-		}
-		return {};
-	}
-
-	Entity Scene::GetDirectionLightEntity()
-	{
-		auto view = m_Registry.view<DirectionLightComponent>();
-		for (auto entity : view)
-		{
-			auto& comp = view.get<DirectionLightComponent>(entity);
-			return { entity, this };
 		}
 		return {};
 	}
@@ -288,6 +298,8 @@ namespace pbe {
 		CopyComponentIfExists<ScriptComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<CameraComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<DirectionLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<PointLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<SpotLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 	}
 
 	Entity Scene::FindEntityByTag(const std::string& tag)
@@ -307,10 +319,6 @@ namespace pbe {
 	// Copy to runtime
 	void Scene::CopyTo(Ref<Scene>& target)
 	{
-		// Environment
-		target->m_Light = m_Light;
-		target->m_LightMultiplier = m_LightMultiplier;
-
 		std::unordered_map<UUID, entt::entity> enttMap;
 		auto idComponents = m_Registry.view<IDComponent>();
 		for (auto entity : idComponents)
@@ -326,6 +334,8 @@ namespace pbe {
 		CopyComponent<ScriptComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<CameraComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<DirectionLightComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<PointLightComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<SpotLightComponent>(target->m_Registry, m_Registry, enttMap);
 
 		const auto& entityInstanceMap = ScriptEngine::GetEntityInstanceMap();
 		if (entityInstanceMap.find(target->GetUUID()) != entityInstanceMap.end())

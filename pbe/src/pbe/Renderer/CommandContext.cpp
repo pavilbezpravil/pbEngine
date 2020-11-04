@@ -275,15 +275,20 @@ void CommandContext::BindDescriptorHeaps( void )
         m_CommandList->SetDescriptorHeaps(NonNullHeaps, HeapsToBind);
 }
 
-void GraphicsContext::SetRenderTargets( UINT NumRTs, const pbe::Ref<ColorBuffer> RTs[], pbe::Ref<DepthBuffer> DS )
+void GraphicsContext::SetRenderTargets( UINT NumRTs, pbe::Ref<ColorBuffer> RTs[], pbe::Ref<DepthBuffer> DS )
 {
 	D3D12_CPU_DESCRIPTOR_HANDLE RTVs[4];
 	DXGI_FORMAT formats[4];
 	for (int i = 0; i < NumRTs; ++i) {
 		RTVs[i] = RTs[i]->GetRTV();
 		formats[i] = RTs[i]->GetFormat();
+
+		TransitionResource(*RTs[i], D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
 	m_CurPSO->SetRenderTargetFormats(NumRTs, formats, DS ? DS->GetFormat() : DXGI_FORMAT_UNKNOWN);
+
+	if (DS)
+		TransitionResource(*DS, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
     m_CommandList->OMSetRenderTargets( NumRTs, RTVs, FALSE, DS ? &DS->GetDSV() : nullptr);
 }
@@ -499,9 +504,10 @@ void CommandContext::InsertAliasBarrier(GpuResource& Before, GpuResource& After,
 
 void CommandContext::WriteBuffer( GpuResource& Dest, size_t DestOffset, const void* BufferData, size_t NumBytes )
 {
-    ASSERT(BufferData != nullptr && Math::IsAligned(BufferData, 16));
+    // ASSERT(BufferData != nullptr && Math::IsAligned(BufferData, 16));
     DynAlloc TempSpace = m_CpuLinearAllocator.Allocate( NumBytes, 512 );
-    SIMDMemCopy(TempSpace.DataPtr, BufferData, Math::DivideByMultiple(NumBytes, 16));
+    // SIMDMemCopy(TempSpace.DataPtr, BufferData, Math::DivideByMultiple(NumBytes, 16));
+    memcpy(TempSpace.DataPtr, BufferData, NumBytes);
     CopyBufferRegion(Dest, DestOffset, TempSpace.Buffer, TempSpace.Offset, NumBytes );
 }
 

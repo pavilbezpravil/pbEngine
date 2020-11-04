@@ -275,10 +275,42 @@ namespace pbe {
 
 			auto& dirLightComponent = entity.GetComponent<DirectionLightComponent>();
 			out << YAML::Key << "Enable" << YAML::Value << dirLightComponent.Enable;
-			out << YAML::Key << "Cast Shadow" << YAML::Value << dirLightComponent.CastShadow;
+			out << YAML::Key << "CastShadow" << YAML::Value << dirLightComponent.CastShadow;
 			out << YAML::Key << "Color" << YAML::Value << dirLightComponent.Color;
+			out << YAML::Key << "Multiplier" << YAML::Value << dirLightComponent.Multiplier;
 
 			out << YAML::EndMap; // DirectionLightComponent
+		}
+
+		if (entity.HasComponent<PointLightComponent>())
+		{
+			out << YAML::Key << "PointLightComponent";
+			out << YAML::BeginMap;
+
+			auto& pointLightComponent = entity.GetComponent<PointLightComponent>();
+			out << YAML::Key << "Enable" << YAML::Value << pointLightComponent.Enable;
+			out << YAML::Key << "CastShadow" << YAML::Value << pointLightComponent.CastShadow;
+			out << YAML::Key << "Color" << YAML::Value << pointLightComponent.Color;
+			out << YAML::Key << "Multiplier" << YAML::Value << pointLightComponent.Multiplier;
+			out << YAML::Key << "Radius" << YAML::Value << pointLightComponent.Radius;
+
+			out << YAML::EndMap;
+		}
+
+		if (entity.HasComponent<SpotLightComponent>())
+		{
+			out << YAML::Key << "SpotLightComponent";
+			out << YAML::BeginMap;
+
+			auto& spotLightComponent = entity.GetComponent<SpotLightComponent>();
+			out << YAML::Key << "Enable" << YAML::Value << spotLightComponent.Enable;
+			out << YAML::Key << "CastShadow" << YAML::Value << spotLightComponent.CastShadow;
+			out << YAML::Key << "Color" << YAML::Value << spotLightComponent.Color;
+			out << YAML::Key << "Multiplier" << YAML::Value << spotLightComponent.Multiplier;
+			out << YAML::Key << "Radius" << YAML::Value << spotLightComponent.Radius;
+			out << YAML::Key << "CutOff" << YAML::Value << spotLightComponent.CutOff;
+
+			out << YAML::EndMap;
 		}
 
 		out << YAML::EndMap; // Entity
@@ -326,21 +358,6 @@ namespace pbe {
 
 		std::string sceneName = data["Scene"].as<std::string>();
 		HZ_CORE_INFO("Deserializing scene '{0}'", sceneName);
-
-		auto environment = data["Environment"];
-		if (environment)
-		{
-			std::string envPath = environment["AssetPath"].as<std::string>();
-
-			auto lightNode = environment["Light"];
-			if (lightNode)
-			{
-				auto& light = m_Scene->GetLight();
-				light.Direction = lightNode["Direction"].as<glm::vec3>();
-				light.Radiance = lightNode["Radiance"].as<glm::vec3>();
-				light.Multiplier = lightNode["Multiplier"].as<float>();
-			}
-		}
 
 		auto entities = data["Entities"];
 		if (entities)
@@ -470,9 +487,34 @@ namespace pbe {
 				if (directionLightComponent)
 				{
 					auto& component = deserializedEntity.AddComponent<DirectionLightComponent>();
+					component.Enable = directionLightComponent["Enable"].as<bool>();
+					component.CastShadow = directionLightComponent["CastShadow"].as<bool>();
 					component.Color = directionLightComponent["Color"].as<glm::vec3>();
+					component.Multiplier = directionLightComponent["Multiplier"].as<float>();
 				}
 
+				auto pointLightComponent = entity["PointLightComponent"];
+				if (pointLightComponent)
+				{
+					auto& component = deserializedEntity.AddComponent<PointLightComponent>();
+					component.Enable = pointLightComponent["Enable"].as<bool>();
+					component.CastShadow = pointLightComponent["CastShadow"].as<bool>();
+					component.Color = pointLightComponent["Color"].as<glm::vec3>();
+					component.Multiplier = pointLightComponent["Multiplier"].as<float>();
+					component.Radius = pointLightComponent["Radius"].as<float>();
+				}
+
+				auto spotLightComponent = entity["SpotLightComponent"];
+				if (spotLightComponent)
+				{
+					auto& component = deserializedEntity.AddComponent<SpotLightComponent>();
+					component.Enable = spotLightComponent["Enable"].as<bool>();
+					component.CastShadow = spotLightComponent["CastShadow"].as<bool>();
+					component.Color = spotLightComponent["Color"].as<glm::vec3>();
+					component.Multiplier = spotLightComponent["Multiplier"].as<float>();
+					component.Radius = spotLightComponent["Radius"].as<float>();
+					component.CutOff = spotLightComponent["CutOff"].as<float>();
+				}
 			}
 		}
 		return true;
