@@ -141,8 +141,8 @@ namespace pbe {
 			m_Registry.view<TransformComponent, DirectionLightComponent>().each([&environment](TransformComponent &trans, DirectionLightComponent &l) {
 				if (l.Enable) {
 					environment.lights.push_back({});
-					environment.lights.back().InitAsDirectLight(trans.Transform * Vec4(0, -1, 0, 0)
-						, trans.Transform * Vec4(0, 0, 1, 0)
+					environment.lights.back().InitAsDirectLight(trans.GetTransform() * Vec4(0, -1, 0, 0)
+						, trans.GetTransform() * Vec4(0, 0, 1, 0)
 						, l.Color * l.Multiplier);
 				}
 			});
@@ -150,7 +150,7 @@ namespace pbe {
 			m_Registry.view<TransformComponent, PointLightComponent>().each([&environment](TransformComponent &trans, PointLightComponent &l) {
 				if (l.Enable) {
 					environment.lights.push_back({});
-					environment.lights.back().InitAsPointLight(trans.Transform[3]
+					environment.lights.back().InitAsPointLight(trans.Translation
 						, l.Color * l.Multiplier
 						, l.Radius);
 				}
@@ -159,8 +159,8 @@ namespace pbe {
 			m_Registry.view<TransformComponent, SpotLightComponent>().each([&environment](TransformComponent &trans, SpotLightComponent &l) {
 				if (l.Enable) {
 					environment.lights.push_back({});
-					environment.lights.back().InitAsSpotLight(trans.Transform[3]
-						,trans.Transform * Vec4(0, -1, 0, 0)
+					environment.lights.back().InitAsSpotLight(trans.Translation
+						,trans.GetTransform() * Vec4(0, -1, 0, 0)
 						, l.Color * l.Multiplier
 						, l.Radius
 						, glm::cos(glm::radians(l.CutOff)));
@@ -174,7 +174,7 @@ namespace pbe {
 			auto& [meshComponent, transformComponent] = group.get<MeshComponent, TransformComponent>(entity);
 			if (meshComponent.Mesh) {
 				meshComponent.Mesh->OnUpdate(ts);
-				SceneRenderer::Get().SubmitMesh(meshComponent, transformComponent);
+				SceneRenderer::Get().SubmitMesh(meshComponent, transformComponent.GetTransform());
 			}
 		}
 		SceneRenderer::Get().EndScene();
@@ -231,7 +231,7 @@ namespace pbe {
 		auto& idComponent = entity.AddComponent<IDComponent>();
 		idComponent.ID = {};
 
-		entity.AddComponent<TransformComponent>(glm::mat4(1.0f));
+		entity.AddComponent<TransformComponent>();
 		if (!name.empty())
 			entity.AddComponent<TagComponent>(name);
 
@@ -245,7 +245,7 @@ namespace pbe {
 		auto& idComponent = entity.AddComponent<IDComponent>();
 		idComponent.ID = uuid;
 
-		entity.AddComponent<TransformComponent>(glm::mat4(1.0f));
+		entity.AddComponent<TransformComponent>();
 		if (!name.empty())
 			entity.AddComponent<TagComponent>(name);
 

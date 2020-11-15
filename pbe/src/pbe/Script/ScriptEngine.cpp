@@ -348,7 +348,7 @@ namespace pbe {
 	// Debug
 	void ScriptEngine::OnImGuiRender()
 	{
-		static bool showDemoWindow = true;
+		static bool showDemoWindow = false;
 		if (showDemoWindow) {
 			ImGui::ShowDemoWindow(&showDemoWindow);
 		}

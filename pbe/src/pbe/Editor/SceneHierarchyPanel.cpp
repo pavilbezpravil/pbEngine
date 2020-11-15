@@ -489,8 +489,8 @@ namespace pbe {
 			auto& tc = entity.GetComponent<TransformComponent>();
 			if (ImGui::TreeNodeEx((void*)((uint32_t)entity | typeid(TransformComponent).hash_code()), ImGuiTreeNodeFlags_DefaultOpen, "Transform"))
 			{
-				auto [translation, rotationQuat, scale] = GetTransformDecomposition(tc);
-				glm::vec3 rotation = glm::degrees(glm::eulerAngles(rotationQuat));
+				// auto [translation, rotationQuat, scale] = GetTransformDecomposition(tc);
+				// glm::vec3 rotation = glm::degrees(glm::eulerAngles(rotationQuat));
 
 				ImGui::Columns(2);
 				ImGui::Text("Translation");
@@ -499,7 +499,7 @@ namespace pbe {
 
 				bool updateTransform = false;
 
-				if (ImGui::DragFloat3("##translation", glm::value_ptr(translation), 0.25f))
+				if (ImGui::DragFloat3("##translation", glm::value_ptr(tc.Translation), 0.25f))
 				{
 					//tc.Transform[3] = glm::vec4(translation, 1.0f);
 					updateTransform = true;
@@ -512,10 +512,15 @@ namespace pbe {
 				ImGui::NextColumn();
 				ImGui::PushItemWidth(-1);
 
-				if (ImGui::DragFloat3("##rotation", glm::value_ptr(rotation), 0.25f))
+				Vec3 eulerAngles = glm::degrees(glm::eulerAngles(tc.Rotation));
+				// tc.Rotation = glm::degrees(eulerAngles);
+				if (ImGui::DragFloat3("##rotation", glm::value_ptr(eulerAngles), 0.25f))
 				{
 					updateTransform = true;
-					// tc.Transform[3] = glm::vec4(translation, 1.0f);
+
+					// tc.Rotation = glm::radians(tc.Rotation);
+					eulerAngles = glm::radians(eulerAngles);
+					tc.Rotation = glm::quat(eulerAngles);
 				}
 
 				ImGui::PopItemWidth();
@@ -525,7 +530,7 @@ namespace pbe {
 				ImGui::NextColumn();
 				ImGui::PushItemWidth(-1);
 
-				if (ImGui::DragFloat3("##scale", glm::value_ptr(scale), 0.25f))
+				if (ImGui::DragFloat3("##scale", glm::value_ptr(tc.Scale), 0.25f))
 				{
 					updateTransform = true;
 				}
@@ -535,12 +540,12 @@ namespace pbe {
 
 				ImGui::Columns(1);
 
-				if (updateTransform)
-				{
-					tc.Transform = glm::translate(glm::mat4(1.0f), translation) *
-						glm::toMat4(glm::quat(glm::radians(rotation))) *
-						glm::scale(glm::mat4(1.0f), scale);
-				}
+				// if (updateTransform)
+				// {
+				// 	tc.Transform = glm::translate(glm::mat4(1.0f), translation) *
+				// 		glm::toMat4(glm::quat(glm::radians(rotation))) *
+				// 		glm::scale(glm::mat4(1.0f), scale);
+				// }
 
 				ImGui::TreePop();
 			}

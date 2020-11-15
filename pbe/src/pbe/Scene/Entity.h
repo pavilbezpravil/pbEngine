@@ -52,8 +52,8 @@ namespace pbe {
 			m_Scene->m_Registry.remove<T>(m_EntityHandle);
 		}
 
-		glm::mat4& Transform() { return m_Scene->m_Registry.get<TransformComponent>(m_EntityHandle); }
-		const glm::mat4& Transform() const { return m_Scene->m_Registry.get<TransformComponent>(m_EntityHandle); }
+		glm::mat4& Transform() { return m_Scene->m_Registry.get<TransformComponent>(m_EntityHandle).GetTransform(); }
+		const glm::mat4& Transform() const { return m_Scene->m_Registry.get<TransformComponent>(m_EntityHandle).GetTransform(); }
 
 		operator uint32_t () const { return (uint32_t)m_EntityHandle; }
 		operator entt::entity () const { return m_EntityHandle; }

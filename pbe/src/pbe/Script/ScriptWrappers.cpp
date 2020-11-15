@@ -12,6 +12,7 @@
 #include "pbe/Core/Input.h"
 
 #define SOL_ALL_SAFETIES_ON 1
+#include <glm/gtx/quaternion.hpp>
 #include <sol/sol.hpp>
 
 #include "pbe/Core/Application.h"
@@ -47,8 +48,32 @@ namespace pbe {
 				sol::meta_function::addition, [](const Vec3& l, const Vec3& r) { return l + r; },
 				sol::meta_function::subtraction, [](const Vec3& l, const Vec3& r) { return l - r; },
 				sol::meta_function::multiplication, [](const Vec3& l, const Vec3& r) { return l * r; },
+				sol::meta_function::multiplication, [](const Vec3& l, float r) { return l * r; },
 				sol::meta_function::to_string, [](const Vec3& l) { return std::string("{") + std::to_string(l.x) + ", " + std::to_string(l.y) + ", " + std::to_string(l.z) + "}"; }
 				);
+
+			// g_luaState.new_usertype<Quat>("Quat",
+			// 	sol::constructors<Quat(), Quat(float, float, float, float)>(),
+			// 	"fromMatrix", [](const Vec3& from, const Vec3& to) { return glm::quat(from, to); },
+			// 	"angleAxis", [](float angle, const Vec3& axis) { return glm::angleAxis(angle, axis); },
+			// 	"w", &Quat::w,
+			// 	"x", &Quat::x,
+			// 	"y", &Quat::y,
+			// 	"z", &Quat::z,
+			// 	"eulerAngles", [](const Quat& self) { return eulerAngles(self); },
+			// 	"angle", [](const Quat& self) { return glm::angle(self); },
+			// 	"toMat4", [](const Quat& self) { return glm::toMat4(self); },
+			// 	"dot", [](const Quat& self, const Quat& r) { return glm::dot(self, r); },
+			// 	"normalize", [](const Quat& self) { return glm::normalize(self); },
+			// 	"inverse", [](const Quat& self) { return glm::inverse(self); },
+			// 	"lerp", [](const Quat& self, const Quat& r, float t) { return glm::mix(self, r, t); },
+			// 	"slerp", [](const Quat& self, const Quat& r, float t) { return glm::slerp(self, r, t); },
+			// 	sol::meta_function::addition, [](const Vec3& l, const Vec3& r) { return l + r; },
+			// 	sol::meta_function::subtraction, [](const Vec3& l, const Vec3& r) { return l - r; },
+			// 	sol::meta_function::multiplication, [](const Quat& self, const Vec3& v) { return self * v; },
+			// 	sol::meta_function::multiplication, [](const Quat& self, const Quat& r) { return self * r; },
+			// 	sol::meta_function::to_string, [](const Quat& l) { return std::string("{") + std::to_string(l.w) + ", " + std::to_string(l.x) + ", " + std::to_string(l.y) + ", " + std::to_string(l.z) + "}"; }
+			// );
 		}
 
 		void RegisterComponent()
@@ -78,8 +103,10 @@ namespace pbe {
 				);
 
 			g_luaState.new_usertype<TransformComponent>("TransformComponent",
-				// "Position", [](const TransformComponent& self, const Vec3& v) { return translate(self.Transform, v); },
-				"Move", [](TransformComponent& self, const Vec3& v) { self.Transform = translate(glm::mat4(1.0), v) * self.Transform; }
+				"Translation", &TransformComponent::Translation,
+				"Rotation", &TransformComponent::Rotation,
+				"Scale", &TransformComponent::Scale,
+				"Move", [](TransformComponent& self, const Vec3& v) { self.Translation += v; }
 				);
 		}
 

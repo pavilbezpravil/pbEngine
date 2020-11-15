@@ -1,6 +1,8 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <glm/ext/matrix_transform.hpp>
+
 
 #include "pbe/Core/UUID.h"
 #include "pbe/Renderer/Texture.h"
@@ -36,15 +38,19 @@ namespace pbe {
 
 	struct TransformComponent
 	{
-		glm::mat4 Transform;
+		Vec3 Translation = {0, 0, 0};
+		Quat Rotation = glm::quat();
+		Vec3 Scale = {1, 1, 1};
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent& other) = default;
-		TransformComponent(const glm::mat4& transform)
-			: Transform(transform) {}
+		TransformComponent(const Vec3& translation)
+			: Translation(translation) {}
 
-		operator glm::mat4& () { return Transform; }
-		operator const glm::mat4& () const { return Transform; }
+		Mat4 GetTransform() const;
+		void SetTransform(const Mat4& trans);
+
+		operator glm::mat4 () const { return GetTransform(); }
 
 		COMPONENT_CLASS_TYPE(TransformComponent)
 	};

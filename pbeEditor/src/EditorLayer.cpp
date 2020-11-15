@@ -110,7 +110,7 @@ namespace pbe {
 		m_SceneHierarchyPanel->SetEntityDeletedCallback(std::bind(&EditorLayer::OnEntityDeleted, this, std::placeholders::_1));
 
 		// todo: add custom scene deserialize on start
-		m_SceneFilePath = "assets/scenes/TestScene.hsc";
+		m_SceneFilePath = "assets/scenes/TestScene.pbsc";
 		SceneSerializer serializer(m_EditorScene);
 		serializer.Deserialize(m_SceneFilePath);
 	}
@@ -169,7 +169,8 @@ namespace pbe {
 		if (ImGui::BeginMenuBar()) {
 			if (ImGui::BeginMenu("File")) {
 				if (ImGui::MenuItem("New Scene", "Ctrl-N")) {
-					// TODO:
+					// TODO: save current scene dialog
+					NewScene();
 				}
 				if (ImGui::MenuItem("Open Scene...", "Ctrl+O"))
 					OpenScene();
@@ -271,7 +272,7 @@ namespace pbe {
 
 			bool snap = Input::IsKeyPressed(HZ_KEY_LEFT_CONTROL);
 
-			auto& entityTransform = selection.Entity.Transform();
+			auto& entityTransform = selection.Entity.GetComponent<TransformComponent>().GetTransform();
 			float snapValue = GetSnapValue();
 			float snapValues[3] = { snapValue, snapValue, snapValue };
 			if (m_SelectionMode == SelectionMode::Entity) {
@@ -282,6 +283,8 @@ namespace pbe {
 					glm::value_ptr(entityTransform),
 					nullptr,
 					snap ? snapValues : nullptr);
+
+				selection.Entity.GetComponent<TransformComponent>().SetTransform(entityTransform);
 			} else {
 				glm::mat4 transformBase = entityTransform * selection.Mesh->Transform;
 				ImGuizmo::Manipulate(glm::value_ptr(m_EditorCamera.GetViewMatrix()),
@@ -457,10 +460,30 @@ namespace pbe {
 		m_EditorScene->SetSelectedEntity(entity);
 	}
 
+	void EditorLayer::NewScene()
+	{
+		auto& app = Application::Get();
+		std::string filepath = app.OpenFile("pbe Scene (*.pbsc)\0*.pbsc\0");
+		if (!filepath.empty())
+		{
+			Ref<Scene> newScene = Ref<Scene>::Create();
+			m_EditorScene = newScene;
+			std::filesystem::path path = filepath;
+			UpdateWindowTitle(path.filename().string());
+			m_SceneHierarchyPanel->SetContext(m_EditorScene);
+			ScriptEngine::SetSceneContext(m_EditorScene);
+
+			m_EditorScene->SetSelectedEntity({});
+			m_SelectionContext.clear();
+
+			m_SceneFilePath = filepath;
+		}
+	}
+	
 	void EditorLayer::OpenScene()
 	{
 		auto& app = Application::Get();
-		std::string filepath = app.OpenFile("pbe Scene (*.hsc)\0*.hsc\0");
+		std::string filepath = app.OpenFile("pbe Scene (*.pbsc)\0*.pbsc\0");
 		if (!filepath.empty())
 		{
 			Ref<Scene> newScene = Ref<Scene>::Create();
@@ -488,7 +511,7 @@ namespace pbe {
 	void EditorLayer::SaveSceneAs()
 	{
 		auto& app = Application::Get();
-		std::string filepath = app.SaveFile("pbe Scene (*.hsc)\0*.hsc\0");
+		std::string filepath = app.SaveFile("pbe Scene (*.pbsc)\0*.pbsc\0");
 		if (!filepath.empty())
 		{
 			SceneSerializer serializer(m_EditorScene);
@@ -619,6 +642,9 @@ namespace pbe {
 						Entity selectedEntity = m_SelectionContext[0].Entity;
 						m_EditorScene->DuplicateEntity(selectedEntity);
 					}
+					break;
+				case KeyCode::N:
+					NewScene();
 					break;
 				case KeyCode::O:
 					OpenScene();

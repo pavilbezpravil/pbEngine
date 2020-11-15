@@ -152,16 +152,6 @@ namespace pbe {
 	{
 	}
 
-	static std::tuple<glm::vec3, glm::quat, glm::vec3> GetTransformDecomposition(const glm::mat4& transform)
-	{
-		glm::vec3 scale, translation, skew;
-		glm::vec4 perspective;
-		glm::quat orientation;
-		glm::decompose(transform, scale, orientation, translation, skew, perspective);
-
-		return { translation, orientation, scale };
-	}
-
 	static void SerializeEntity(YAML::Emitter& out, Entity entity)
 	{
 		UUID uuid = entity.GetComponent<IDComponent>().ID;
@@ -185,11 +175,10 @@ namespace pbe {
 			out << YAML::Key << "TransformComponent";
 			out << YAML::BeginMap; // TransformComponent
 
-			auto& transform = entity.GetComponent<TransformComponent>().Transform;
-			auto[pos, rot, scale] = GetTransformDecomposition(transform);
-			out << YAML::Key << "Position" << YAML::Value << pos;
-			out << YAML::Key << "Rotation" << YAML::Value << rot;
-			out << YAML::Key << "Scale" << YAML::Value << scale;
+			auto& tc = entity.GetComponent<TransformComponent>();
+			out << YAML::Key << "Position" << YAML::Value << tc.Translation;
+			out << YAML::Key << "Rotation" << YAML::Value << tc.Rotation;
+			out << YAML::Key << "Scale" << YAML::Value << tc.Scale;
 
 			out << YAML::EndMap; // TransformComponent
 		}
@@ -382,18 +371,15 @@ namespace pbe {
 				if (transformComponent)
 				{
 					// Entities always have transforms
-					auto& transform = deserializedEntity.GetComponent<TransformComponent>().Transform;
-					glm::vec3 translation = transformComponent["Position"].as<glm::vec3>();
-					glm::quat rotation = transformComponent["Rotation"].as<glm::quat>();
-					glm::vec3 scale = transformComponent["Scale"].as<glm::vec3>();
-
-					transform = glm::translate(glm::mat4(1.0f), translation) *
-						glm::toMat4(rotation) * glm::scale(glm::mat4(1.0f), scale);
+					auto& tc = deserializedEntity.GetComponent<TransformComponent>();
+					tc.Translation = transformComponent["Position"].as<glm::vec3>();
+					tc.Rotation = transformComponent["Rotation"].as<glm::quat>();
+					tc.Scale = transformComponent["Scale"].as<glm::vec3>();
 
 					HZ_CORE_INFO("  Entity Transform:");
-					HZ_CORE_INFO("    Translation: {0}, {1}, {2}", translation.x, translation.y, translation.z);
-					HZ_CORE_INFO("    Rotation: {0}, {1}, {2}, {3}", rotation.w, rotation.x, rotation.y, rotation.z);
-					HZ_CORE_INFO("    Scale: {0}, {1}, {2}", scale.x, scale.y, scale.z);
+					HZ_CORE_INFO("    Translation: {0}, {1}, {2}", tc.Translation.x, tc.Translation.y, tc.Translation.z);
+					HZ_CORE_INFO("    Rotation: {0}, {1}, {2} {3}", tc.Rotation.w, tc.Rotation.x, tc.Rotation.y, tc.Rotation.z);
+					HZ_CORE_INFO("    Scale: {0}, {1}, {2}", tc.Scale.x, tc.Scale.y, tc.Scale.z);
 				}
 
 				auto scriptComponent = entity["ScriptComponent"];

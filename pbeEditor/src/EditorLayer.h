@@ -50,6 +50,7 @@ namespace pbe {
 
 		void SelectEntity(Entity entity);
 
+		void NewScene();
 		void OpenScene();
 		void SaveScene();
 		void SaveSceneAs();
