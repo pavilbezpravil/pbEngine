@@ -199,47 +199,50 @@ namespace pbe {
 			out << YAML::Key << "ScriptComponent";
 			out << YAML::BeginMap; // ScriptComponent
 
-			auto& moduleName = entity.GetComponent<ScriptComponent>().ModuleName;
-			out << YAML::Key << "ModuleName" << YAML::Value << moduleName;
+			auto& moduleName = entity.GetComponent<ScriptComponent>().ScriptPath;
+			out << YAML::Key << "ScriptPath" << YAML::Value << moduleName;
 
-			EntityInstanceData& data = ScriptEngine::GetEntityInstanceData(entity.GetSceneUUID(), uuid);
-			const auto& moduleFieldMap = data.ModuleFieldMap;
-			if (moduleFieldMap.find(moduleName) != moduleFieldMap.end())
+			if (ScriptEngine::HasEntityInstanceData(entity.GetSceneUUID(), uuid))
 			{
-				const auto& fields = moduleFieldMap.at(moduleName);
-				out << YAML::Key << "StoredFields" << YAML::Value;
-				out << YAML::BeginSeq;
-				for (const auto& [name, field] : fields)
+				EntityInstanceData& data = ScriptEngine::GetEntityInstanceData(entity.GetSceneUUID(), uuid);
+				const auto& moduleFieldMap = data.ModuleFieldMap;
+				if (moduleFieldMap.find(moduleName) != moduleFieldMap.end())
 				{
-					out << YAML::BeginMap; // Field
-					out << YAML::Key << "Name" << YAML::Value << name;
-					out << YAML::Key << "Type" << YAML::Value << (uint32_t)field.Type;
-					out << YAML::Key << "Data" << YAML::Value;
-
-					switch (field.Type)
+					const auto& fields = moduleFieldMap.at(moduleName);
+					out << YAML::Key << "StoredFields" << YAML::Value;
+					out << YAML::BeginSeq;
+					for (const auto&[name, field] : fields)
 					{
-					case FieldType::Int:
-						out << field.GetStoredValue<int>();
-						break;
-					case FieldType::UnsignedInt:
-						out << field.GetStoredValue<uint32_t>();
-						break;
-					case FieldType::Float:
-						out << field.GetStoredValue<float>();
-						break;
-					case FieldType::Vec2:
-						out << field.GetStoredValue<glm::vec2>();
-						break;
-					case FieldType::Vec3:
-						out << field.GetStoredValue<glm::vec3>();
-						break;
-					case FieldType::Vec4:
-						out << field.GetStoredValue<glm::vec4>();
-						break;
+						out << YAML::BeginMap; // Field
+						out << YAML::Key << "Name" << YAML::Value << name;
+						out << YAML::Key << "Type" << YAML::Value << (uint32_t)field.Type;
+						out << YAML::Key << "Data" << YAML::Value;
+
+						// switch (field.Type)
+						// {
+						// case FieldType::Int:
+						// 	out << field.GetStoredValue<int>();
+						// 	break;
+						// case FieldType::UnsignedInt:
+						// 	out << field.GetStoredValue<uint32_t>();
+						// 	break;
+						// case FieldType::Float:
+						// 	out << field.GetStoredValue<float>();
+						// 	break;
+						// case FieldType::Vec2:
+						// 	out << field.GetStoredValue<glm::vec2>();
+						// 	break;
+						// case FieldType::Vec3:
+						// 	out << field.GetStoredValue<glm::vec3>();
+						// 	break;
+						// case FieldType::Vec4:
+						// 	out << field.GetStoredValue<glm::vec4>();
+						// 	break;
+						// }
+						out << YAML::EndMap; // Field
 					}
-					out << YAML::EndMap; // Field
+					out << YAML::EndSeq;
 				}
-				out << YAML::EndSeq;
 			}
 
 			out << YAML::EndMap; // ScriptComponent
@@ -396,12 +399,12 @@ namespace pbe {
 				auto scriptComponent = entity["ScriptComponent"];
 				if (scriptComponent)
 				{
-					std::string moduleName = scriptComponent["ModuleName"].as<std::string>();
+					std::string moduleName = scriptComponent["ScriptPath"].as<std::string>();
 					deserializedEntity.AddComponent<ScriptComponent>(moduleName);
 
 					HZ_CORE_INFO("  Script Module: {0}", moduleName);
 
-					if (ScriptEngine::ModuleExists(moduleName))
+					if (ScriptEngine::ScriptExists(moduleName))
 					{
 						auto storedFields = scriptComponent["StoredFields"];
 						if (storedFields)
@@ -419,44 +422,44 @@ namespace pbe {
 									publicFields.emplace(name, std::move(pf));
 								}
 								auto dataNode = field["Data"];
-								switch (type)
-								{
-									case FieldType::Float:
-									{
-										publicFields.at(name).SetStoredValue(dataNode.as<float>());
-										break;
-									}
-									case FieldType::Int:
-									{
-										publicFields.at(name).SetStoredValue(dataNode.as<int32_t>());
-										break;
-									}
-									case FieldType::UnsignedInt:
-									{
-										publicFields.at(name).SetStoredValue(dataNode.as<uint32_t>());
-										break;
-									}
-									case FieldType::String:
-									{
-										HZ_CORE_ASSERT(false, "Unimplemented");
-										break;
-									}
-									case FieldType::Vec2:
-									{
-										publicFields.at(name).SetStoredValue(dataNode.as<glm::vec2>());
-										break;
-									}
-									case FieldType::Vec3:
-									{
-										publicFields.at(name).SetStoredValue(dataNode.as<glm::vec3>());
-										break;
-									}
-									case FieldType::Vec4:
-									{
-										publicFields.at(name).SetStoredValue(dataNode.as<glm::vec4>());
-										break;
-									}
-								}
+								// switch (type)
+								// {
+								// 	case FieldType::Float:
+								// 	{
+								// 		publicFields.at(name).SetStoredValue(dataNode.as<float>());
+								// 		break;
+								// 	}
+								// 	case FieldType::Int:
+								// 	{
+								// 		publicFields.at(name).SetStoredValue(dataNode.as<int32_t>());
+								// 		break;
+								// 	}
+								// 	case FieldType::UnsignedInt:
+								// 	{
+								// 		publicFields.at(name).SetStoredValue(dataNode.as<uint32_t>());
+								// 		break;
+								// 	}
+								// 	case FieldType::String:
+								// 	{
+								// 		HZ_CORE_ASSERT(false, "Unimplemented");
+								// 		break;
+								// 	}
+								// 	case FieldType::Vec2:
+								// 	{
+								// 		publicFields.at(name).SetStoredValue(dataNode.as<glm::vec2>());
+								// 		break;
+								// 	}
+								// 	case FieldType::Vec3:
+								// 	{
+								// 		publicFields.at(name).SetStoredValue(dataNode.as<glm::vec3>());
+								// 		break;
+								// 	}
+								// 	case FieldType::Vec4:
+								// 	{
+								// 		publicFields.at(name).SetStoredValue(dataNode.as<glm::vec4>());
+								// 		break;
+								// 	}
+								// }
 							}
 						}
 					}
@@ -483,35 +486,31 @@ namespace pbe {
 					HZ_CORE_INFO("  Primary Camera: {0}", component.Primary);
 				}
 
-				auto directionLightComponent = entity["DirectionLightComponent"];
-				if (directionLightComponent)
+				auto ReadLightComponentBase = [] (LightComponentBase& l, auto& yamlLightComponent)
+				{
+					l.Enable = yamlLightComponent["Enable"].as<bool>();
+					l.CastShadow = yamlLightComponent["CastShadow"].as<bool>();
+					l.Color = yamlLightComponent["Color"].as<glm::vec3>();
+					l.Multiplier = yamlLightComponent["Multiplier"].as<float>();
+				};
+
+				if (auto directionLightComponent = entity["DirectionLightComponent"])
 				{
 					auto& component = deserializedEntity.AddComponent<DirectionLightComponent>();
-					component.Enable = directionLightComponent["Enable"].as<bool>();
-					component.CastShadow = directionLightComponent["CastShadow"].as<bool>();
-					component.Color = directionLightComponent["Color"].as<glm::vec3>();
-					component.Multiplier = directionLightComponent["Multiplier"].as<float>();
+					ReadLightComponentBase(component, directionLightComponent);
 				}
 
-				auto pointLightComponent = entity["PointLightComponent"];
-				if (pointLightComponent)
+				if (auto pointLightComponent = entity["PointLightComponent"])
 				{
 					auto& component = deserializedEntity.AddComponent<PointLightComponent>();
-					component.Enable = pointLightComponent["Enable"].as<bool>();
-					component.CastShadow = pointLightComponent["CastShadow"].as<bool>();
-					component.Color = pointLightComponent["Color"].as<glm::vec3>();
-					component.Multiplier = pointLightComponent["Multiplier"].as<float>();
+					ReadLightComponentBase(component, pointLightComponent);
 					component.Radius = pointLightComponent["Radius"].as<float>();
 				}
 
-				auto spotLightComponent = entity["SpotLightComponent"];
-				if (spotLightComponent)
+				if (auto spotLightComponent = entity["SpotLightComponent"])
 				{
 					auto& component = deserializedEntity.AddComponent<SpotLightComponent>();
-					component.Enable = spotLightComponent["Enable"].as<bool>();
-					component.CastShadow = spotLightComponent["CastShadow"].as<bool>();
-					component.Color = spotLightComponent["Color"].as<glm::vec3>();
-					component.Multiplier = spotLightComponent["Multiplier"].as<float>();
+					ReadLightComponentBase(component, spotLightComponent);
 					component.Radius = spotLightComponent["Radius"].as<float>();
 					component.CutOff = spotLightComponent["CutOff"].as<float>();
 				}

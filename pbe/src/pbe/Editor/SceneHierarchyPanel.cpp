@@ -9,6 +9,7 @@
 #include <assimp/scene.h>
 
 #define GLM_ENABLE_EXPERIMENTAL
+#include <stdio.h>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -654,97 +655,59 @@ namespace pbe {
 
 		DrawComponent<ScriptComponent>("Script", entity, [=](ScriptComponent& sc) mutable
 		{
-			BeginPropertyGrid();
-			std::string oldName = sc.ModuleName;
-			if (Property("Module Name", sc.ModuleName, !ScriptEngine::ModuleExists(sc.ModuleName))) // TODO: no live edit
-			{
-				// Shutdown old script
-				if (ScriptEngine::ModuleExists(oldName))
-					ScriptEngine::ShutdownScriptEntity(entity, oldName);
+			// BeginPropertyGrid();
+			//
+			// std::string oldName = sc.ScriptPath;
+			// if (Property("Script Path", sc.ScriptPath, !ScriptEngine::ScriptExists(sc.ScriptPath))) // TODO: no live edit
+			// {
+			// 	// Shutdown old script
+			// 	if (ScriptEngine::ScriptExists(oldName))
+			// 		ScriptEngine::ShutdownScriptEntity(entity, oldName);
+			//
+			// 	if (ScriptEngine::ScriptExists(sc.ScriptPath))
+			// 		ScriptEngine::InitScriptEntity(entity);
+			// }
+			//
+			// // Public Fields
+			// if (ScriptEngine::ScriptExists(sc.ScriptPath))
+			// {
+			//
+			// }
+			//
+			// EndPropertyGrid();
 
-				if (ScriptEngine::ModuleExists(sc.ModuleName))
-					ScriptEngine::InitScriptEntity(entity);
-			}
+			ImGui::Columns(3);
+			ImGui::SetColumnWidth(0, 100);
+			ImGui::SetColumnWidth(1, 300);
+			ImGui::SetColumnWidth(2, 40);
+			ImGui::Text("File Path");
+			ImGui::NextColumn();
+			ImGui::PushItemWidth(-1);
 
-			// Public Fields
-			if (ScriptEngine::ModuleExists(sc.ModuleName))
-			{
-				EntityInstanceData& entityInstanceData = ScriptEngine::GetEntityInstanceData(entity.GetSceneUUID(), id);
-				auto& moduleFieldMap = entityInstanceData.ModuleFieldMap;
-				if (moduleFieldMap.find(sc.ModuleName) != moduleFieldMap.end())
-				{
-					auto& publicFields = moduleFieldMap.at(sc.ModuleName);
-					for (auto& [name, field] : publicFields)
-					{
-						bool isRuntime = m_Context->m_IsPlaying && field.IsRuntimeAvailable();
-						switch (field.Type)
-						{
-						case FieldType::Int:
-						{
-							int value = isRuntime ? field.GetRuntimeValue<int>() : field.GetStoredValue<int>();
-							if (Property(field.Name.c_str(), value))
-							{
-								if (isRuntime)
-									field.SetRuntimeValue(value);
-								else
-									field.SetStoredValue(value);
-							}
-							break;
-						}
-						case FieldType::Float:
-						{
-							float value = isRuntime ? field.GetRuntimeValue<float>() : field.GetStoredValue<float>();
-							if (Property(field.Name.c_str(), value, 0.2f))
-							{
-								if (isRuntime)
-									field.SetRuntimeValue(value);
-								else
-									field.SetStoredValue(value);
-							}
-							break;
-						}
-						case FieldType::Vec2:
-						{
-							glm::vec2 value = isRuntime ? field.GetRuntimeValue<glm::vec2>() : field.GetStoredValue<glm::vec2>();
-							if (Property(field.Name.c_str(), value, 0.2f))
-							{
-								if (isRuntime)
-									field.SetRuntimeValue(value);
-								else
-									field.SetStoredValue(value);
-							}
-							break;
-						}
-						case FieldType::Vec3:
-						{
-							glm::vec3 value = isRuntime ? field.GetRuntimeValue<glm::vec3>() : field.GetStoredValue<glm::vec3>();
-							if (Property(field.Name.c_str(), value, 0.2f))
-							{
-								if (isRuntime)
-									field.SetRuntimeValue(value);
-								else
-									field.SetStoredValue(value);
-							}
-							break;
-						}
-						case FieldType::Vec4:
-						{
-							glm::vec4 value = isRuntime ? field.GetRuntimeValue<glm::vec4>() : field.GetStoredValue<glm::vec4>();
-							if (Property(field.Name.c_str(), value, 0.2f))
-							{
-								if (isRuntime)
-									field.SetRuntimeValue(value);
-								else
-									field.SetStoredValue(value);
-							}
-							break;
-						}
-						}
-					}
+			ImGui::InputText("##meshfilepath", (char*)sc.ScriptPath.c_str(), 256, ImGuiInputTextFlags_ReadOnly);
+
+			ImGui::PopItemWidth();
+			ImGui::NextColumn();
+
+			if (ImGui::Button("...##openscript")) {
+				std::string file = Application::Get().OpenFile();
+				if (!file.empty()) {
+					// Shutdown old script
+					if (ScriptEngine::ScriptExists(sc.ScriptPath))
+						ScriptEngine::ShutdownScriptEntity(entity, sc.ScriptPath);
+
+					sc.ScriptPath = file;
+					if (ScriptEngine::ScriptExists(sc.ScriptPath))
+						ScriptEngine::InitScriptEntity(entity);
 				}
 			}
 
-			EndPropertyGrid();
+			// Public Fields
+			if (ScriptEngine::ScriptExists(sc.ScriptPath))
+			{
+
+			}
+
 #if TODO
 			if (ImGui::Button("Run Script"))
 			{

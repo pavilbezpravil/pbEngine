@@ -25,17 +25,18 @@ IncludeDir["ImGui"] = "pbe/vendor/ImGui"
 IncludeDir["glm"] = "pbe/vendor/glm"
 IncludeDir["entt"] = "pbe/vendor/entt/single_include"
 IncludeDir["FastNoise"] = "pbe/vendor/FastNoise/Cpp"
-IncludeDir["mono"] = "pbe/vendor/mono/include"
 IncludeDir["spdlog"] = "pbe/vendor/spdlog/include"
 IncludeDir["WinPixEventRuntime"] = "pbe/vendor/WinPixEventRuntime/Include/WinPixEventRuntime"
+IncludeDir["Lua"] = "pbe/vendor/lua-5.4.1/src"
+IncludeDir["Sol2"] = "pbe/vendor/sol2/single/include"
 
 LibraryDir = {}
-LibraryDir["mono"] = "vendor/mono/lib/Debug/mono-2.0-sgen.lib"
 LibraryDir["WinPixEventRuntime"] = "vendor/WinPixEventRuntime/bin/WinPixEventRuntime.lib"
 
 group "Dependencies"
 include "pbe/vendor/GLFW"
 include "pbe/vendor/ImGui"
+include "pbe/vendor/lua-5.4.1"
 group ""
 
 group "Core"
@@ -74,22 +75,23 @@ project "pbe"
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.ImGui}",
 		"%{IncludeDir.entt}",
-		"%{IncludeDir.mono}",
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.WinPixEventRuntime}",
+		"%{IncludeDir.Lua}",
+		"%{IncludeDir.Sol2}",
 		"%{IncludeDir.FastNoise}",
 		"%{prj.name}/vendor/assimp/include",
 		"%{prj.name}/vendor/stb/include",
-		"%{prj.name}/vendor/yaml-cpp/include"
+		"%{prj.name}/vendor/yaml-cpp/include",
 	}
 	
 	links 
 	{ 
 		"GLFW",
 		"ImGui",
+		"Lua",
 		"d3d12",
 		"dxgi",
-		"%{LibraryDir.mono}",
 		"%{LibraryDir.WinPixEventRuntime}",
 	}
 	
@@ -191,7 +193,6 @@ project "pbeEditor"
 		postbuildcommands 
 		{
 			'{COPY} "../pbe/vendor/assimp/bin/Debug/assimp-vc141-mtd.dll" "%{cfg.targetdir}"',
-			'{COPY} "../pbe/vendor/mono/bin/Debug/mono-2.0-sgen.dll" "%{cfg.targetdir}"'
 		}
 				
 	filter "configurations:Release"
@@ -206,7 +207,6 @@ project "pbeEditor"
 		postbuildcommands 
 		{
 			'{COPY} "../pbe/vendor/assimp/bin/Release/assimp-vc141-mt.dll" "%{cfg.targetdir}"',
-			'{COPY} "../pbe/vendor/mono/bin/Debug/mono-2.0-sgen.dll" "%{cfg.targetdir}"'
 		}
 
 	filter "configurations:Dist"
@@ -221,7 +221,6 @@ project "pbeEditor"
 		postbuildcommands 
 		{
 			'{COPY} "../pbe/vendor/assimp/bin/Release/assimp-vc141-mtd.dll" "%{cfg.targetdir}"',
-			'{COPY} "../pbe/vendor/mono/bin/Debug/mono-2.0-sgen.dll" "%{cfg.targetdir}"'
 		}
 group ""
 

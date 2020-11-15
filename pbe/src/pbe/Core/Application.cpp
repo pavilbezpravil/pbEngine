@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include <imgui/imgui.h>
+#include <filesystem>
 
 #include "pbe/Script/ScriptEngine.h"
 
@@ -36,7 +37,7 @@ namespace pbe {
 		m_ImGuiLayer = new ImGuiLayer("ImGui");
 		PushOverlay(m_ImGuiLayer);
 
-		// ScriptEngine::Init("assets/scripts/ExampleApp.dll");
+		ScriptEngine::Init("assets/scripts/ExampleApp.dll");
 	}
 
 	Application::~Application()
@@ -151,9 +152,8 @@ namespace pbe {
 		ofn.nFilterIndex = 1;
 		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 
-		if (GetOpenFileNameA(&ofn) == TRUE)
-		{
-			return ofn.lpstrFile;
+		if (GetOpenFileNameA(&ofn) == TRUE) {
+			return std::filesystem::relative(ofn.lpstrFile).string();
 		}
 		return std::string();
 	}

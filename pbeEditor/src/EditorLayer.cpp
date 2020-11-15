@@ -110,8 +110,9 @@ namespace pbe {
 		m_SceneHierarchyPanel->SetEntityDeletedCallback(std::bind(&EditorLayer::OnEntityDeleted, this, std::placeholders::_1));
 
 		// todo: add custom scene deserialize on start
+		m_SceneFilePath = "assets/scenes/TestScene.hsc";
 		SceneSerializer serializer(m_EditorScene);
-		serializer.Deserialize("assets/scenes/TestScene.hsc");
+		serializer.Deserialize(m_SceneFilePath);
 	}
 
 	void EditorLayer::OnDetach()
@@ -304,6 +305,9 @@ namespace pbe {
 			{
 				// if (m_ViewportPanelFocused)
 					m_EditorCamera.OnUpdate(ts);
+
+				// todo: tmp for test script
+					m_EditorScene->OnUpdate(ts);
 
 				m_EditorScene->OnRenderEditor(ts, m_EditorCamera);
 
@@ -544,9 +548,6 @@ namespace pbe {
 		OnImGuiAllocatorInfo();
 		OnImGuiViewport();
 		ScriptEngine::OnImGuiRender();
-
-		// static bool showDemoWindow = true;
-		// ImGui::ShowDemoWindow(&showDemoWindow);
 
 		ImGui::End();
 	}

@@ -95,7 +95,7 @@ namespace pbe {
 			{
 				UUID entityID = m_Registry.get<IDComponent>(entity).ID;
 				Entity e = { entity, this };
-				if (ScriptEngine::ModuleExists(e.GetComponent<ScriptComponent>().ModuleName))
+				if (ScriptEngine::ScriptExists(e.GetComponent<ScriptComponent>().ScriptPath))
 					ScriptEngine::OnUpdateEntity(m_SceneID, entityID, ts);
 			}
 		}
@@ -193,7 +193,7 @@ namespace pbe {
 			for (auto entity : view)
 			{
 				Entity e = { entity, this };
-				if (ScriptEngine::ModuleExists(e.GetComponent<ScriptComponent>().ModuleName))
+				if (ScriptEngine::ScriptExists(e.GetComponent<ScriptComponent>().ScriptPath))
 					ScriptEngine::InstantiateEntityClass(e);
 			}
 		}

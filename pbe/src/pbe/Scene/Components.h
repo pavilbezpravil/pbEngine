@@ -9,9 +9,14 @@
 
 namespace pbe {
 
+
+#define COMPONENT_CLASS_TYPE(ComponentType) static const char* GetName() { return STRINGIFY(ComponentType); }
+
 	struct IDComponent
 	{
 		UUID ID = 0;
+
+		COMPONENT_CLASS_TYPE(IDComponent)
 	};
 
 	struct TagComponent
@@ -25,6 +30,8 @@ namespace pbe {
 
 		operator std::string& () { return Tag; }
 		operator const std::string& () const { return Tag; }
+
+		COMPONENT_CLASS_TYPE(TagComponent)
 	};
 
 	struct TransformComponent
@@ -38,6 +45,8 @@ namespace pbe {
 
 		operator glm::mat4& () { return Transform; }
 		operator const glm::mat4& () const { return Transform; }
+
+		COMPONENT_CLASS_TYPE(TransformComponent)
 	};
 
 	struct MeshComponent
@@ -50,16 +59,20 @@ namespace pbe {
 			: Mesh(mesh) {}
 
 		operator Ref<pbe::Mesh> () { return Mesh; }
+
+		COMPONENT_CLASS_TYPE(MeshComponent)
 	};
 
 	struct ScriptComponent
 	{
-		std::string ModuleName;
+		std::string ScriptPath;
 
 		ScriptComponent() = default;
 		ScriptComponent(const ScriptComponent& other) = default;
 		ScriptComponent(const std::string& moduleName)
-			: ModuleName(moduleName) {}
+			: ScriptPath(moduleName) {}
+
+		COMPONENT_CLASS_TYPE(ScriptComponent)
 	};
 
 	struct CameraComponent
@@ -72,12 +85,14 @@ namespace pbe {
 
 		operator SceneCamera& () { return Camera; }
 		operator const SceneCamera& () const { return Camera; }
+
+		COMPONENT_CLASS_TYPE(CameraComponent)
 	};
 
 	struct LightComponentBase
 	{
 		bool Enable = true;
-		bool CastShadow = true;
+		bool CastShadow = false;
 		Vec3 Color = { 1.0f, 1.0f, 1.0f };
 		float Multiplier = 1.0f;
 
@@ -90,6 +105,8 @@ namespace pbe {
 	{
 		DirectionLightComponent() = default;
 		DirectionLightComponent(const DirectionLightComponent& other) = default;
+
+		COMPONENT_CLASS_TYPE(DirectionLightComponent)
 	};
 
 	struct PointLightComponent : LightComponentBase
@@ -98,6 +115,8 @@ namespace pbe {
 
 		PointLightComponent() = default;
 		PointLightComponent(const PointLightComponent& other) = default;
+
+		COMPONENT_CLASS_TYPE(PointLightComponent)
 	};
 
 	struct SpotLightComponent : LightComponentBase
@@ -107,6 +126,8 @@ namespace pbe {
 
 		SpotLightComponent() = default;
 		SpotLightComponent(const SpotLightComponent& other) = default;
+
+		COMPONENT_CLASS_TYPE(SpotLightComponent)
 	};
 
 }

@@ -23,3 +23,6 @@
 [submodule "pbe/vendor/yaml-cpp"]
 	path = pbe/vendor/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "pbe/vendor/sol2"]
+	path = pbe/vendor/sol2
+	url = https://github.com/ThePhD/sol2.git
