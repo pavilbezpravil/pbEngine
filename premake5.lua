@@ -95,6 +95,8 @@ project "pbe"
 		"%{LibraryDir.WinPixEventRuntime}",
 	}
 	
+	buildoptions { "/bigobj" }
+
 	filter "files:pbe/vendor/FastNoise/**.cpp or files:pbe/vendor/yaml-cpp/src/**.cpp"
    	flags { "NoPCH" }
 

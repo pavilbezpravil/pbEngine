@@ -63,41 +63,46 @@ namespace pbe {
 
 	void ImGuiLayer::OnEvent(Event& event) {
 		EventDispatcher d(event);
-		d.Dispatch<MouseButtonPressedEvent>([](MouseButtonPressedEvent& e) {
-			ImGuiIO& io = ImGui::GetIO();
-			io.MouseDown[e.GetMouseButton()] = true;
-			return false;
-		});
-		d.Dispatch<MouseButtonReleasedEvent>([](MouseButtonReleasedEvent& e) {
-			ImGuiIO& io = ImGui::GetIO();
-			io.MouseDown[e.GetMouseButton()] = false;
-			return false;
-		});
+		ImGuiIO& io = ImGui::GetIO();
 
-		d.Dispatch<KeyPressedEvent>([](KeyPressedEvent& e) {
-			ImGuiIO& io = ImGui::GetIO();
-			io.KeysDown[(int)e.GetKeyCode()] = true;
-			return false;
-		});
-		
-		d.Dispatch<KeyReleasedEvent>([](KeyReleasedEvent& e) {
-			ImGuiIO& io = ImGui::GetIO();
-			io.KeysDown[(int)e.GetKeyCode()] = false;
-			return false;
-		});
+		bool isMouseHandles = io.WantCaptureMouse;
+		bool isKeyboardHandles = io.WantCaptureKeyboard;
+		if (true || io.WantCaptureMouse) {
+			d.Dispatch<MouseButtonPressedEvent>([&](MouseButtonPressedEvent& e) {
+				io.MouseDown[e.GetMouseButton()] = true;
+				return isMouseHandles;
+				});
+			d.Dispatch<MouseButtonReleasedEvent>([&](MouseButtonReleasedEvent& e) {
+				io.MouseDown[e.GetMouseButton()] = false;
+				return isMouseHandles;
+				});
+			d.Dispatch<MouseScrolledEvent>([&](MouseScrolledEvent& e) {
+				io.MouseWheel = e.GetYOffset();
+				io.MouseWheelH = e.GetXOffset();
+				return isMouseHandles;
+				});
+			d.Dispatch<MouseMovedEvent>([&](MouseMovedEvent& e) {
+				io.MousePos = { e.GetX(), e.GetY() };
+				return isMouseHandles;
+				});
+		}
 
-		d.Dispatch<KeyTypedEvent>([](KeyTypedEvent& e) {
-			ImGuiIO& io = ImGui::GetIO();
-			io.AddInputCharacter((uint)e.GetKeyCode());
-			return false;
-		});
+		if (true || io.WantCaptureKeyboard) {
+			d.Dispatch<KeyPressedEvent>([&](KeyPressedEvent& e) {
+				io.KeysDown[(int)e.GetKeyCode()] = true;
+				return isKeyboardHandles;
+				});
 
-		d.Dispatch<MouseScrolledEvent>([](MouseScrolledEvent& e) {
-			ImGuiIO& io = ImGui::GetIO();
-			io.MouseWheel = e.GetYOffset();
-			io.MouseWheelH = e.GetXOffset();
-			return false;
-		});
+			d.Dispatch<KeyReleasedEvent>([&](KeyReleasedEvent& e) {
+				io.KeysDown[(int)e.GetKeyCode()] = false;
+				return isKeyboardHandles;
+				});
+
+			d.Dispatch<KeyTypedEvent>([&](KeyTypedEvent& e) {
+				io.AddInputCharacter((uint)e.GetKeyCode());
+				return isKeyboardHandles;
+				});
+		}
 	}
 
 	void ImGuiLayer::OnAttach()

@@ -231,6 +231,19 @@ namespace pbe {
 		m_ViewportPanelMouseOver = ImGui::IsWindowHovered();
 		m_ViewportPanelFocused = ImGui::IsWindowFocused();
 
+		ImGuiIO& io = ImGui::GetIO();
+		// io.WantCaptureMouse = !m_ViewportPanelFocused || !m_ViewportPanelMouseOver;
+		// io.WantCaptureKeyboard = !m_ViewportPanelFocused || !m_ViewportPanelMouseOver;
+		io.WantCaptureMouse = !m_ViewportPanelMouseOver;
+		io.WantCaptureKeyboard = !m_ViewportPanelMouseOver;
+
+		// HZ_CORE_INFO("viewport hovered {}", m_ViewportPanelMouseOver);
+		// HZ_CORE_INFO("viewport focused {}", m_ViewportPanelFocused);
+		// HZ_CORE_INFO("io.WantCaptureMouse {}", io.WantCaptureMouse);
+		// HZ_CORE_INFO("io.WantCaptureKeyboard {}", io.WantCaptureKeyboard);
+		// HZ_CORE_INFO("io.MousePos ({}, {})", io.MousePos.x, io.MousePos.y);
+
+
 		auto viewportOffset = ImGui::GetCursorPos(); // includes tab bar
 		auto viewportSize = ImGui::GetContentRegionAvail();
 		
@@ -620,8 +633,7 @@ namespace pbe {
 					}
 					break;
 				case KeyCode::Delete:
-					if (!m_SelectionContext.empty())
-					{
+					if (!m_SelectionContext.empty()) {
 						Entity selectedEntity = m_SelectionContext[0].Entity;
 						m_EditorScene->DestroyEntity(selectedEntity);
 						m_SelectionContext.clear();

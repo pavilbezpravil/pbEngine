@@ -39,13 +39,17 @@ namespace pbe {
 	struct TransformComponent
 	{
 		Vec3 Translation = {0, 0, 0};
-		Quat Rotation = glm::quat();
+		Quat Rotation = glm::quat(1, 0, 0, 0);
 		Vec3 Scale = {1, 1, 1};
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent& other) = default;
 		TransformComponent(const Vec3& translation)
 			: Translation(translation) {}
+
+		Vec3 Forward() const { return Rotation * Vec3_X; }
+		Vec3 Up() const { return Rotation * Vec3_Y; }
+		Vec3 Right() const { return Rotation * Vec3_Z; }
 
 		Mat4 GetTransform() const;
 		void SetTransform(const Mat4& trans);

@@ -13,6 +13,13 @@ using Mat4 = glm::mat4;
 
 using Quat = glm::quat;
 
+const Vec3 Vec3_X    = Vec3(1, 0, 0);
+const Vec3 Vec3_XNeg = Vec3(-1, 0, 0);
+const Vec3 Vec3_Y    = Vec3(0, 1, 0);
+const Vec3 Vec3_YNeg = Vec3(0, -1, 0);
+const Vec3 Vec3_Z    = Vec3(0, 0, 1);
+const Vec3 Vec3_ZNeg = Vec3(0, 0, -1);
+
 std::tuple<glm::vec3, glm::quat, glm::vec3> GetTransformDecomposition(const glm::mat4& transform);
 
 namespace Math
