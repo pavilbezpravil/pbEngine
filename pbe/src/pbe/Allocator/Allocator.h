@@ -12,7 +12,7 @@ namespace pbe {
 			++_totalNAlloc;
 			++_curNAlloc;
 			void* p = malloc(size + sizeof(uint));
-			*(uint*)p = size;
+			*(uint*)p = (uint)size;
 			return (byte*)p + sizeof(uint);
 			// return malloc(size);
 		}
@@ -42,12 +42,12 @@ namespace pbe {
 
 }
 
-inline void* operator new(size_t size)
+void* operator new(size_t size)
 {
 	return pbe::pbeAllocator.alloc(size);
 }
 
-inline void operator delete(void* p)
+void operator delete(void* p)
 {
 	if (p)
 		pbe::pbeAllocator.free(p);

@@ -95,6 +95,11 @@ project "pbe"
 		"%{LibraryDir.WinPixEventRuntime}",
 	}
 	
+	defines 
+	{
+		"_CRT_SECURE_NO_WARNINGS"
+	}
+
 	buildoptions { "/bigobj" }
 
 	filter "files:pbe/vendor/FastNoise/**.cpp or files:pbe/vendor/yaml-cpp/src/**.cpp"

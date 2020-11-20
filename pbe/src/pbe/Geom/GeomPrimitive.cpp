@@ -63,7 +63,7 @@ namespace pbe {
 		// Create the vertices.
 		//								  
 
-		meshData.Create(fvf, 24, 36 / 3);
+		meshData.Create(fvf, 24, 36);
 
 		Vertex v[24];
 

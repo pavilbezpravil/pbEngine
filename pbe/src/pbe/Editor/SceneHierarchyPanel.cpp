@@ -637,7 +637,7 @@ namespace pbe {
 			ImGui::Checkbox("Enable", &l.Enable);
 			ImGui::Checkbox("Cast Shadow", &l.CastShadow);
 			ImGui::ColorEdit3("Color", glm::value_ptr(l.Color));
-			ImGui::DragFloat("Multiplier", &l.Multiplier, 0.1, 0, 1000);
+			ImGui::DragFloat("Multiplier", &l.Multiplier, 0.1f, 0, 1000);
 		};
 		
 		DrawComponent<DirectionLightComponent>("Direction Light", entity, [&](DirectionLightComponent& dl)

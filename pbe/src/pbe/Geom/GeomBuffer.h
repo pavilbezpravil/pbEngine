@@ -14,16 +14,17 @@ namespace pbe {
 	static_assert(sizeof(GeomFace) == 3 * sizeof(uint));
 
 	struct GeomBuffer {
-		void Create(FVF fvf, int size = 0, int faces = 0);
+		void Create(FVF fvf, int size = 0, int nIndexes = 0);
 
 		void AddVertex();
+		void AddIndexes(uint n);
 		void AddFace();
 
 		FVF GetFVF() const { return fvf; }
-		int NumVertex() const { return data.size() / stride; }
-		int GetStride() const { return stride; }
+		uint NumVertex() const { return uint(data.size()) / stride; }
+		uint GetStride() const { return stride; }
 		const void* GetRawVertexData() const { return data.data(); }
-		const void* GetRawFaceData() const { return faces.data(); }
+		const void* GetRawIndexesData() const { return indexes.data(); }
 
 		const BYTE* GetRaw(int i, FVF type, int typeIdx = 0) const;
 		BYTE* GetRaw(int i, FVF type, int typeIdx = 0);
@@ -34,7 +35,7 @@ namespace pbe {
 		const Vec3& GetNormal(int i) const;
 		Vec3& NormalMut(int i);
 
-		int NumFace() const;
+		uint NumFace() const;
 
 		const GeomFace& GetFace(int face) const;
 		GeomFace& FaceMut(int face);
@@ -43,8 +44,8 @@ namespace pbe {
 		FVF fvf = FVF_UNKNOWN;
 		// int size = 0;
 		std::vector<byte> data;
-		int stride = 0;
-		std::vector<GeomFace> faces;
+		uint stride = 0;
+		std::vector<uint> indexes;
 	};
 
 }

@@ -5,7 +5,6 @@
 #include "ImGuizmo.h"
 
 // #define IMGUI_IMPL_API
-
 #include "examples/imgui_impl_win32.h"
 #include "examples/imgui_impl_dx12.h"
 

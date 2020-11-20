@@ -708,8 +708,8 @@ namespace pbe {
 					for (uint32_t i = 0; i < submeshes.size(); i++) {
 						auto& submesh = submeshes[i];
 						Ray ray = {
-							glm::inverse(entity.Transform() * submesh.Transform) * glm::vec4(origin, 1.0f),
-							glm::inverse(glm::mat3(entity.Transform()) * glm::mat3(submesh.Transform)) * direction
+							glm::inverse(entity.GetComponent<TransformComponent>().GetTransform() * submesh.Transform) * glm::vec4(origin, 1.0f),
+							glm::inverse(glm::mat3(entity.GetComponent<TransformComponent>().GetTransform()) * glm::mat3(submesh.Transform)) * direction
 						};
 
 						float t;

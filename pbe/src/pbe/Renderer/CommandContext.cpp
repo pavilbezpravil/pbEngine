@@ -26,6 +26,7 @@ namespace
 			return D3D12_COMMAND_LIST_TYPE_COMPUTE;
 		}
 		HZ_CORE_ASSERT(false);
+		return (D3D12_COMMAND_LIST_TYPE)-1;
 	}
 }
 
@@ -279,7 +280,7 @@ void GraphicsContext::SetRenderTargets( UINT NumRTs, pbe::Ref<ColorBuffer> RTs[]
 {
 	D3D12_CPU_DESCRIPTOR_HANDLE RTVs[4];
 	DXGI_FORMAT formats[4];
-	for (int i = 0; i < NumRTs; ++i) {
+	for (UINT i = 0; i < NumRTs; ++i) {
 		RTVs[i] = RTs[i]->GetRTV();
 		formats[i] = RTs[i]->GetFormat();
 

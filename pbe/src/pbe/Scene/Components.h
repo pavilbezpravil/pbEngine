@@ -46,6 +46,8 @@ namespace pbe {
 		TransformComponent(const TransformComponent& other) = default;
 		TransformComponent(const Vec3& translation)
 			: Translation(translation) {}
+		TransformComponent(const Quat& rotation)
+			: Rotation(rotation) {}
 
 		Vec3 Forward() const { return Rotation * Vec3_X; }
 		Vec3 Up() const { return Rotation * Vec3_Y; }

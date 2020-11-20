@@ -3,12 +3,12 @@
 
 namespace pbe {
 
-	void GeomBuffer::Create(FVF fvf, int size, int faces) {
+	void GeomBuffer::Create(FVF fvf, int size, int nIndexes) {
 		this->fvf = fvf;
 		stride = fvfGetStride(fvf);
 		data.resize(stride * size);
 
-		this->faces.resize(faces);
+		this->indexes.resize(nIndexes);
 	}
 
 	void GeomBuffer::AddVertex()
@@ -16,9 +16,14 @@ namespace pbe {
 		data.resize(data.size() + stride);
 	}
 
+	void GeomBuffer::AddIndexes(uint n)
+	{
+		indexes.resize(indexes.size() + n);
+	}
+
 	void GeomBuffer::AddFace()
 	{
-		faces.push_back({});
+		AddIndexes(3);
 	}
 
 	const BYTE* GeomBuffer::GetRaw(int i, FVF type, int typeIdx) const {
@@ -45,16 +50,18 @@ namespace pbe {
 		return *(Vec3*)(GetRaw(i, FVF_NORMAL));
 	}
 
-	int GeomBuffer::NumFace() const {
-		return faces.size();
+	uint GeomBuffer::NumFace() const {
+		// todo:
+		HZ_CORE_ASSERT(indexes.size() % 3 == 0);
+		return uint(indexes.size()) / 3;
 	}
 
 	const GeomFace& GeomBuffer::GetFace(int face) const {
-		return faces[face];
+		return *(GeomFace*)&indexes[face * 3];
 	}
 
 	GeomFace& GeomBuffer::FaceMut(int face) {
-		return faces[face];
+		return *(GeomFace*)&indexes[face * 3];
 	}
 
 }
