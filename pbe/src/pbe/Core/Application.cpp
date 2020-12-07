@@ -12,6 +12,7 @@
 #include <Windows.h>
 
 // dx12
+#include "Input.h"
 #include "pbe/Renderer/CommandContext.h"
 #include "pbe/Renderer/GraphicsCore.h"
 #include "pbe/Renderer/ColorBuffer.h"
@@ -31,6 +32,8 @@ namespace pbe {
 		m_Window->SetEventCallback(BIND_EVENT_FN(OnEvent));
 		m_Window->SetVSync(true);
 
+		Input::Init();
+
 		Renderer::Instantiate();
 		Renderer::Get().Init();
 
@@ -45,6 +48,8 @@ namespace pbe {
 		m_LayerStack.Clear();
 		ScriptEngine::Shutdown();
 		Renderer::Get().Shutdown();
+
+		Input::Shutdown();
 	}
 
 	void Application::PushLayer(Layer* layer)

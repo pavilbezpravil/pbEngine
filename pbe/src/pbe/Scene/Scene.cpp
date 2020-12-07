@@ -154,7 +154,7 @@ namespace pbe {
 		const auto& camera = cameraEntity.GetComponent<CameraComponent>();
 		HZ_CORE_ASSERT(camera.Primary);
 		const auto& trans = cameraEntity.GetComponent<TransformComponent>();
-		Mat4 view = glm::translate(glm::mat4(1.0f), trans.Translation);// * glm::toMat4(trans.Rotation);
+		Mat4 view = glm::translate(glm::mat4(1.0f), trans.Translation) * glm::toMat4(trans.Rotation);
 		view = glm::inverse(view);
 		OnRenderScene(camera.Camera.GetProjectionMatrix() * view, trans.Translation);
 	}

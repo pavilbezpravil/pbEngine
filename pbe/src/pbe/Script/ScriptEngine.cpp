@@ -66,6 +66,11 @@ namespace pbe {
 		return s;
 	}
 
+	static sol::light<uint64_t> GetEntityHandler(Entity e)
+	{
+		void* handler = (void*)(uint64_t)e.GetUUID();
+		return sol::light<uint64_t>(handler);
+	}
 
 	template<typename... Ts>
 	std::ostream& operator<<(std::ostream& os, std::tuple<Ts...> const& theTuple)
@@ -205,8 +210,22 @@ namespace pbe {
 		if (!smDesc.successLoaded)
 			return;
 
-		auto func = (*GetSceneContext(entity).luaState)[smDesc.ModuleCallPrefix]["onUpdate"];
-		LuaSafeCall(func, entity, ts.GetSeconds());
+		auto& luaState = *GetSceneContext(entity).luaState;
+
+		// luaState["pbe_entity"]["printEntityInfo"]();
+		// luaState["pbe_entity"]["printEntityMap"]();
+
+
+		auto entityHandler = GetEntityHandler(entity);
+		// auto& res = luaState["pbe_entity"]["getEntity"](entityHandler);
+		// auto& res = ;
+		Entity& e = luaState["pbe_entity"]["map"][entityHandler];
+		
+		auto func = luaState[smDesc.ModuleCallPrefix]["onUpdate"];
+		LuaSafeCall(func, e, ts.GetSeconds());
+
+		// auto func = luaState[smDesc.ModuleCallPrefix]["onUpdate"];
+		// LuaSafeCall(func, entity, ts.GetSeconds());
 	}
 
 	void ScriptEngine::OnDestroyEntity(Entity entity)
@@ -244,16 +263,17 @@ namespace pbe {
 	bool ScriptEngine::LoadModule(const std::string& modulePath)
 	{
 		scriptModuleDescMap[modulePath] = {};
-
+		
 		ScriptModuleDesc& smDesc = scriptModuleDescMap[modulePath];
-		smDesc.ModulePath = ToLuaRequirePath(modulePath);
+		smDesc.ModulePath = modulePath;
 		smDesc.ModuleCallPrefix = GetLuaModulePrefix(modulePath);
 
-		bool success = LoadModuleInternal(*testLuaState, smDesc.ModuleCallPrefix, smDesc.ModulePath);
+		std::string modulePathProcessed = ToLuaRequirePath(modulePath);
+		bool success = LoadModuleInternal(*testLuaState, smDesc.ModuleCallPrefix, modulePathProcessed);
 		// todo: stupid logic
 		if (success) {
 			for (auto& element : contexts) {
-				LoadModuleInternal(*element.second.luaState, smDesc.ModuleCallPrefix, smDesc.ModulePath);
+				LoadModuleInternal(*element.second.luaState, smDesc.ModuleCallPrefix, modulePathProcessed);
 			}
 		} else {
 			HZ_CORE_TRACE("Cant load module {}", smDesc.ModulePath);
@@ -283,6 +303,7 @@ namespace pbe {
 
 		if (IsScriptModuleSuccessLoaded(sc.ScriptPath)) {
 			instData.awaked = true;
+			UploadEntityToState(entity);
 			OnAwakeEntity(entity);
 		}
 	}
@@ -303,6 +324,7 @@ namespace pbe {
 		if (instData.instantiated) {
 			HZ_CORE_ASSERT(IsScriptModuleSuccessLoaded(instData.pDesc->ModulePath));
 			OnDestroyEntity(entity);
+			UnloadEntityFromState(entity);
 			instData.instantiated = false;
 		}
 		instData.awaked = false;
@@ -371,5 +393,31 @@ namespace pbe {
 	{
 		bool successLoad = LuaSafeCall((luaState)["pbe_sys"]["loadModule"], moduleCallPrefix, modulePath);
 		return successLoad;
+	}
+
+	void ScriptEngine::UploadEntityToState(Entity entity)
+	{
+		auto& luaState = *GetSceneContext(entity).luaState;
+		auto entityHandler = GetEntityHandler(entity);
+		// LuaSafeCall(luaState["pbe_entity"]["addEntity"], entityHandler, entity);
+		luaState["pbe_entity"]["map"][entityHandler] = entity;
+	}
+
+	void ScriptEngine::GetEntityFromState(Entity entity)
+	{
+		// auto& luaState = *GetSceneContext(entity).luaState;
+		// void* handler = (void*)(uint64_t)entity.GetUUID();
+		// auto e = luaState["pbe_entity"]["getEntity"](sol::light(handler)).get<sol::table>();
+		// e["sdfsdf"];
+		//
+		// auto i = luaState["pbe_entity"];
+		//
+	}
+
+	void ScriptEngine::UnloadEntityFromState(Entity entity)
+	{
+		auto& luaState = *GetSceneContext(entity).luaState;
+		auto entityHandler = GetEntityHandler(entity);
+		LuaSafeCall(luaState["pbe_entity"]["removeEntity"], entityHandler);
 	}
 }

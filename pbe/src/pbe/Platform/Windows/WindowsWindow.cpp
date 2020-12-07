@@ -14,6 +14,8 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 
+#include "pbe/Core/Input.h"
+
 namespace pbe {
 
 	static void GLFWErrorCallback(int error, const char* description)
@@ -200,6 +202,8 @@ namespace pbe {
 		float time = glfwGetTime();
 		float delta = time - m_LastFrameTime;
 		m_LastFrameTime = time;
+
+		Input::Update();
 	}
 
 	void WindowsWindow::SetVSync(bool enabled)

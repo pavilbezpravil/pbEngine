@@ -1,3 +1,5 @@
+print "Load pbe_sys.lua"
+
 utils = {}
 function utils.PrintTable(t)
     print("Print table")
@@ -7,7 +9,11 @@ function utils.PrintTable(t)
     end
 end
 
-print "Load pbe_sys.lua"
+function utils.tablelength(T)
+  local count = 0
+  for _ in pairs(T) do count = count + 1 end
+  return count
+end
 
 pbe_sys = {}
 
@@ -66,7 +72,7 @@ function pbe_sys.RequireModule(modulePath)
             __newindex = M,
         })
 
-        dofileIntoEnv("assets/scripts/player.lua", newenv)
+        dofileIntoEnv(modulePath, newenv)
     end
 
     -- dofileIntoEnv("assets/scripts/player.lua", M)
@@ -93,7 +99,41 @@ function pbe_sys.checkModuleExist(moduleName)
     end
 end
 
+pbe_entity = {}
+pbe_entity.map = {}
+function pbe_entity.addEntity(entityHangler, entity)
+  print("entityHandler " .. tostring(entityHangler))
+  pbe_entity.map[entityHangler] = entity
 
-function someFunc()
-  print("some func called ")
+  pbe_entity.printEntityMap()
+  pbe_entity.printEntityInfo()
+end
+
+function pbe_entity.printEntityMap()
+  print("print entity map")
+  for k, v in pairs(pbe_entity.map) do
+    -- print(k, " ", tostring(v))
+    print(k, " wtf? ", v)
+  end
+end
+
+function pbe_entity.printEntityInfo()
+  print("printEntityInfo")
+  print("map length = " .. tablelength(pbe_entity.map))
+end
+
+function pbe_entity.getEntity(entityHangler)
+  pbe_entity.printEntityMap()
+  
+  print("entityHandler " .. tostring(entityHangler))
+  entity = pbe_entity.map[entityHangler]
+  return entity
+end
+
+function pbe_entity.removeEntity(entityHangler)
+  pbe_entity.map[entityHangler] = nil
+end
+
+function test_e_func()
+  return test_e
 end

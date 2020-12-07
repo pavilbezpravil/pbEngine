@@ -7,6 +7,31 @@
 #include <GLFW/glfw3.h>
 
 namespace pbe {
+	Input* s_Input = NULL;
+	
+	void Input::Init()
+	{
+		HZ_CORE_ASSERT(!s_Input);
+		s_Input = new Input();
+	}
+
+	void Input::Shutdown()
+	{
+		HZ_CORE_ASSERT(s_Input);
+		delete s_Input;
+		s_Input = NULL;
+	}
+
+	void Input::Update()
+	{
+		s_Input->mousePrevPos = s_Input->mouseCurPos;
+		auto [x, y] = s_Input->GetMousePosition();
+		s_Input->mouseCurPos = {x, y};
+
+		if (s_Input->mousePrevPos.x == NAN) {
+			s_Input->mousePrevPos = s_Input->mouseCurPos;
+		}
+	}
 
 	bool Input::IsKeyPressed(KeyCode keycode)
 	{
@@ -45,4 +70,9 @@ namespace pbe {
 
 	}
 
+	std::pair<float, float> Input::GetMouseDelta()
+	{
+		Vec2 delta = s_Input->mouseCurPos - s_Input->mousePrevPos;
+		return {delta.x, delta.y};
+	}
 }

@@ -114,6 +114,10 @@ namespace pbe {
 		void UploadKnownModules(const sol::state& luaState);
 		bool LoadModuleInternal(const sol::state& luaState, const std::string& moduleCallPrefix, const std::string& modulePath);
 
+		void UploadEntityToState(Entity entity);
+		void GetEntityFromState(Entity entity);
+		void UnloadEntityFromState(Entity entity);
+
 		using ScriptModuleDescMap = std::unordered_map<std::string, ScriptModuleDesc>;
 		ScriptModuleDescMap scriptModuleDescMap;
 

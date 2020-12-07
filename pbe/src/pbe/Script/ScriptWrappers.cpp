@@ -56,37 +56,69 @@ namespace pbe {
 		{
 			HZ_CORE_INFO("    RegisterMathFunction");
 
-			auto vec3 = g_luaState.new_usertype<Vec3>("Vec3",
-				sol::constructors<Vec3(), Vec3(float, float, float)>());
+			{
+				auto vec3 = g_luaState.new_usertype<Vec3>("Vec3",
+					sol::constructors<Vec3(), Vec3(float, float, float)>());
 
-			vec3.set("x", &Vec3::x);
-			vec3.set("y", &Vec3::y);
-			vec3.set("z", &Vec3::z);
+				vec3.set("x", &Vec3::x);
+				vec3.set("y", &Vec3::y);
+				vec3.set("z", &Vec3::z);
 
-			vec3.set("X", sol::property([]() { return Vec3_X; }));
-			vec3.set("XNeg", sol::property([]() { return Vec3_XNeg; }));
-			vec3.set("Y", sol::property([]() { return Vec3_Y; }));
-			vec3.set("YNeg", sol::property([]() { return Vec3_YNeg; }));
-			vec3.set("Z", sol::property([]() { return Vec3_Z; }));
-			vec3.set("ZNeg", sol::property([]() { return Vec3_ZNeg; }));
+				vec3.set("X", sol::property([]() { return Vec3_X; }));
+				vec3.set("XNeg", sol::property([]() { return Vec3_XNeg; }));
+				vec3.set("Y", sol::property([]() { return Vec3_Y; }));
+				vec3.set("YNeg", sol::property([]() { return Vec3_YNeg; }));
+				vec3.set("Z", sol::property([]() { return Vec3_Z; }));
+				vec3.set("ZNeg", sol::property([]() { return Vec3_ZNeg; }));
 
-			vec3.set("cross", [](const Vec3& l, const Vec3& r) { return glm::cross(l, r); });
-			vec3.set("dot", [](const Vec3& l, const Vec3& r) { return glm::dot(l, r); });
-			vec3.set("normalize", [](const Vec3& l) { return glm::normalize(l); });
-			vec3.set("length", [](const Vec3& l) { return glm::length(l); });
-			vec3.set("distance", [](const Vec3& l, const Vec3& r) { return glm::distance(l, r); });
+				vec3.set("cross", [](const Vec3& l, const Vec3& r) { return glm::cross(l, r); });
+				vec3.set("dot", [](const Vec3& l, const Vec3& r) { return glm::dot(l, r); });
+				vec3.set("normalize", [](const Vec3& l) { return glm::normalize(l); });
+				vec3.set("length", [](const Vec3& l) { return glm::length(l); });
+				vec3.set("distance", [](const Vec3& l, const Vec3& r) { return glm::distance(l, r); });
 
-			vec3.set(sol::meta_function::unary_minus, [](const Vec3& self) { return -self; });
+				vec3.set(sol::meta_function::unary_minus, [](const Vec3& self) { return -self; });
 
-			vec3.set(sol::meta_function::addition, [](const Vec3& l, const Vec3& r) { return l + r; });
-			vec3.set(sol::meta_function::subtraction, [](const Vec3& l, const Vec3& r) { return l - r; });
-			vec3.set(sol::meta_function::multiplication,
-				sol::overload(
-					[](const Vec3& l, const Vec3& r) { return l * r; },
-					[](const Vec3& l, float r) { return l * r; })
+				vec3.set(sol::meta_function::addition, [](const Vec3& l, const Vec3& r) { return l + r; });
+				vec3.set(sol::meta_function::subtraction, [](const Vec3& l, const Vec3& r) { return l - r; });
+				vec3.set(sol::meta_function::multiplication,
+					sol::overload(
+						[](const Vec3& l, const Vec3& r) { return l * r; },
+						[](const Vec3& l, float r) { return l * r; })
 				);
 
-			vec3.set(sol::meta_function::to_string, [](const Vec3& l) { return std::string("{") + std::to_string(l.x) + ", " + std::to_string(l.y) + ", " + std::to_string(l.z) + "}"; });
+				vec3.set(sol::meta_function::to_string, [](const Vec3& l) { return std::string("{") + std::to_string(l.x) + ", " + std::to_string(l.y) + ", " + std::to_string(l.z) + "}"; });
+			}
+
+			{
+				auto vec2 = g_luaState.new_usertype<Vec2>("Vec2",
+					sol::constructors<Vec2(), Vec2(float, float)>());
+
+				vec2.set("x", &Vec2::x);
+				vec2.set("y", &Vec2::y);
+
+				vec2.set("X", sol::property([]() { return Vec2_X; }));
+				vec2.set("XNeg", sol::property([]() { return Vec2_XNeg; }));
+				vec2.set("Y", sol::property([]() { return Vec2_Y; }));
+				vec2.set("YNeg", sol::property([]() { return Vec2_YNeg; }));
+
+				vec2.set("dot", [](const Vec2& l, const Vec2& r) { return glm::dot(l, r); });
+				vec2.set("normalize", [](const Vec2& l) { return glm::normalize(l); });
+				vec2.set("length", [](const Vec2& l) { return glm::length(l); });
+				vec2.set("distance", [](const Vec2& l, const Vec2& r) { return glm::distance(l, r); });
+
+				vec2.set(sol::meta_function::unary_minus, [](const Vec2& self) { return -self; });
+
+				vec2.set(sol::meta_function::addition, [](const Vec2& l, const Vec2& r) { return l + r; });
+				vec2.set(sol::meta_function::subtraction, [](const Vec2& l, const Vec2& r) { return l - r; });
+				vec2.set(sol::meta_function::multiplication,
+					sol::overload(
+						[](const Vec2& l, const Vec2& r) { return l * r; },
+						[](const Vec2& l, float r) { return l * r; })
+				);
+
+				vec2.set(sol::meta_function::to_string, [](const Vec2& l) { return std::string("{") + std::to_string(l.x) + ", " + std::to_string(l.y) + "}"; });
+			}
 
 			auto quat = g_luaState.new_usertype<Quat>("Quat",
 				sol::constructors<Quat(), Quat(float, float, float, float)>()
@@ -198,7 +230,10 @@ namespace pbe {
 					return sol::make_object(lua, sol::lua_nil);
 				});
 			entity.set("getUUID", [](const Entity& e) { return e.GetUUID(); });
-			entity.set(sol::meta_function::to_string, [](const Entity& e) { return std::string("Entity {") + std::to_string(e.GetSceneUUID()) + "}"; });
+			entity.set(sol::meta_function::to_string, [](const Entity& e)
+			{
+				return std::string("Entity {") + std::to_string(e.GetUUID()) + "}";
+			});
 		}
 
 		void RegisterInput(sol::state& g_luaState)
@@ -261,6 +296,8 @@ namespace pbe {
 
 			input.set("isKeyPressed", [](const KeyCode& keyCode) { return Input::IsKeyPressed(keyCode); });
 			input.set("isMouseButtonPressed", [](int button) { return Input::IsMouseButtonPressed(button); });
+			input.set("getMousePosition", []() { auto [x, y] = Input::GetMousePosition(); return Vec2(x, y); });
+			input.set("getMouseDelta", []() { auto [x, y] = Input::GetMouseDelta(); return Vec2(x, y); });
 		}
 	}
 }

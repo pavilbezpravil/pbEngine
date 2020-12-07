@@ -3,7 +3,9 @@ function onCreate(self)
 end
 
 function onUpdate(self, dt)
+    print("sdfgsdgdfgdfgdfg")
     trans = self:getComponent("TransformComponent")
+    print("sdfgsdgdfgdfgdfg")
 
     local direction = Vec3.new()
     if Input.isKeyPressed(KeyCode.W) then
@@ -20,6 +22,13 @@ function onUpdate(self, dt)
     end
     direction:normalize()
 
+    mouseDelta = Input.getMouseDelta()
+    -- print(tostring(mouseDelta))
+
+    mouseSensitivity = 0.002
+    q = Quat.angleAxis(mouseDelta.x * mouseSensitivity, Vec3.YNeg)
+    trans.rotation = q * trans.rotation
+
     local speed = 2
-    trans.translation = trans.translation + direction * speed * dt    
+    trans.translation = trans.translation + direction * speed * dt
 end
