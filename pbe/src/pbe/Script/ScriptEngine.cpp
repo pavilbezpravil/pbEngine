@@ -199,8 +199,13 @@ namespace pbe {
 		if (!smDesc.successLoaded)
 			return;
 
-		auto func = (*GetSceneContext(entity).luaState)[smDesc.ModuleCallPrefix]["onCreate"];
-		LuaSafeCall(func, entity);
+		auto& luaState = *GetSceneContext(entity).luaState;
+
+		auto entityHandler = GetEntityHandler(entity);
+		Script::LuaEntity& e = luaState["pbe_entity"]["map"][entityHandler];
+
+		auto func = luaState[smDesc.ModuleCallPrefix]["onCreate"];
+		LuaSafeCall(func, e);
 	}
 
 	void ScriptEngine::OnUpdateEntity(Entity entity, Timestep ts)
@@ -219,7 +224,8 @@ namespace pbe {
 		auto entityHandler = GetEntityHandler(entity);
 		// auto& res = luaState["pbe_entity"]["getEntity"](entityHandler);
 		// auto& res = ;
-		Entity& e = luaState["pbe_entity"]["map"][entityHandler];
+		Script::LuaEntity& e = luaState["pbe_entity"]["map"][entityHandler];
+		// Entity& e = luaState["pbe_entity"]["map"][entityHandler];
 		
 		auto func = luaState[smDesc.ModuleCallPrefix]["onUpdate"];
 		LuaSafeCall(func, e, ts.GetSeconds());
@@ -400,7 +406,8 @@ namespace pbe {
 		auto& luaState = *GetSceneContext(entity).luaState;
 		auto entityHandler = GetEntityHandler(entity);
 		// LuaSafeCall(luaState["pbe_entity"]["addEntity"], entityHandler, entity);
-		luaState["pbe_entity"]["map"][entityHandler] = entity;
+		luaState["pbe_entity"]["map"][entityHandler] = Script::LuaEntity{ entity };
+		// luaState["pbe_entity"]["map"][entityHandler] = entity;
 	}
 
 	void ScriptEngine::GetEntityFromState(Entity entity)

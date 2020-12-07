@@ -205,10 +205,11 @@ namespace pbe {
 		{
 			HZ_CORE_INFO("    RegisterEntity");
 
-			auto& entity = g_luaState.new_usertype<Entity>("Entity");
+			using EntityT = LuaEntity;
+			
+			auto& entity = g_luaState.new_usertype<EntityT>("Entity");
 
-			// entity.set();
-			entity.set("getComponent", [](Entity& e, const char* name, sol::this_state s)
+			entity.set("getComponent", [](EntityT& e, const char* name, sol::this_state s)
 				{
 					sol::state_view lua(s);
 
@@ -229,11 +230,13 @@ namespace pbe {
 					}
 					return sol::make_object(lua, sol::lua_nil);
 				});
-			entity.set("getUUID", [](const Entity& e) { return e.GetUUID(); });
-			entity.set(sol::meta_function::to_string, [](const Entity& e)
+			entity.set("getUUID", [](const EntityT& e) { return e.GetUUID(); });
+			entity.set(sol::meta_function::to_string, [](const EntityT& e)
 			{
 				return std::string("Entity {") + std::to_string(e.GetUUID()) + "}";
 			});
+			entity.set(sol::meta_function::index, &dynamic_object::dynamic_get);
+			entity.set(sol::meta_function::new_index, &dynamic_object::dynamic_set);
 		}
 
 		void RegisterInput(sol::state& g_luaState)
