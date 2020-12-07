@@ -1,34 +1,21 @@
 #include "pch.h"
 #include "ScriptEngine.h"
 
-#include <iostream>
-#include <chrono>
-#include <thread>
 #include <filesystem>
-
+#include <imgui.h>
 #include <Windows.h>
-#include <winioctl.h>
-
-#include "ScriptEngineRegistry.h"
-
-#include "pbe/Scene/Scene.h"
-
-#include "imgui.h"
 
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
+
+#include "pbe/Scene/Scene.h"
 
 #include "ScriptWrappers.h"
 
 
 namespace pbe {
 
-	static Ref<Scene> s_SceneContext;
-
-	static EntityInstanceMap s_EntityInstanceMap;
-
-	using LoadedScriptMap = std::unordered_set<std::string>;
-	static LoadedScriptMap s_LoadedScriptMap;
+	ScriptEngine* s_ScriptEngine = NULL;
 
 	void my_panic(sol::optional<std::string> maybe_msg) {
 		HZ_CORE_WARN("Lua is in a panic state and will now abort() the application");
@@ -55,36 +42,15 @@ namespace pbe {
 		return sol::stack::push(L, description);
 	}
 
-	sol::state g_luaState;
-
-	void ScriptEngine::ReloadAssembly(const std::string& path)
-	{
-		if (s_EntityInstanceMap.size())
-		{
-			Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
-			HZ_CORE_ASSERT(scene, "No active scene!");
-			if (s_EntityInstanceMap.find(scene->GetUUID()) != s_EntityInstanceMap.end())
-			{
-				auto& entityMap = s_EntityInstanceMap.at(scene->GetUUID());
-				for (auto&[entityID, entityInstanceData]: entityMap)
-				{
-					const auto& entityMap = scene->GetEntityMap();
-					HZ_CORE_ASSERT(entityMap.find(entityID) != entityMap.end(), "Invalid entity ID or entity doesn't exist in scene!");
-					InitScriptEntity(entityMap.at(entityID));
-				}
-			}
-		}
-	}
-
 	static std::string ToLuaRequirePath(const std::string& modulePath)
 	{
 		std::string s = modulePath;
 		std::replace(s.begin(), s.end(), '\\', '/');
-		// remove '.lua'
-		s.pop_back();
-		s.pop_back();
-		s.pop_back();
-		s.pop_back();
+		// // remove '.lua'
+		// s.pop_back();
+		// s.pop_back();
+		// s.pop_back();
+		// s.pop_back();
 		return s;
 	}
 
@@ -100,252 +66,264 @@ namespace pbe {
 		return s;
 	}
 
-	bool ScriptEngine::ReloadScript(const std::string& path)
+
+	template<typename... Ts>
+	std::ostream& operator<<(std::ostream& os, std::tuple<Ts...> const& theTuple)
 	{
-		// auto result = g_luaState.safe_script_file(path, [](lua_State*, sol::protected_function_result pfr) {
-		// 	return pfr;
-		// });
-		auto modulePrefix = GetLuaModulePrefix(path);
-		auto luaPath = ToLuaRequirePath(path);
-		std::ostringstream stringStream;
-		stringStream << "package.loaded['" << luaPath << "'] = nil\n"
-					<< modulePrefix << " =  " << "require '" << luaPath << "'";
-
-		auto script = stringStream.str();
-		auto result = g_luaState.safe_script(script, [&](lua_State*, sol::protected_function_result pfr) {
-			sol::error err = pfr;
-			HZ_CORE_WARN("script '{}' reload with error: {}", path, err.what());
-			return pfr;
-		});
-
-		// g_luaState.require_file(modulePrefix, luaPath + ".lua");
-
-		return result.valid();
+		std::apply
+		(
+			[&os](Ts const&... tupleArgs)
+			{
+				os << '[';
+				std::size_t n{ 0 };
+				((os << tupleArgs << (++n != sizeof...(Ts) ? ", " : "")), ...);
+				os << ']';
+			}, theTuple
+		);
+		return os;
 	}
-
-	void ScriptEngine::ReloadAllScripts()
+	
+	template<typename Func, typename... Args>
+	bool LuaSafeCall(Func&& func, Args&&... args)
 	{
-		for (auto& scene_map : s_EntityInstanceMap) {
-			for (auto& item : scene_map.second) {
-				item.second.successLoaded = ScriptEngine::ReloadScript(item.second.ModulePath);
+		if (func != sol::nil) {
+			auto result = func(std::forward<Args>(args)...);
+			if (!result.valid()) {
+				sol::error err = result;
+				HZ_CORE_TRACE("script error: {}", err.what());
 			}
+			return result.valid();
+		} else {
+			std::ostringstream iss;
+			iss << func.key;
+			HZ_CORE_TRACE("{} is nil", iss.str());
 		}
+		return false;
+
+		// try
+		// {
+		// 	func(std::forward<Args>(args)...);
+		// }
+		// catch (sol::error err) {
+		// 	HZ_CORE_TRACE("script error: {}", err.what());
+		// 	return false;
+		// }
 	}
 
-	void ScriptEngine::Init(const std::string& assemblyPath)
+	void MakeDefaultState(sol::state& luaState)
+	{
+		luaState = {};
+		luaState.set_panic(sol::c_call<decltype(&my_panic), &my_panic>);
+		luaState.set_exception_handler(&pbe_lua_exception);
+
+		luaState.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::math, sol::lib::debug);
+
+		Script::LoadSystemScripts(luaState);
+		Script::RegisterGameFunction(luaState);
+		Script::RegisterInput(luaState);
+		Script::RegisterMathFunction(luaState);
+		Script::RegisterComponent(luaState);
+		Script::RegisterEntity(luaState);
+	}
+
+	SceneScriptContext::SceneScriptContext() : luaState(std::make_unique<sol::state>()) {
+		
+	}
+
+	bool SceneScriptContext::HasInstData(Entity e)
+	{
+		return instanceDataMap.count(e.GetUUID()) > 0;
+	}
+
+	void ScriptEngine::InitScene(Scene* scene)
+	{
+		CreateContext(scene);
+	}
+
+	void ScriptEngine::ShutdownScene(Scene* scene)
+	{
+		DestroyContext(scene);
+	}
+
+	EntityInstanceData& SceneScriptContext::GetInstData(Entity e)
+	{
+		HZ_CORE_ASSERT(instanceDataMap.count(e.GetUUID()));
+		return instanceDataMap[e.GetUUID()];
+	}
+
+	void SceneScriptContext::AddInstData(Entity e, EntityInstanceData&& instData)
+	{
+		HZ_CORE_ASSERT(instanceDataMap.count(e.GetUUID()) == 0);
+		instanceDataMap[e.GetUUID()] = std::move(instData);
+	}
+
+	void SceneScriptContext::RemoveInstData(Entity e)
+	{
+		HZ_CORE_ASSERT(instanceDataMap.count(e.GetUUID()));
+		instanceDataMap.erase(e.GetUUID());
+	}
+
+	void ScriptEngine::Init()
 	{
 		HZ_CORE_INFO("ScriptEngine Init");
 
-		g_luaState.set_panic(sol::c_call<decltype(&my_panic), &my_panic>);
-		g_luaState.set_exception_handler(&pbe_lua_exception);
-
-		g_luaState.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::math);
-
-		Script::RegisterGameFunction();
-		Script::RegisterMathFunction();
-		Script::RegisterComponent();
-		Script::RegisterEntity();
+		s_ScriptEngine = new ScriptEngine;
 	}
 
 	void ScriptEngine::Shutdown()
 	{
-		// shutdown mono
-		s_SceneContext = nullptr;
-		s_EntityInstanceMap.clear();
+		delete s_ScriptEngine;
+		s_ScriptEngine = NULL;
 	}
 
-	void ScriptEngine::OnSceneDestruct(UUID sceneID)
+	SceneScriptContext& ScriptEngine::GetSceneContext(Entity entity)
 	{
-		if (s_EntityInstanceMap.find(sceneID) != s_EntityInstanceMap.end())
-		{
-			s_EntityInstanceMap.at(sceneID).clear();
-			s_EntityInstanceMap.erase(sceneID);
-		}
+		HZ_CORE_ASSERT(contexts.find(entity.GetSceneUUID()) != contexts.end());
+		return contexts[entity.GetSceneUUID()];
 	}
 
-	void ScriptEngine::SetSceneContext(const Ref<Scene>& scene)
+	void ScriptEngine::OnAwakeEntity(Entity entity)
 	{
-		s_SceneContext = scene;
-	}
-
-	const Ref<Scene>& ScriptEngine::GetCurrentSceneContext()
-	{
-		return s_SceneContext;
-	}
-
-	void ScriptEngine::CopyEntityScriptData(UUID dst, UUID src)
-	{
-		HZ_CORE_ASSERT(s_EntityInstanceMap.find(dst) != s_EntityInstanceMap.end());
-		HZ_CORE_ASSERT(s_EntityInstanceMap.find(src) != s_EntityInstanceMap.end());
-
-		auto& dstEntityMap = s_EntityInstanceMap.at(dst);
-		auto& srcEntityMap = s_EntityInstanceMap.at(src);
-
+		// todo:
 	}
 
 	void ScriptEngine::OnCreateEntity(Entity entity)
 	{
-		OnCreateEntity(entity.m_Scene->GetUUID(), entity.GetComponent<IDComponent>().ID);
-	}
-
-	void ScriptEngine::OnCreateEntity(UUID sceneID, UUID entityID)
-	{
-		auto& instData = GetEntityInstanceData(sceneID, entityID);
-		// todo: call OnCreate
-	}
-
-	void ScriptEngine::OnUpdateEntity(UUID sceneID, UUID entityID, Timestep ts)
-	{
-		HZ_CORE_ASSERT(s_EntityInstanceMap.find(sceneID) != s_EntityInstanceMap.end());
-		auto& entityMap = s_EntityInstanceMap.at(sceneID);
-		HZ_CORE_ASSERT(entityMap.find(entityID) != entityMap.end());
-		auto& scriptInstance = entityMap.at(entityID);
-
-		if (!scriptInstance.successLoaded)
+		EntityInstanceData& instData = GetEntityInstData(entity);
+		const ScriptModuleDesc& smDesc = *instData.pDesc;
+		if (!smDesc.successLoaded)
 			return;
 
-		auto modulePrefix = GetLuaModulePrefix(scriptInstance.ModulePath);
-
-		auto e = s_SceneContext->GetEntityMap().at(entityID);
-		auto result = g_luaState[modulePrefix]["onUpdate"](e, ts.GetSeconds());
-		if (!result.valid()) {
-			sol::error err = result;
-			HZ_CORE_TRACE("script error: {}", err.what());
-		}
-
-		// SafeScript("OnUpdate()");
+		auto func = (*GetSceneContext(entity).luaState)[smDesc.ModuleCallPrefix]["onCreate"];
+		LuaSafeCall(func, entity);
 	}
 
-	void ScriptEngine::OnScriptComponentDestroyed(UUID sceneID, UUID entityID)
+	void ScriptEngine::OnUpdateEntity(Entity entity, Timestep ts)
 	{
-		HZ_CORE_ASSERT(s_EntityInstanceMap.find(sceneID) != s_EntityInstanceMap.end());
-		auto& entityMap = s_EntityInstanceMap.at(sceneID);
-		HZ_CORE_ASSERT(entityMap.find(entityID) != entityMap.end());
-		entityMap.erase(entityID);
+		EntityInstanceData& instData = GetEntityInstData(entity);
+		const ScriptModuleDesc& smDesc = *instData.pDesc;
+		if (!smDesc.successLoaded)
+			return;
+
+		auto func = (*GetSceneContext(entity).luaState)[smDesc.ModuleCallPrefix]["onUpdate"];
+		LuaSafeCall(func, entity, ts.GetSeconds());
 	}
 
-	bool ScriptEngine::ScriptExists(const std::string& moduleName)
+	void ScriptEngine::OnDestroyEntity(Entity entity)
 	{
-		std::filesystem::path p{moduleName};
+		EntityInstanceData& instData = GetEntityInstData(entity);
+		if (!instData.instantiated)
+			return;
+
+		auto func = (*GetSceneContext(entity).luaState)[instData.pDesc->ModuleCallPrefix]["onDestroy"];
+		LuaSafeCall(func, entity);
+	}
+
+	void ScriptEngine::OnScriptComponentDestroyed(Entity entity)
+	{
+		HZ_CORE_ASSERT(!GetEntityInstData(entity).instantiated && !GetEntityInstData(entity).awaked);
+		// RemoveEntityInstData(entity);
+	}
+
+	bool ScriptEngine::PathExist(const std::string& modulePath)
+	{
+		std::filesystem::path p{modulePath};
 		return exists(p);
 	}
 
-	static FieldType GetPBEFieldType()
+	bool ScriptEngine::IsModuleKnown(const std::string& modulePath)
 	{
-
-		return FieldType::None;
+		return scriptModuleDescMap.find(modulePath) != scriptModuleDescMap.end();
 	}
 
-	const char* FieldTypeToString(FieldType type)
+	bool ScriptEngine::IsScriptModuleSuccessLoaded(const std::string& modulePath)
 	{
-		switch (type)
-		{
-			case FieldType::Float:       return "Float";
-			case FieldType::Int:         return "Int";
-			case FieldType::UnsignedInt: return "UnsignedInt";
-			case FieldType::String:      return "String";
-			case FieldType::Vec2:        return "Vec2";
-			case FieldType::Vec3:        return "Vec3";
-			case FieldType::Vec4:        return "Vec4";
+		return IsModuleKnown(modulePath) && scriptModuleDescMap[modulePath].successLoaded;
+	}
+
+	bool ScriptEngine::LoadModule(const std::string& modulePath)
+	{
+		scriptModuleDescMap[modulePath] = {};
+
+		ScriptModuleDesc& smDesc = scriptModuleDescMap[modulePath];
+		smDesc.ModulePath = ToLuaRequirePath(modulePath);
+		smDesc.ModuleCallPrefix = GetLuaModulePrefix(modulePath);
+
+		bool success = LoadModuleInternal(*testLuaState, smDesc.ModuleCallPrefix, smDesc.ModulePath);
+		// todo: stupid logic
+		if (success) {
+			for (auto& element : contexts) {
+				LoadModuleInternal(*element.second.luaState, smDesc.ModuleCallPrefix, smDesc.ModulePath);
+			}
+		} else {
+			HZ_CORE_TRACE("Cant load module {}", smDesc.ModulePath);
 		}
-		return "Unknown";
+
+		smDesc.successLoaded = success;
+		return smDesc.successLoaded;
+	}
+
+	void ScriptEngine::UnloadScriptModule(const std::string& modulePath)
+	{
+		HZ_CORE_ASSERT(IsModuleKnown(modulePath));
+		scriptModuleDescMap.erase(modulePath);
 	}
 
 	void ScriptEngine::InitScriptEntity(Entity entity)
 	{
-		Scene* scene = entity.m_Scene;
-		UUID id = entity.GetComponent<IDComponent>().ID;
-		auto& scriptPath = entity.GetComponent<ScriptComponent>().ScriptPath;
-		if (scriptPath.empty())
-			return;
-
-		if (!ScriptExists(scriptPath))
-		{
-			HZ_CORE_ERROR("Entity references non-existent script '{0}'", scriptPath);
-			return;
+		auto& sc = entity.GetComponent<ScriptComponent>();
+		if (!IsModuleKnown(sc.ScriptPath)) {
+			LoadModule(sc.ScriptPath);
 		}
 
-		EntityInstanceData instData;
-		instData.ModulePath = scriptPath;
+		HZ_CORE_ASSERT(!HasEntityInstData(entity));
+		GetSceneContext(entity).AddInstData(entity, {});
+		EntityInstanceData& instData = GetEntityInstData(entity);
+		instData.pDesc = &scriptModuleDescMap[sc.ScriptPath];
 
-		if (s_LoadedScriptMap.find(scriptPath) == s_LoadedScriptMap.end()) {
-			instData.successLoaded = ScriptEngine::ReloadScript(scriptPath);
-			s_LoadedScriptMap.insert(scriptPath);
+		if (IsScriptModuleSuccessLoaded(sc.ScriptPath)) {
+			instData.awaked = true;
+			OnAwakeEntity(entity);
 		}
-
-		s_EntityInstanceMap[scene->GetUUID()][entity.GetUUID()] = instData;
 	}
 
-	void ScriptEngine::ShutdownScriptEntity(Entity entity, const std::string& moduleName)
+	void ScriptEngine::InstantiateEntity(Entity entity)
 	{
-		EntityInstanceData& entityInstanceData = GetEntityInstanceData(entity.GetSceneUUID(), entity.GetUUID());
-		ScriptModuleFieldMap& moduleFieldMap = entityInstanceData.ModuleFieldMap;
-		if (moduleFieldMap.find(moduleName) != moduleFieldMap.end())
-			moduleFieldMap.erase(moduleName);
-	}
-
-	void ScriptEngine::InstantiateEntityClass(Entity entity)
-	{
-		Scene* scene = entity.m_Scene;
-		UUID id = entity.GetComponent<IDComponent>().ID;
-		auto& moduleName = entity.GetComponent<ScriptComponent>().ScriptPath;
-
-
-		// Call OnCreate function (if exists)
-		OnCreateEntity(entity);
-	}
-
-	bool ScriptEngine::HasEntityInstanceData(UUID sceneID, UUID entityID)
-	{
-		if (s_EntityInstanceMap.find(sceneID) != s_EntityInstanceMap.end())
-		{
-			auto& entityIDMap = s_EntityInstanceMap.at(sceneID);
-			return entityIDMap.find(entityID) != entityIDMap.end();
+		auto& instData = GetEntityInstData(entity);
+		if (IsScriptModuleSuccessLoaded(instData.pDesc->ModulePath)) {
+			instData.instantiated = true;
+			OnCreateEntity(entity);
 		}
-		return false;
 	}
 
-	EntityInstanceData& ScriptEngine::GetEntityInstanceData(UUID sceneID, UUID entityID)
+	void ScriptEngine::ShutdownScriptEntity(Entity entity)
 	{
-		HZ_CORE_ASSERT(s_EntityInstanceMap.find(sceneID) != s_EntityInstanceMap.end(), "Invalid scene ID!");
-		auto& entityIDMap = s_EntityInstanceMap.at(sceneID);
-		HZ_CORE_ASSERT(entityIDMap.find(entityID) != entityIDMap.end(), "Invalid entity ID!");
-		return entityIDMap.at(entityID);
-	}
-
-	EntityInstanceMap& ScriptEngine::GetEntityInstanceMap()
-	{
-		return s_EntityInstanceMap;
-	}
-
-	static uint32_t GetFieldSize(FieldType type)
-	{
-		switch (type)
-		{
-			case FieldType::Float:       return 4;
-			case FieldType::Int:         return 4;
-			case FieldType::UnsignedInt: return 4;
-			// case FieldType::String:   return 8; // TODO
-			case FieldType::Vec2:        return 4 * 2;
-			case FieldType::Vec3:        return 4 * 3;
-			case FieldType::Vec4:        return 4 * 4;
+		HZ_CORE_ASSERT(HasEntityInstData(entity));
+		auto& instData = GetEntityInstData(entity);
+		if (instData.instantiated) {
+			HZ_CORE_ASSERT(IsScriptModuleSuccessLoaded(instData.pDesc->ModulePath));
+			OnDestroyEntity(entity);
+			instData.instantiated = false;
 		}
-		HZ_CORE_ASSERT(false, "Unknown field type!");
-		return 0;
+		instData.awaked = false;
+		RemoveEntityInstData(entity);
 	}
 
-	void PublicField::CopyStoredValueToRuntime()
+	bool ScriptEngine::HasEntityInstData(Entity entity)
 	{
-
+		return GetSceneContext(entity).HasInstData(entity);
 	}
 
-	bool PublicField::IsRuntimeAvailable() const
+	EntityInstanceData& ScriptEngine::GetEntityInstData(Entity e)
 	{
-		return true;
+		return GetSceneContext(e).GetInstData(e);
 	}
 
+	void ScriptEngine::RemoveEntityInstData(Entity e)
+	{
+		GetSceneContext(e).RemoveInstData(e);
+	}
 
-	// Debug
 	void ScriptEngine::OnImGuiRender()
 	{
 		static bool showDemoWindow = false;
@@ -355,58 +333,43 @@ namespace pbe {
 
 		ImGui::Begin("Script Engine Debug");
 
-		if (ImGui::Button("Reload scripts"))
-			ScriptEngine::ReloadAllScripts();
-		
-		// for (auto& [sceneID, entityMap] : s_EntityInstanceMap)
-		// {
-		// 	bool opened = ImGui::TreeNode((void*)(uint64_t)sceneID, "Scene (%llx)", sceneID);
-		// 	if (opened)
-		// 	{
-		// 		Ref<Scene> scene = Scene::GetScene(sceneID);
-		// 		for (auto& [entityID, entityInstanceData] : entityMap)
-		// 		{
-		// 			Entity entity = scene->GetScene(sceneID)->GetEntityMap().at(entityID);
-		// 			std::string entityName = "Unnamed Entity";
-		// 			if (entity.HasComponent<TagComponent>())
-		// 				entityName = entity.GetComponent<TagComponent>().Tag;
-		// 			opened = ImGui::TreeNode((void*)(uint64_t)entityID, "%s (%llx)", entityName.c_str(), entityID);
-		// 			if (opened)
-		// 			{
-		// 				for (auto& [moduleName, fieldMap] : entityInstanceData.ModuleFieldMap)
-		// 				{
-		// 					opened = ImGui::TreeNode(moduleName.c_str());
-		// 					if (opened)
-		// 					{
-		// 						for (auto& [fieldName, field] : fieldMap)
-		// 						{
-		//
-		// 							opened = ImGui::TreeNodeEx((void*)&field, ImGuiTreeNodeFlags_Leaf , fieldName.c_str());
-		// 							if (opened)
-		// 							{
-		//
-		// 								ImGui::TreePop();
-		// 							}
-		// 						}
-		// 						ImGui::TreePop();
-		// 					}
-		// 				}
-		// 				ImGui::TreePop();
-		// 			}
-		// 		}
-		// 		ImGui::TreePop();
-		// 	}
-		// }
 		ImGui::End();
 	}
 
-	bool ScriptEngine::SafeScript(const char* script)
+	ScriptEngine::ScriptEngine()
 	{
-		auto result = g_luaState.safe_script(script, &sol::script_pass_on_error);
-		if (!result.valid()) {
-			sol::error err = result;
-			HZ_CORE_TRACE("script error: {}", err.what());
+		testLuaState = std::make_unique<sol::state>();
+		MakeDefaultState(*testLuaState);
+	}
+
+	void ScriptEngine::CreateContext(Scene* scene)
+	{
+		HZ_CORE_ASSERT(contexts.count(scene->GetUUID()) == 0);
+
+		contexts[scene->GetUUID()] = {};
+		auto& c = contexts[scene->GetUUID()];
+
+		MakeDefaultState(*c.luaState);
+		UploadKnownModules(*c.luaState);
+	}
+
+	void ScriptEngine::DestroyContext(Scene* scene)
+	{
+		HZ_CORE_ASSERT(contexts.find(scene->GetUUID()) != contexts.end());
+		contexts.erase(scene->GetUUID());
+	}
+
+	void ScriptEngine::UploadKnownModules(const sol::state& luaState)
+	{
+		for (auto& [modulePath, moduleDesc]: scriptModuleDescMap) {
+			LoadModuleInternal(luaState, moduleDesc.ModuleCallPrefix, moduleDesc.ModulePath);
 		}
-		return result.valid();
+	}
+
+	bool ScriptEngine::LoadModuleInternal(const sol::state& luaState, const std::string& moduleCallPrefix,
+		const std::string& modulePath)
+	{
+		bool successLoad = LuaSafeCall((luaState)["pbe_sys"]["loadModule"], moduleCallPrefix, modulePath);
+		return successLoad;
 	}
 }

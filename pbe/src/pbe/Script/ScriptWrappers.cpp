@@ -19,11 +19,32 @@
 
 namespace pbe {
 
-	extern sol::state g_luaState;
-
 	namespace Script {
 
-		void RegisterGameFunction()
+		sol::protected_function_result pbe_script_default_on_error(lua_State* L, sol::protected_function_result pfr) {
+			sol::error err = pfr;
+			HZ_CORE_WARN("Error while load  script {}", err.what());
+			return pfr;
+		}
+
+		void LoadSystemScriptInternal(sol::state& g_luaState, const char* path)
+		{
+			auto res = g_luaState.safe_script_file(path, pbe_script_default_on_error);
+
+			if (!res.valid()) {
+				sol::error err = res;
+				HZ_CORE_WARN("Error while load system internal script '{}'. /n{}", path, err.what());
+			}
+		}
+
+		void LoadSystemScripts(sol::state& g_luaState)
+		{
+			HZ_CORE_INFO("    LoadSystemScripts");
+
+			LoadSystemScriptInternal(g_luaState, "assets/scripts/pbe_sys.lua");
+		}
+
+		void RegisterGameFunction(sol::state& g_luaState)
 		{
 			HZ_CORE_INFO("    RegisterGameFunction");
 
@@ -31,7 +52,7 @@ namespace pbe {
 			game["GetTotalTime"] = [&]() { return Application::Get().GetTime(); };
 		}
 
-		void RegisterMathFunction()
+		void RegisterMathFunction(sol::state& g_luaState)
 		{
 			HZ_CORE_INFO("    RegisterMathFunction");
 
@@ -101,7 +122,7 @@ namespace pbe {
 			quat.set(sol::meta_function::to_string, [](const Quat& l) { return std::string("{") + std::to_string(l.w) + ", " + std::to_string(l.x) + ", " + std::to_string(l.y) + ", " + std::to_string(l.z) + "}"; });
 		}
 
-		void RegisterComponent()
+		void RegisterComponent(sol::state& g_luaState)
 		{
 			HZ_CORE_INFO("    RegisterComponent");
 
@@ -148,7 +169,7 @@ namespace pbe {
 			return sol::make_object(lua, sol::lua_nil);
 		};
 
-		void RegisterEntity()
+		void RegisterEntity(sol::state& g_luaState)
 		{
 			HZ_CORE_INFO("    RegisterEntity");
 
@@ -161,29 +182,85 @@ namespace pbe {
 
 					if (!strcmp(name, TransformComponent::GetName())) {
 						return GetComponentSafe<TransformComponent>(e, name, lua);
-					}
-					else if (!strcmp(name, DirectionLightComponent::GetName())) {
+					} else if (!strcmp(name, DirectionLightComponent::GetName())) {
 						return GetComponentSafe<DirectionLightComponent>(e, name, lua);
-					}
-					else if (!strcmp(name, PointLightComponent::GetName())) {
+					} else if (!strcmp(name, PointLightComponent::GetName())) {
 						return GetComponentSafe<PointLightComponent>(e, name, lua);
-					}
-					else if (!strcmp(name, SpotLightComponent::GetName())) {
+					} else if (!strcmp(name, SpotLightComponent::GetName())) {
 						return GetComponentSafe<SpotLightComponent>(e, name, lua);
-					}
-					else if (!strcmp(name, MeshComponent::GetName())) {
+					} else if (!strcmp(name, MeshComponent::GetName())) {
 						return GetComponentSafe<MeshComponent>(e, name, lua);
-					}
-					else if (!strcmp(name, TagComponent::GetName())) {
+					} else if (!strcmp(name, TagComponent::GetName())) {
 						return GetComponentSafe<TagComponent>(e, name, lua);
-					}
-					else if (!strcmp(name, CameraComponent::GetName())) {
+					} else if (!strcmp(name, CameraComponent::GetName())) {
 						return GetComponentSafe<CameraComponent>(e, name, lua);
 					}
 					return sol::make_object(lua, sol::lua_nil);
 				});
 			entity.set("getUUID", [](const Entity& e) { return e.GetUUID(); });
 			entity.set(sol::meta_function::to_string, [](const Entity& e) { return std::string("Entity {") + std::to_string(e.GetSceneUUID()) + "}"; });
+		}
+
+		void RegisterInput(sol::state& g_luaState)
+		{
+			HZ_CORE_INFO("    RegisterInput");
+
+			auto keyCodes = g_luaState.create_table("KeyCode");
+
+			// #define REGISTER_KEY_CODE(keyCode) keyCodes.set(STRINGIFY(keyCode), sol::property([]() { return KeyCode::keyCode; }))
+			#define REGISTER_KEY_CODE(keyCode) keyCodes[STRINGIFY(keyCode)] =  KeyCode::keyCode;
+
+			REGISTER_KEY_CODE(A);
+			REGISTER_KEY_CODE(B);
+			REGISTER_KEY_CODE(C);
+			REGISTER_KEY_CODE(D);
+			REGISTER_KEY_CODE(E);
+			REGISTER_KEY_CODE(F);
+			REGISTER_KEY_CODE(G);
+			REGISTER_KEY_CODE(H);
+			REGISTER_KEY_CODE(I);
+
+			REGISTER_KEY_CODE(J);
+			REGISTER_KEY_CODE(K);
+			REGISTER_KEY_CODE(L);
+			REGISTER_KEY_CODE(M);
+			REGISTER_KEY_CODE(N);
+			REGISTER_KEY_CODE(O);
+			REGISTER_KEY_CODE(P);
+			REGISTER_KEY_CODE(Q);
+			REGISTER_KEY_CODE(R);
+
+			REGISTER_KEY_CODE(S);
+			REGISTER_KEY_CODE(T);
+			REGISTER_KEY_CODE(U);
+			REGISTER_KEY_CODE(V);
+			REGISTER_KEY_CODE(W);
+			REGISTER_KEY_CODE(X);
+			REGISTER_KEY_CODE(Y);
+			REGISTER_KEY_CODE(Z);
+
+			REGISTER_KEY_CODE(D1);
+			REGISTER_KEY_CODE(D2);
+			REGISTER_KEY_CODE(D3);
+			REGISTER_KEY_CODE(D4);
+			REGISTER_KEY_CODE(D5);
+			REGISTER_KEY_CODE(D6);
+			REGISTER_KEY_CODE(D7);
+			REGISTER_KEY_CODE(D8);
+			REGISTER_KEY_CODE(D9);
+			REGISTER_KEY_CODE(D0);
+
+			REGISTER_KEY_CODE(Space);
+			REGISTER_KEY_CODE(Enter);
+			REGISTER_KEY_CODE(LeftShift);
+			REGISTER_KEY_CODE(RightShift);
+			REGISTER_KEY_CODE(LeftControl);
+			REGISTER_KEY_CODE(RightControl);
+
+			auto input = g_luaState.create_table("Input");
+
+			input.set("isKeyPressed", [](const KeyCode& keyCode) { return Input::IsKeyPressed(keyCode); });
+			input.set("isMouseButtonPressed", [](int button) { return Input::IsMouseButtonPressed(button); });
 		}
 	}
 }

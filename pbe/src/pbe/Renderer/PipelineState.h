@@ -36,19 +36,25 @@ public:
 
 protected:
 
+	void MakeCopy(const PSO& pso);
+
     pbe::Ref<RootSignature> m_RootSignature;
 
-    ID3D12PipelineState* m_PSO;
+    ID3D12PipelineState* m_PSO = nullptr;
 };
 
 class GraphicsPSO : public PSO
 {
+	typedef PSO PARENT;
+
     friend class CommandContext;
 
 public:
 
     // Start with empty state
     GraphicsPSO();
+
+	void MakeCopy(const GraphicsPSO& gPso);
 
     void SetBlendState( const D3D12_BLEND_DESC& BlendDesc );
     void SetRasterizerState( const D3D12_RASTERIZER_DESC& RasterizerDesc );
@@ -89,6 +95,8 @@ class ComputePSO : public PSO
 
 public:
     ComputePSO();
+
+	void MakeCopy(ComputePSO& cPso);
 
     void SetComputeShader( const void* Binary, size_t Size ) { m_PSODesc.CS = CD3DX12_SHADER_BYTECODE(const_cast<void*>(Binary), Size); }
     void SetComputeShader( const D3D12_SHADER_BYTECODE& Binary ) { m_PSODesc.CS = Binary; }

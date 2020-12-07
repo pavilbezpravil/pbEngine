@@ -9,8 +9,7 @@ namespace pbe {
 
 	LayerStack::~LayerStack()
 	{
-		for (Layer* layer : m_Layers)
-			delete layer;
+		Clear();
 	}
 
 	void LayerStack::PushLayer(Layer* layer)
@@ -42,4 +41,10 @@ namespace pbe {
 			m_Layers.erase(it);
 	}
 
+	void LayerStack::Clear()
+	{
+		for (Layer* layer : m_Layers)
+			delete layer;
+		m_Layers.clear();
+	}
 }

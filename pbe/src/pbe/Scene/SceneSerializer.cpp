@@ -191,47 +191,44 @@ namespace pbe {
 			auto& moduleName = entity.GetComponent<ScriptComponent>().ScriptPath;
 			out << YAML::Key << "ScriptPath" << YAML::Value << moduleName;
 
-			if (ScriptEngine::HasEntityInstanceData(entity.GetSceneUUID(), uuid))
+			if (s_ScriptEngine->HasEntityInstData(entity))
 			{
-				EntityInstanceData& data = ScriptEngine::GetEntityInstanceData(entity.GetSceneUUID(), uuid);
-				const auto& moduleFieldMap = data.ModuleFieldMap;
-				if (moduleFieldMap.find(moduleName) != moduleFieldMap.end())
-				{
-					const auto& fields = moduleFieldMap.at(moduleName);
-					out << YAML::Key << "StoredFields" << YAML::Value;
-					out << YAML::BeginSeq;
-					for (const auto&[name, field] : fields)
-					{
-						out << YAML::BeginMap; // Field
-						out << YAML::Key << "Name" << YAML::Value << name;
-						out << YAML::Key << "Type" << YAML::Value << (uint32_t)field.Type;
-						out << YAML::Key << "Data" << YAML::Value;
+				EntityInstanceData& data = s_ScriptEngine->GetEntityInstData(entity);
 
-						// switch (field.Type)
-						// {
-						// case FieldType::Int:
-						// 	out << field.GetStoredValue<int>();
-						// 	break;
-						// case FieldType::UnsignedInt:
-						// 	out << field.GetStoredValue<uint32_t>();
-						// 	break;
-						// case FieldType::Float:
-						// 	out << field.GetStoredValue<float>();
-						// 	break;
-						// case FieldType::Vec2:
-						// 	out << field.GetStoredValue<glm::vec2>();
-						// 	break;
-						// case FieldType::Vec3:
-						// 	out << field.GetStoredValue<glm::vec3>();
-						// 	break;
-						// case FieldType::Vec4:
-						// 	out << field.GetStoredValue<glm::vec4>();
-						// 	break;
-						// }
-						out << YAML::EndMap; // Field
-					}
-					out << YAML::EndSeq;
-				}
+				// const auto& fields = data.pDesc->ModuleFieldMap;
+				// out << YAML::Key << "StoredFields" << YAML::Value;
+				// out << YAML::BeginSeq;
+				// for (const auto&[name, field] : fields)
+				// {
+				// 	out << YAML::BeginMap; // Field
+				// 	out << YAML::Key << "Name" << YAML::Value << name;
+				// 	out << YAML::Key << "Type" << YAML::Value << (uint32_t)field.Type;
+				// 	out << YAML::Key << "Data" << YAML::Value;
+				//
+				// 	// switch (field.Type)
+				// 	// {
+				// 	// case FieldType::Int:
+				// 	// 	out << field.GetStoredValue<int>();
+				// 	// 	break;
+				// 	// case FieldType::UnsignedInt:
+				// 	// 	out << field.GetStoredValue<uint32_t>();
+				// 	// 	break;
+				// 	// case FieldType::Float:
+				// 	// 	out << field.GetStoredValue<float>();
+				// 	// 	break;
+				// 	// case FieldType::Vec2:
+				// 	// 	out << field.GetStoredValue<glm::vec2>();
+				// 	// 	break;
+				// 	// case FieldType::Vec3:
+				// 	// 	out << field.GetStoredValue<glm::vec3>();
+				// 	// 	break;
+				// 	// case FieldType::Vec4:
+				// 	// 	out << field.GetStoredValue<glm::vec4>();
+				// 	// 	break;
+				// 	// }
+				// 	out << YAML::EndMap; // Field
+				// }
+				// out << YAML::EndSeq;
 			}
 
 			out << YAML::EndMap; // ScriptComponent
@@ -390,64 +387,25 @@ namespace pbe {
 
 					HZ_CORE_INFO("  Script Module: {0}", moduleName);
 
-					if (ScriptEngine::ScriptExists(moduleName))
+					if (s_ScriptEngine->PathExist(moduleName))
 					{
-						auto storedFields = scriptComponent["StoredFields"];
-						if (storedFields)
-						{
-							for (auto field : storedFields)
-							{
-								std::string name = field["Name"].as<std::string>();
-								FieldType type = (FieldType)field["Type"].as<uint32_t>();
-								EntityInstanceData& data = ScriptEngine::GetEntityInstanceData(m_Scene->GetUUID(), uuid);
-								auto& moduleFieldMap = data.ModuleFieldMap;
-								auto& publicFields = moduleFieldMap[moduleName];
-								if (publicFields.find(name) == publicFields.end())
-								{
-									PublicField pf = { name, type };
-									publicFields.emplace(name, std::move(pf));
-								}
-								auto dataNode = field["Data"];
-								// switch (type)
-								// {
-								// 	case FieldType::Float:
-								// 	{
-								// 		publicFields.at(name).SetStoredValue(dataNode.as<float>());
-								// 		break;
-								// 	}
-								// 	case FieldType::Int:
-								// 	{
-								// 		publicFields.at(name).SetStoredValue(dataNode.as<int32_t>());
-								// 		break;
-								// 	}
-								// 	case FieldType::UnsignedInt:
-								// 	{
-								// 		publicFields.at(name).SetStoredValue(dataNode.as<uint32_t>());
-								// 		break;
-								// 	}
-								// 	case FieldType::String:
-								// 	{
-								// 		HZ_CORE_ASSERT(false, "Unimplemented");
-								// 		break;
-								// 	}
-								// 	case FieldType::Vec2:
-								// 	{
-								// 		publicFields.at(name).SetStoredValue(dataNode.as<glm::vec2>());
-								// 		break;
-								// 	}
-								// 	case FieldType::Vec3:
-								// 	{
-								// 		publicFields.at(name).SetStoredValue(dataNode.as<glm::vec3>());
-								// 		break;
-								// 	}
-								// 	case FieldType::Vec4:
-								// 	{
-								// 		publicFields.at(name).SetStoredValue(dataNode.as<glm::vec4>());
-								// 		break;
-								// 	}
-								// }
-							}
-						}
+						// auto storedFields = scriptComponent["StoredFields"];
+						// if (storedFields)
+						// {
+						// 	for (auto field : storedFields)
+						// 	{
+						// 		std::string name = field["Name"].as<std::string>();
+						// 		FieldType type = (FieldType)field["Type"].as<uint32_t>();
+						// 		EntityInstanceData& data = s_ScriptEngine->GetEntityInstData(m_Scene->GetUUID(), uuid);
+						// 		auto& moduleFieldMap = data.ModuleFieldMap;
+						// 		auto& publicFields = moduleFieldMap[moduleName];
+						// 		if (publicFields.find(name) == publicFields.end())
+						// 		{
+						// 			PublicField pf = { name, type };
+						// 			publicFields.emplace(name, std::move(pf));
+						// 		}
+						// 	}
+						// }
 					}
 				}
 

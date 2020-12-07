@@ -25,8 +25,11 @@ namespace pbe {
 		void Init();
 
 		void OnUpdate(Timestep ts);
-		void OnRenderRuntime(Timestep ts);
-		void OnRenderEditor(Timestep ts, const EditorCamera& editorCamera);
+
+		// todo: tmp
+		void OnRenderScene(const Mat4& viewProj, const Vec3& camPos);
+		void OnRenderRuntime();
+		void OnRenderEditor(const EditorCamera& editorCamera);
 		void OnEvent(Event& e);
 
 		// Runtime

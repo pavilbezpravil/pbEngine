@@ -124,8 +124,7 @@ void GraphicsContext::ResetState()
 {
 	m_CurRootSignature = nullptr;
 	m_CurPSO = pbe::Ref<GraphicsPSO>::Create();
-	*m_CurPSO = GraphicsPSODefault;
-	m_CurPSO->IncRefCount(); // todo:
+	m_CurPSO->MakeCopy(GraphicsPSODefault);
 }
 
 void GraphicsContext::FlushState()
@@ -141,7 +140,8 @@ void GraphicsContext::FlushState()
 void ComputeContext::ResetState()
 {
 	m_CurRootSignature = nullptr;
-	*m_CurPipelineState = GraphicsPSODefault;
+	HZ_CORE_ASSERT(false);
+	// m_CurPipelineState->MakeCopy(ComputePSODefault);
 }
 
 void ComputeContext::FlushState()

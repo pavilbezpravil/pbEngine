@@ -1,14 +1,5 @@
 Scene: Scene Name
 Entities:
-  - Entity: 8123897666677350266
-    TagComponent:
-      Tag: Script
-    TransformComponent:
-      Position: [0, 0, 0]
-      Rotation: [1, 0, 0, 0]
-      Scale: [1, 1, 1]
-    ScriptComponent:
-      ScriptPath: assets\scripts\test.lua
   - Entity: 12553034354518934200
     TagComponent:
       Tag: Point Light
@@ -84,3 +75,15 @@ Entities:
       Multiplier: 15
       Radius: 10
       CutOff: 45
+  - Entity: 3475196139392903098
+    TagComponent:
+      Tag: Player
+    TransformComponent:
+      Position: [0, 0, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    ScriptComponent:
+      ScriptPath: assets\scripts\player.lua
+    CameraComponent:
+      Camera: some camera data...
+      Primary: true

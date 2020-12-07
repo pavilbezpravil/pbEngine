@@ -339,7 +339,7 @@ protected:
 
 private:
 	pbe::Ref<RootSignature> m_CurRootSignature = nullptr;
-	pbe::Ref<GraphicsPSO> m_CurPipelineState = nullptr;
+	pbe::Ref<ComputePSO> m_CurPipelineState = nullptr;
 };
 
 inline void CommandContext::FlushResourceBarriers( void )
@@ -728,7 +728,7 @@ inline void GraphicsContext::DrawIndexedInstanced(UINT IndexCountPerInstance, UI
     INT BaseVertexLocation, UINT StartInstanceLocation)
 {
 	HZ_CORE_ASSERT(m_CurPSO);
-	// check PSO dirty
+	// todo: check PSO dirty
 	m_CurPSO->Finalize();
 	SetPipelineState(m_CurPSO);
 	

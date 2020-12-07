@@ -37,11 +37,12 @@ namespace pbe {
 		m_ImGuiLayer = new ImGuiLayer("ImGui");
 		PushOverlay(m_ImGuiLayer);
 
-		ScriptEngine::Init("assets/scripts/ExampleApp.dll");
+		ScriptEngine::Init();
 	}
 
 	Application::~Application()
 	{
+		m_LayerStack.Clear();
 		ScriptEngine::Shutdown();
 		Renderer::Get().Shutdown();
 	}

@@ -4,10 +4,12 @@
 #include "pbe/Core/Timestep.h"
 
 #include <string>
-
-#include "pbe/Scene/Components.h"
 #include "pbe/Scene/Entity.h"
 
+namespace sol
+{
+	class state;
+}
 
 namespace pbe {
 
@@ -31,53 +33,94 @@ namespace pbe {
 		friend class ScriptEngine;
 	};
 
-	using ScriptModuleFieldMap = std::unordered_map<std::string, std::unordered_map<std::string, PublicField>>;
+	using ScriptModuleFieldMap = std::unordered_map<std::string, PublicField>;
+
+	struct ScriptModuleDesc
+	{
+		std::string ModulePath;
+		std::string ModuleCallPrefix;
+		ScriptModuleFieldMap ModuleFieldMap;
+		bool successLoaded = false;
+		int nUsedEntity = 0;
+	};
 
 	struct EntityInstanceData
 	{
-		std::string ModulePath;
-		ScriptModuleFieldMap ModuleFieldMap;
-		bool successLoaded = false;
+		const ScriptModuleDesc* pDesc = nullptr;
+		bool awaked = false;
+		bool instantiated = false;
 	};
 
-	using EntityInstanceMap = std::unordered_map<UUID, std::unordered_map<UUID, EntityInstanceData>>;
+	using EntityInstanceMap = std::unordered_map<UUID, EntityInstanceData>;
+	
+	struct SceneScriptContext
+	{
+		std::unique_ptr<sol::state> luaState;
+		EntityInstanceMap instanceDataMap;
+
+		SceneScriptContext();
+
+		bool HasInstData(Entity e);
+		EntityInstanceData& GetInstData(Entity e);
+		void AddInstData(Entity e, EntityInstanceData&& instData);
+		void RemoveInstData(Entity e);
+	};
+
+	using ContextMap = std::unordered_map<UUID, SceneScriptContext>;
 
 	class ScriptEngine
 	{
 	public:
-		static void Init(const std::string& assemblyPath);
+		static void Init();
 		static void Shutdown();
 
-		static void OnSceneDestruct(UUID sceneID);
+		SceneScriptContext& GetSceneContext(Entity entity);
 
-		static void ReloadAssembly(const std::string& path);
-		static bool ReloadScript(const std::string& path);
-		static void ReloadAllScripts();
+		void InitScene(Scene* scene);
+		void ShutdownScene(Scene* scene);
 
-		static void SetSceneContext(const Ref<Scene>& scene);
-		static const Ref<Scene>& GetCurrentSceneContext();
+		void OnAwakeEntity(Entity entity);
+		void OnCreateEntity(Entity entity);
+		void OnUpdateEntity(Entity entity, Timestep ts);
+		void OnDestroyEntity(Entity entity);
 
-		static void CopyEntityScriptData(UUID dst, UUID src);
+		void OnScriptComponentDestroyed(Entity entity);
 
-		static void OnCreateEntity(Entity entity);
-		static void OnCreateEntity(UUID sceneID, UUID entityID);
-		static void OnUpdateEntity(UUID sceneID, UUID entityID, Timestep ts);
+		bool PathExist(const std::string& modulePath); // todo: move to fs
+		
+		bool IsModuleKnown(const std::string& modulePath);
+		bool IsScriptModuleSuccessLoaded(const std::string& modulePath);
 
-		static void OnScriptComponentDestroyed(UUID sceneID, UUID entityID);
+		bool LoadModule(const std::string& modulePath);
+		void UnloadScriptModule(const std::string& modulePath);
 
-		static bool ScriptExists(const std::string& moduleName);
-		static void InitScriptEntity(Entity entity);
-		static void ShutdownScriptEntity(Entity entity, const std::string& moduleName);
-		static void InstantiateEntityClass(Entity entity);
+		void InitScriptEntity(Entity entity);
+		void InstantiateEntity(Entity entity);
+		void ShutdownScriptEntity(Entity entity);
 
-		static EntityInstanceMap& GetEntityInstanceMap();
-		static bool HasEntityInstanceData(UUID sceneID, UUID entityID);
-		static EntityInstanceData& GetEntityInstanceData(UUID sceneID, UUID entityID);
+		bool HasEntityInstData(Entity entity);
+		EntityInstanceData& GetEntityInstData(Entity e);
+		void RemoveEntityInstData(Entity e);
 
 		// Debug
-		static void OnImGuiRender();
+		void OnImGuiRender();
 
 	private:
-		static bool SafeScript(const char* script);
+		ScriptEngine();
+
+		void CreateContext(Scene* scene);
+		void DestroyContext(Scene* scene);
+
+		void UploadKnownModules(const sol::state& luaState);
+		bool LoadModuleInternal(const sol::state& luaState, const std::string& moduleCallPrefix, const std::string& modulePath);
+
+		using ScriptModuleDescMap = std::unordered_map<std::string, ScriptModuleDesc>;
+		ScriptModuleDescMap scriptModuleDescMap;
+
+		ContextMap contexts;
+
+		std::unique_ptr<sol::state> testLuaState;
 	};
+
+	extern ScriptEngine* s_ScriptEngine;
 }

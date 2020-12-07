@@ -104,7 +104,6 @@ namespace pbe {
 
 		m_EditorScene = Ref<Scene>::Create();
 		UpdateWindowTitle("Untitled Scene");
-		ScriptEngine::SetSceneContext(m_EditorScene);
 		m_SceneHierarchyPanel = CreateScope<SceneHierarchyPanel>(m_EditorScene);
 		m_SceneHierarchyPanel->SetSelectionChangedCallback(std::bind(&EditorLayer::SelectEntity, this, std::placeholders::_1));
 		m_SceneHierarchyPanel->SetEntityDeletedCallback(std::bind(&EditorLayer::OnEntityDeleted, this, std::placeholders::_1));
@@ -125,8 +124,8 @@ namespace pbe {
 
 		m_SceneState = SceneState::Play;
 
-		if (m_ReloadScriptOnPlay)
-			ScriptEngine::ReloadAssembly("assets/scripts/ExampleApp.dll");
+		// if (m_ReloadScriptOnPlay)
+		// 	s_ScriptEngine->InitState();
 
 		m_RuntimeScene = Ref<Scene>::Create();
 		m_EditorScene->CopyTo(m_RuntimeScene);
@@ -144,7 +143,6 @@ namespace pbe {
 		m_RuntimeScene = nullptr;
 
 		m_SelectionContext.clear();
-		ScriptEngine::SetSceneContext(m_EditorScene);
 		m_SceneHierarchyPanel->SetContext(m_EditorScene);
 	}
 
@@ -186,14 +184,6 @@ namespace pbe {
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu("Script")) {
-				if (ImGui::MenuItem("Reload C# Assembly"))
-					ScriptEngine::ReloadAssembly("assets/scripts/ExampleApp.dll");
-
-				ImGui::MenuItem("Reload assembly on play", nullptr, &m_ReloadScriptOnPlay);
-				ImGui::EndMenu();
-			}
-
 			ImGui::EndMenuBar();
 		}
 	}
@@ -222,7 +212,32 @@ namespace pbe {
 		ImGui::Begin("Viewport");
 
 		ImGui::SetNextItemWidth(30);
-		ImGui::Button("Play");
+		switch (m_SceneState) {
+			case SceneState::Edit:
+				if (ImGui::Button("Play")) {
+					OnScenePlay();
+				}
+				break;
+			case SceneState::Play:
+				if (ImGui::Button("Pause")) {
+					m_SceneState = SceneState::Pause;
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Stop")) {
+					OnSceneStop();
+				}
+				break;
+			case SceneState::Pause:
+				if (ImGui::Button("Continue")) {
+					m_SceneState = SceneState::Play;
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Stop")) {
+					OnSceneStop();
+				}
+				break;
+			default: HZ_CORE_ASSERT(FALSE);
+		}
 		ImGui::SameLine();
 
 		ImGui::SetNextItemWidth(80);
@@ -243,10 +258,9 @@ namespace pbe {
 		// HZ_CORE_INFO("io.WantCaptureKeyboard {}", io.WantCaptureKeyboard);
 		// HZ_CORE_INFO("io.MousePos ({}, {})", io.MousePos.x, io.MousePos.y);
 
-
 		auto viewportOffset = ImGui::GetCursorPos(); // includes tab bar
 		auto viewportSize = ImGui::GetContentRegionAvail();
-		
+
 		Renderer::Get().Resize((uint)viewportSize.x, (uint)viewportSize.y);
 		m_EditorScene->SetViewportSize((uint32_t)viewportSize.x, (uint32_t)viewportSize.y);
 		if (m_RuntimeScene)
@@ -264,6 +278,15 @@ namespace pbe {
 		m_ViewportBounds[0] = { minBound.x, minBound.y };
 		m_ViewportBounds[1] = { maxBound.x, maxBound.y };
 		m_AllowViewportCameraEvents = ImGui::IsMouseHoveringRect(minBound, maxBound);
+
+		// todo:
+		if (m_RuntimeScene) {
+			Entity cameraEntity = m_RuntimeScene->GetMainCameraEntity();
+			if (cameraEntity) {
+				CameraComponent& camera = cameraEntity.GetComponent<CameraComponent>();
+				camera.Camera.SetViewportSize((uint32_t)viewportSize.x, (uint32_t)viewportSize.y);
+			}
+		}
 
 		OnImGuiGizmo();
 
@@ -323,19 +346,19 @@ namespace pbe {
 					m_EditorCamera.OnUpdate(ts);
 
 				// todo: tmp for test script
-					m_EditorScene->OnUpdate(ts);
+				// m_EditorScene->OnUpdate(ts);
 
-				m_EditorScene->OnRenderEditor(ts, m_EditorCamera);
+				m_EditorScene->OnRenderEditor(m_EditorCamera);
 
 				break;
 			}
 			case SceneState::Play:
 			{
-				if (m_ViewportPanelFocused)
-					m_EditorCamera.OnUpdate(ts);
+				// if (m_ViewportPanelFocused)
+				// 	m_EditorCamera.OnUpdate(ts);
 
 				m_RuntimeScene->OnUpdate(ts);
-				m_RuntimeScene->OnRenderRuntime(ts);
+				m_RuntimeScene->OnRenderRuntime();
 				break;
 			}
 			case SceneState::Pause:
@@ -343,7 +366,7 @@ namespace pbe {
 				if (m_ViewportPanelFocused)
 					m_EditorCamera.OnUpdate(ts);
 
-				m_RuntimeScene->OnRenderRuntime(ts);
+				m_RuntimeScene->OnRenderRuntime();
 				break;
 			}
 		}
@@ -484,7 +507,6 @@ namespace pbe {
 			std::filesystem::path path = filepath;
 			UpdateWindowTitle(path.filename().string());
 			m_SceneHierarchyPanel->SetContext(m_EditorScene);
-			ScriptEngine::SetSceneContext(m_EditorScene);
 
 			m_EditorScene->SetSelectedEntity({});
 			m_SelectionContext.clear();
@@ -506,7 +528,6 @@ namespace pbe {
 			std::filesystem::path path = filepath;
 			UpdateWindowTitle(path.filename().string());
 			m_SceneHierarchyPanel->SetContext(m_EditorScene);
-			ScriptEngine::SetSceneContext(m_EditorScene);
 
 			m_EditorScene->SetSelectedEntity({});
 			m_SelectionContext.clear();
@@ -583,7 +604,7 @@ namespace pbe {
 		OnImGuiRendererInfo();
 		OnImGuiAllocatorInfo();
 		OnImGuiViewport();
-		ScriptEngine::OnImGuiRender();
+		s_ScriptEngine->OnImGuiRender();
 
 		ImGui::End();
 	}

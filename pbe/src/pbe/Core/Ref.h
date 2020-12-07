@@ -20,6 +20,9 @@ namespace pbe {
 		}
 
 		uint32_t GetRefCount() const { return m_RefCount; }
+
+		RefCounted& operator=(const RefCounted&) = delete;
+
 	private:
 		mutable uint32_t m_RefCount = 0; // TODO: atomic
 	};

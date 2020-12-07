@@ -49,9 +49,9 @@ namespace pbe {
 		TransformComponent(const Quat& rotation)
 			: Rotation(rotation) {}
 
-		Vec3 Forward() const { return Rotation * Vec3_X; }
+		Vec3 Forward() const { return Rotation * Vec3_ZNeg; }
 		Vec3 Up() const { return Rotation * Vec3_Y; }
-		Vec3 Right() const { return Rotation * Vec3_Z; }
+		Vec3 Right() const { return Rotation * Vec3_X; }
 
 		Mat4 GetTransform() const;
 		void SetTransform(const Mat4& trans);
@@ -90,7 +90,7 @@ namespace pbe {
 	struct CameraComponent
 	{
 		SceneCamera Camera;
-		bool Primary = true;
+		bool Primary = false;
 
 		CameraComponent() = default;
 		CameraComponent(const CameraComponent& other) = default;

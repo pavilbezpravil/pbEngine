@@ -97,25 +97,6 @@ namespace pbe {
 			}
 		}
 		ImGui::End();
-
-#if TODO
-		ImGui::Begin("Mesh Debug");
-		if (ImGui::CollapsingHeader(mesh->m_FilePath.c_str()))
-		{
-			if (mesh->m_IsAnimated)
-			{
-				if (ImGui::CollapsingHeader("Animation"))
-				{
-					if (ImGui::Button(mesh->m_AnimationPlaying ? "Pause" : "Play"))
-						mesh->m_AnimationPlaying = !mesh->m_AnimationPlaying;
-
-					ImGui::SliderFloat("##AnimationTime", &mesh->m_AnimationTime, 0.0f, (float)mesh->m_Scene->mAnimations[0]->mDuration);
-					ImGui::DragFloat("Time Scale", &mesh->m_TimeMultiplier, 0.05f, 0.0f, 10.0f);
-				}
-			}
-		}
-		ImGui::End();
-#endif
 	}
 
 	void SceneHierarchyPanel::DrawEntityNode(Entity entity)
@@ -540,13 +521,6 @@ namespace pbe {
 
 				ImGui::Columns(1);
 
-				// if (updateTransform)
-				// {
-				// 	tc.Transform = glm::translate(glm::mat4(1.0f), translation) *
-				// 		glm::toMat4(glm::quat(glm::radians(rotation))) *
-				// 		glm::scale(glm::mat4(1.0f), scale);
-				// }
-
 				ImGui::TreePop();
 			}
 			ImGui::Separator();
@@ -577,6 +551,8 @@ namespace pbe {
 
 		DrawComponent<CameraComponent>("Camera", entity, [](CameraComponent& cc)
 		{
+			ImGui::Checkbox("Primary", &cc.Primary);
+			
 			// Projection Type
 			const char* projTypeStrings[] = { "Perspective", "Orthographic" };
 			const char* currentProj = projTypeStrings[(int)cc.Camera.GetProjectionType()];
@@ -660,27 +636,6 @@ namespace pbe {
 
 		DrawComponent<ScriptComponent>("Script", entity, [=](ScriptComponent& sc) mutable
 		{
-			// BeginPropertyGrid();
-			//
-			// std::string oldName = sc.ScriptPath;
-			// if (Property("Script Path", sc.ScriptPath, !ScriptEngine::ScriptExists(sc.ScriptPath))) // TODO: no live edit
-			// {
-			// 	// Shutdown old script
-			// 	if (ScriptEngine::ScriptExists(oldName))
-			// 		ScriptEngine::ShutdownScriptEntity(entity, oldName);
-			//
-			// 	if (ScriptEngine::ScriptExists(sc.ScriptPath))
-			// 		ScriptEngine::InitScriptEntity(entity);
-			// }
-			//
-			// // Public Fields
-			// if (ScriptEngine::ScriptExists(sc.ScriptPath))
-			// {
-			//
-			// }
-			//
-			// EndPropertyGrid();
-
 			ImGui::Columns(3);
 			ImGui::SetColumnWidth(0, 100);
 			ImGui::SetColumnWidth(1, 300);
@@ -697,28 +652,11 @@ namespace pbe {
 			if (ImGui::Button("...##openscript")) {
 				std::string file = Application::Get().OpenFile();
 				if (!file.empty()) {
-					// Shutdown old script
-					if (ScriptEngine::ScriptExists(sc.ScriptPath))
-						ScriptEngine::ShutdownScriptEntity(entity, sc.ScriptPath);
-
+					s_ScriptEngine->ShutdownScriptEntity(entity);
 					sc.ScriptPath = file;
-					if (ScriptEngine::ScriptExists(sc.ScriptPath))
-						ScriptEngine::InitScriptEntity(entity);
+					s_ScriptEngine->InitScriptEntity(entity);
 				}
 			}
-
-			// Public Fields
-			if (ScriptEngine::ScriptExists(sc.ScriptPath))
-			{
-
-			}
-
-#if TODO
-			if (ImGui::Button("Run Script"))
-			{
-				ScriptEngine::OnCreateEntity(entity);
-			}
-#endif
 		});
 
 	}

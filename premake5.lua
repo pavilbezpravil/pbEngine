@@ -176,7 +176,7 @@ project "pbeEditor"
 
 	postbuildcommands 
 	{
-		'{COPY} "../pbeEditor/assets" "%{cfg.targetdir}/assets"',
+		-- '{COPY} "../pbeEditor/assets" "%{cfg.targetdir}/assets"',
 		'{COPY} "pbe/vendor/WinPixEventRuntime/bin" "%{cfg.targetdir}"'
 	}
 	

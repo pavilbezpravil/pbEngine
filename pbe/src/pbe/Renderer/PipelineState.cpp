@@ -21,6 +21,12 @@ void PSO::DestroyAll(void)
     s_ComputePSOHashMap.clear();
 }
 
+void PSO::MakeCopy(const PSO& pso)
+{
+	m_PSO = pso.m_PSO;
+	m_RootSignature = pso.m_RootSignature;
+}
+
 
 GraphicsPSO::GraphicsPSO()
 {
@@ -29,6 +35,13 @@ GraphicsPSO::GraphicsPSO()
     m_PSODesc.SampleMask = 0xFFFFFFFFu;
     m_PSODesc.SampleDesc.Count = 1;
     m_PSODesc.InputLayout.NumElements = 0;
+}
+
+void GraphicsPSO::MakeCopy(const GraphicsPSO& gPso)
+{
+	PARENT::MakeCopy(gPso);
+	m_PSODesc = gPso.m_PSODesc;
+	m_InputLayouts = gPso.m_InputLayouts;
 }
 
 void GraphicsPSO::SetBlendState( const D3D12_BLEND_DESC& BlendDesc )
@@ -177,4 +190,9 @@ ComputePSO::ComputePSO()
 {
     ZeroMemory(&m_PSODesc, sizeof(m_PSODesc));
     m_PSODesc.NodeMask = 1;
+}
+
+void ComputePSO::MakeCopy(ComputePSO& cPso)
+{
+	cPso.m_PSODesc = m_PSODesc;
 }

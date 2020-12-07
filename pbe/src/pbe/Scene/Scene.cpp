@@ -34,7 +34,7 @@ namespace pbe {
 
 		auto entityID = registry.get<IDComponent>(entity).ID;
 		HZ_CORE_ASSERT(scene->m_EntityIDMap.find(entityID) != scene->m_EntityIDMap.end());
-		ScriptEngine::InitScriptEntity(scene->m_EntityIDMap.at(entityID));
+		s_ScriptEngine->InitScriptEntity(scene->m_EntityIDMap.at(entityID));
 	}
 
 	static void OnScriptComponentDestroy(entt::registry& registry, entt::entity entity)
@@ -45,7 +45,7 @@ namespace pbe {
 		Scene* scene = s_ActiveScenes[sceneID];
 
 		auto entityID = registry.get<IDComponent>(entity).ID;
-		ScriptEngine::OnScriptComponentDestroyed(sceneID, entityID);
+		s_ScriptEngine->OnScriptComponentDestroyed(Entity{ entity, scene });
 	}
 
 	Scene::Scene(const std::string& debugName)
@@ -68,11 +68,12 @@ namespace pbe {
 
 		m_Registry.clear();
 		s_ActiveScenes.erase(m_SceneID);
-		ScriptEngine::OnSceneDestruct(m_SceneID);
+		s_ScriptEngine->ShutdownScene(this);
 	}
 
 	void Scene::Init()
 	{
+		s_ScriptEngine->InitScene(this);
 	}
 
 	static std::tuple<glm::vec3, glm::quat, glm::vec3> GetTransformDecomposition(const glm::mat4& transform)
@@ -85,7 +86,6 @@ namespace pbe {
 		return { translation, orientation, scale };
 	}
 
-	// Merge OnUpdate/Render into one function?
 	void Scene::OnUpdate(Timestep ts)
 	{
 		// Update all entities
@@ -94,46 +94,12 @@ namespace pbe {
 			for (auto entity : view)
 			{
 				UUID entityID = m_Registry.get<IDComponent>(entity).ID;
-				Entity e = { entity, this };
-				if (ScriptEngine::ScriptExists(e.GetComponent<ScriptComponent>().ScriptPath))
-					ScriptEngine::OnUpdateEntity(m_SceneID, entityID, ts);
+				s_ScriptEngine->OnUpdateEntity(Entity{ entity, this }, ts);
 			}
 		}
 	}
 
-	void Scene::OnRenderRuntime(Timestep ts)
-	{
-		/////////////////////////////////////////////////////////////////////
-		// RENDER 3D SCENE
-		/////////////////////////////////////////////////////////////////////
-		//
-		// Entity cameraEntity = GetMainCameraEntity();
-		// if (!cameraEntity)
-		// 	return;
-		//
-		// glm::mat4 cameraViewMatrix = glm::inverse(cameraEntity.GetComponent<TransformComponent>().Transform);
-		// HZ_CORE_ASSERT(cameraEntity, "Scene does not contain any cameras!");
-		// SceneCamera& camera = cameraEntity.GetComponent<CameraComponent>();
-		// camera.SetViewportSize(m_ViewportWidth, m_ViewportHeight);
-		//
-		// auto group = m_Registry.group<MeshComponent>(entt::get<TransformComponent>);
-		// SceneRenderer::Get().BeginScene(this, { camera, cameraViewMatrix });
-		// for (auto entity : group)
-		// {
-		// 	auto [transformComponent, meshComponent] = group.get<TransformComponent, MeshComponent>(entity);
-		// 	if (meshComponent.Mesh)
-		// 	{
-		// 		meshComponent.Mesh->OnUpdate(ts);
-		//
-		// 		SceneRenderer::SubmitMesh(meshComponent, transformComponent, nullptr);
-		// 	}
-		// }
-		// SceneRenderer::Get().EndScene();
-
-		/////////////////////////////////////////////////////////////////////
-	}
-
-	void Scene::OnRenderEditor(Timestep ts, const EditorCamera& editorCamera)
+	void Scene::OnRenderScene(const Mat4& viewProj, const Vec3& camPos)
 	{
 		SceneRenderer::Environment environment;
 
@@ -145,7 +111,7 @@ namespace pbe {
 						, trans.GetTransform() * Vec4(0, 0, 1, 0)
 						, l.Color * l.Multiplier);
 				}
-			});
+				});
 
 			m_Registry.view<TransformComponent, PointLightComponent>().each([&environment](TransformComponent &trans, PointLightComponent &l) {
 				if (l.Enable) {
@@ -154,13 +120,13 @@ namespace pbe {
 						, l.Color * l.Multiplier
 						, l.Radius);
 				}
-			});
+				});
 
 			m_Registry.view<TransformComponent, SpotLightComponent>().each([&environment](TransformComponent &trans, SpotLightComponent &l) {
 				if (l.Enable) {
 					environment.lights.push_back({});
 					environment.lights.back().InitAsSpotLight(trans.Translation
-						,trans.GetTransform() * Vec4(0, -1, 0, 0)
+						, trans.GetTransform() * Vec4(0, -1, 0, 0)
 						, l.Color * l.Multiplier
 						, l.Radius
 						, glm::cos(glm::radians(l.CutOff)));
@@ -169,15 +135,33 @@ namespace pbe {
 		}
 
 		auto group = m_Registry.group<MeshComponent>(entt::get<TransformComponent>);
-		SceneRenderer::Get().BeginScene(this, { editorCamera.GetViewProjection(), editorCamera.GetPosition() }, environment);
+		SceneRenderer::Get().BeginScene(this, { viewProj, camPos }, environment);
 		for (auto entity : group) {
-			auto& [meshComponent, transformComponent] = group.get<MeshComponent, TransformComponent>(entity);
+			auto&[meshComponent, transformComponent] = group.get<MeshComponent, TransformComponent>(entity);
 			if (meshComponent.Mesh) {
-				meshComponent.Mesh->OnUpdate(ts);
 				SceneRenderer::Get().SubmitMesh(meshComponent, transformComponent.GetTransform());
 			}
 		}
 		SceneRenderer::Get().EndScene();
+	}
+
+	void Scene::OnRenderRuntime()
+	{
+		Entity cameraEntity = GetMainCameraEntity();
+		if (!cameraEntity)
+			return;
+
+		const auto& camera = cameraEntity.GetComponent<CameraComponent>();
+		HZ_CORE_ASSERT(camera.Primary);
+		const auto& trans = cameraEntity.GetComponent<TransformComponent>();
+		Mat4 view = glm::translate(glm::mat4(1.0f), trans.Translation);// * glm::toMat4(trans.Rotation);
+		view = glm::inverse(view);
+		OnRenderScene(camera.Camera.GetProjectionMatrix() * view, trans.Translation);
+	}
+
+	void Scene::OnRenderEditor(const EditorCamera& editorCamera)
+	{
+		OnRenderScene(editorCamera.GetViewProjection(), editorCamera.GetPosition());
 	}
 
 	void Scene::OnEvent(Event& e)
@@ -186,15 +170,12 @@ namespace pbe {
 
 	void Scene::OnRuntimeStart()
 	{
-		ScriptEngine::SetSceneContext(this);
-
 		{
 			auto view = m_Registry.view<ScriptComponent>();
 			for (auto entity : view)
 			{
 				Entity e = { entity, this };
-				if (ScriptEngine::ScriptExists(e.GetComponent<ScriptComponent>().ScriptPath))
-					ScriptEngine::InstantiateEntityClass(e);
+				s_ScriptEngine->InstantiateEntity(e);
 			}
 		}
 
@@ -257,7 +238,7 @@ namespace pbe {
 	void Scene::DestroyEntity(Entity entity)
 	{
 		if (entity.HasComponent<ScriptComponent>())
-			ScriptEngine::OnScriptComponentDestroyed(m_SceneID, entity.GetUUID());
+			entity.RemoveComponent<ScriptComponent>();
 
 		m_Registry.destroy(entity.m_EntityHandle);
 	}
@@ -336,10 +317,6 @@ namespace pbe {
 		CopyComponent<DirectionLightComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<PointLightComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<SpotLightComponent>(target->m_Registry, m_Registry, enttMap);
-
-		const auto& entityInstanceMap = ScriptEngine::GetEntityInstanceMap();
-		if (entityInstanceMap.find(target->GetUUID()) != entityInstanceMap.end())
-			ScriptEngine::CopyEntityScriptData(target->GetUUID(), m_SceneID);
 	}
 
 	Ref<Scene> Scene::GetScene(UUID uuid)
