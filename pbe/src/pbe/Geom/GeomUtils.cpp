@@ -8,7 +8,7 @@ namespace pbe {
 	}
 
 	Ref<IndexBuffer> GeomUtils::GeomCreateIndexBuffer(GeomBuffer& geomBuffer) {
-		return IndexBuffer::CreateIB(geomBuffer.GetRawIndexesData(), geomBuffer.NumFace() * sizeof(GeomFace));
+		return IndexBuffer::CreateIB(geomBuffer.GetRawIndexesData(), geomBuffer.NumIndexes() * SIZEOF_INDEX);
 	}
 
 }

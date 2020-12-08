@@ -27,6 +27,7 @@ namespace pbe {
 		void OnUpdate(Timestep ts);
 
 		// todo: tmp
+		void OnRenderEntityInfo();
 		void OnRenderScene(const Mat4& viewProj, const Vec3& camPos);
 		void OnRenderRuntime();
 		void OnRenderEditor(const EditorCamera& editorCamera);
@@ -74,8 +75,6 @@ namespace pbe {
 		EntityMap m_EntityIDMap;
 
 		entt::entity m_SelectedEntity;
-
-		Entity* m_PhysicsBodyEntityBuffer = nullptr;
 
 		bool m_IsPlaying = false;
 

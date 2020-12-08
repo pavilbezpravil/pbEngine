@@ -401,8 +401,23 @@ inline void GraphicsContext::SetBlendFactor( Color BlendFactor )
 
 inline void GraphicsContext::SetPrimitiveTopology( D3D12_PRIMITIVE_TOPOLOGY Topology )
 {
-	HZ_CORE_ASSERT(Topology == D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+	D3D12_PRIMITIVE_TOPOLOGY_TYPE ptt = D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+	switch (Topology) {
+		case D3D_PRIMITIVE_TOPOLOGY_POINTLIST:
+			ptt = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+			break;
+		case D3D_PRIMITIVE_TOPOLOGY_LINELIST:
+			ptt = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+			break;
+		case D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST:
+			ptt = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+			break;
+		default:
+			HZ_CORE_ASSERT(FALSE);
+	}
+
+	HZ_CORE_ASSERT(ptt != D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED);
+	SetPrimitiveTopologyType(ptt);
     m_CommandList->IASetPrimitiveTopology(Topology);
 }
 

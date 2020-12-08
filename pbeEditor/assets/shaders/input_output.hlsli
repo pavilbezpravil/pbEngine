@@ -1,12 +1,26 @@
 struct VS_IN {
-	float3 posL : POSITION0;
-	float3 normalL : NORMAL0;
+	#ifdef VS_IN_POS_L
+		float3 posL : POSITION0;
+	#endif
+	#ifdef VS_IN_NORMAL_L
+		float3 normalL : NORMAL0;
+	#endif
+	#ifdef VS_IN_COLOR0
+		float4 color0 : COLOR0;
+	#endif
 };
 
 struct VS_OUT {
 	float4 posH : SV_POSITION;
-	float3 posW : POSITION0;
-	float3 normalW : NORMAL0;
+	#ifdef VS_OUT_POS_W
+		float3 posW : POSITION0;
+	#endif
+	#ifdef VS_OUT_NORMAL_W
+		float3 normalW : NORMAL0;
+	#endif
+	#ifdef VS_OUT_COLOR0
+		float4 color0 : COLOR0;
+	#endif
 };
 
 struct PS_OUT {

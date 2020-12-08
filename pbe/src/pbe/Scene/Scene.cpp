@@ -13,6 +13,8 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "pbe/Renderer/RendPrim.h"
+
 
 namespace pbe {
 
@@ -99,6 +101,34 @@ namespace pbe {
 		}
 	}
 
+	void Scene::OnRenderEntityInfo()
+	{
+		m_Registry.view<TransformComponent, DirectionLightComponent>().each([](TransformComponent& trans, DirectionLightComponent& l) {
+			RendPrim::DrawSphere(trans.Translation, 0.2f, 8, Color{ 15 / 255.f, 133 / 255.f, 212 / 255.f, 255 });
+			RendPrim::DrawCircle(trans.Translation, trans.Forward(), 1.f, 8, Color{ 1, 1, 1, 1 });
+			
+			Vec3 from = trans.Translation;
+			RendPrim::DrawLine(from, from + trans.Forward() * 0.4f, Color{ 1, 1, 1, 1 });
+			
+			from = trans.Translation - trans.Right() * 0.2f;
+			RendPrim::DrawLine(from, from + trans.Forward() * 0.4f, Color{ 1, 1, 1, 1 });
+
+			from = trans.Translation + trans.Right() * 0.2f;
+			RendPrim::DrawLine(from, from + trans.Forward() * 0.4f, Color{ 1, 1, 1, 1 });
+			});
+
+		m_Registry.view<TransformComponent, PointLightComponent>().each([](TransformComponent& trans, PointLightComponent& l) {
+			RendPrim::DrawSphere(trans.Translation, 0.2f, 8, Color{ 15 / 255.f, 133 / 255.f, 212 / 255.f, 255 });
+			RendPrim::DrawSphere(trans.Translation, l.Radius, 8, Color{ 1, 1, 1, 1 });
+			});
+
+		m_Registry.view<TransformComponent, SpotLightComponent>().each([](TransformComponent& trans, SpotLightComponent& l) {
+			RendPrim::DrawSphere(trans.Translation, 0.2f, 8, Color{ 15 / 255.f, 133 / 255.f, 212 / 255.f, 255 });
+			RendPrim::DrawLine(trans.Translation, trans.Translation + trans.Forward() * 0.4f, Color{ 0, 0, 1, 1 });
+			RendPrim::DrawCone(trans.Translation, trans.Forward(), l.CutOff, l.Radius, 8, Color{ 1, 1, 1, 1 });
+			});
+	}
+
 	void Scene::OnRenderScene(const Mat4& viewProj, const Vec3& camPos)
 	{
 		SceneRenderer::Environment environment;
@@ -107,8 +137,8 @@ namespace pbe {
 			m_Registry.view<TransformComponent, DirectionLightComponent>().each([&environment](TransformComponent &trans, DirectionLightComponent &l) {
 				if (l.Enable) {
 					environment.lights.push_back({});
-					environment.lights.back().InitAsDirectLight(trans.GetTransform() * Vec4(0, -1, 0, 0)
-						, trans.GetTransform() * Vec4(0, 0, 1, 0)
+					environment.lights.back().InitAsDirectLight(trans.Forward()
+						, trans.Up()
 						, l.Color * l.Multiplier);
 				}
 				});
@@ -126,10 +156,10 @@ namespace pbe {
 				if (l.Enable) {
 					environment.lights.push_back({});
 					environment.lights.back().InitAsSpotLight(trans.Translation
-						, trans.GetTransform() * Vec4(0, -1, 0, 0)
+						, trans.Forward()
 						, l.Color * l.Multiplier
 						, l.Radius
-						, glm::cos(glm::radians(l.CutOff)));
+						, glm::cos(l.CutOff / 2.f));
 				}
 				});
 		}
@@ -161,6 +191,7 @@ namespace pbe {
 
 	void Scene::OnRenderEditor(const EditorCamera& editorCamera)
 	{
+		OnRenderEntityInfo();
 		OnRenderScene(editorCamera.GetViewProjection(), editorCamera.GetPosition());
 	}
 
@@ -184,7 +215,6 @@ namespace pbe {
 
 	void Scene::OnRuntimeStop()
 	{
-		delete[] m_PhysicsBodyEntityBuffer;
 		m_IsPlaying = false;
 	}
 

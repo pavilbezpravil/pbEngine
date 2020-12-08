@@ -1,4 +1,8 @@
-static const float PI = 3.14159265359;
+#define VS_IN_POS_L
+#define VS_IN_NORMAL_L
+
+#define VS_OUT_POS_W
+#define VS_OUT_NORMAL_W
 
 #ifdef COLOR_PASS
 	#define PS_OUT_COLOR0
@@ -105,10 +109,12 @@ PS_OUT mainPS(VS_OUT input) {
 				L = normalize(light.position - posW);
 				float distance = length(light.position - posW);
 				attenuation = 1.0 / (distance * distance);
+				attenuation *= smoothstep(1, 0, distance / light.radius);
 			} else if (light.type == LIGHT_TYPE_SPOT) {
 				L = normalize(light.position - posW);
 				float distance = length(light.position - posW);
 				attenuation = 1.0 / (distance * distance);
+				attenuation *= smoothstep(1, 0, distance / light.radius);
 
 				float3 lightDirection = normalize(light.up);
 				float cutOffValue = dot(lightDirection, -L);

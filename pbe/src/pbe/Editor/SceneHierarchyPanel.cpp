@@ -624,14 +624,17 @@ namespace pbe {
 		DrawComponent<PointLightComponent>("Point Light", entity, [&](PointLightComponent& dl)
 		{
 			DrawLightBase(dl);
-			ImGui::DragFloat("Radius", &dl.Radius, 0.5, 0, 1000);
+			ImGui::DragFloat("Radius", &dl.Radius, 0.1, 0, 1000);
 		});
 
 		DrawComponent<SpotLightComponent>("Spot Light", entity, [&](SpotLightComponent& dl)
 		{
 			DrawLightBase(dl);
-			ImGui::DragFloat("Radius", &dl.Radius, 0.5, 0, 1000);
-			ImGui::DragFloat("CutOff", &dl.CutOff, 1, 0, 360);
+			ImGui::DragFloat("Radius", &dl.Radius, 0.1, 0, 1000);
+			float cutOff = glm::degrees(dl.CutOff);
+			if (ImGui::DragFloat("CutOff", &cutOff, 1, 0, 360)) {
+				dl.CutOff = glm::radians(cutOff);
+			}
 		});
 
 		DrawComponent<ScriptComponent>("Script", entity, [=](ScriptComponent& sc) mutable

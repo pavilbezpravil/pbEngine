@@ -8,13 +8,20 @@ namespace pbe {
 
 	struct AABB
 	{
-		glm::vec3 Min, Max;
+		Vec3 Min, Max;
 
 		AABB()
 			: Min(FLT_MAX), Max(FLT_MIN) {}
 
-		AABB(const glm::vec3& min, const glm::vec3& max)
+		AABB(const Vec3& min, const Vec3& max)
 			: Min(min), Max(max) {}
+
+		static AABB FromCenterHalfSize(const Vec3& center, const Vec3& halfSize)
+		{
+			return AABB{center - halfSize, center + halfSize};
+		}
+
+		Vec3 Size() const { return Max - Min; }
 
 		void AddPoint(const Vec3& p) {
 			Min = glm::min(Min, p);

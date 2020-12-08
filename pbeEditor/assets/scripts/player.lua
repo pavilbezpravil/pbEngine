@@ -1,10 +1,9 @@
 function onCreate(self)
-    print("onCreate from lua")
     self.mouseSensitivity = 0.002
 end
 
 function onUpdate(self, dt)
-    trans = self:getComponent("TransformComponent")
+    local trans = self:getComponent("TransformComponent")
 
     local direction = Vec3.new()
     if Input.isKeyPressed(KeyCode.W) then
@@ -21,12 +20,15 @@ function onUpdate(self, dt)
     end
     direction:normalize()
 
-    mouseDelta = Input.getMouseDelta()
+    local mouseDelta = Input.getMouseDelta()
     -- print(tostring(mouseDelta))
 
-    -- local mouseSensitivity = 0.002
-    q = Quat.angleAxis(mouseDelta.x * self.mouseSensitivity, Vec3.YNeg)
+    local q = Quat.angleAxis(mouseDelta.x * self.mouseSensitivity, Vec3.YNeg)
     trans.rotation = q * trans.rotation
+
+    local spherePos = trans.translation + trans.forward * 4
+    RendPrim.drawSphere(spherePos, 0.5, 16, Color.Red)
+    RendPrim.drawLine(spherePos - trans.right * 1.2, spherePos + trans.right * 1.2, Color.Green)
 
     local speed = 2
     trans.translation = trans.translation + direction * speed * dt

@@ -13,9 +13,9 @@ namespace pbe {
 	Ref<IndexBuffer> IndexBuffer::CreateIB(const void* data, uint32_t size)
 	{
 		auto ib = Ref<IndexBuffer>::Create();
-		auto faceByteSize = sizeof(uint);
-		HZ_CORE_ASSERT(size % faceByteSize == 0);
-		ib->Create(L"", size / faceByteSize, faceByteSize, data);
+		auto indexByteSize = sizeof(uint);
+		HZ_CORE_ASSERT(size % indexByteSize == 0);
+		ib->Create(L"", size / indexByteSize, indexByteSize, data);
 		return ib;
 	}
 

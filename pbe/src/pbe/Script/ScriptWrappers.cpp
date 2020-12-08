@@ -16,6 +16,7 @@
 #include <sol/sol.hpp>
 
 #include "pbe/Core/Application.h"
+#include "pbe/Renderer/RendPrim.h"
 
 namespace pbe {
 
@@ -55,6 +56,43 @@ namespace pbe {
 		void RegisterMathFunction(sol::state& g_luaState)
 		{
 			HZ_CORE_INFO("    RegisterMathFunction");
+
+			{
+				using VecT = Vec4;
+				auto vec3 = g_luaState.new_usertype<VecT>("Vec4",
+					sol::constructors<VecT(), VecT(float, float, float, float)>());
+
+				vec3.set("x", &VecT::x);
+				vec3.set("y", &VecT::y);
+				vec3.set("z", &VecT::z);
+				vec3.set("w", &VecT::w);
+
+				vec3.set("X", sol::property([]() { return Vec4_X; }));
+				vec3.set("XNeg", sol::property([]() { return Vec4_XNeg; }));
+				vec3.set("Y", sol::property([]() { return Vec4_Y; }));
+				vec3.set("YNeg", sol::property([]() { return Vec4_YNeg; }));
+				vec3.set("Z", sol::property([]() { return Vec4_Z; }));
+				vec3.set("ZNeg", sol::property([]() { return Vec4_ZNeg; }));
+				vec3.set("W", sol::property([]() { return Vec4_W; }));
+				vec3.set("WNeg", sol::property([]() { return Vec4_WNeg; }));
+
+				vec3.set("dot", [](const VecT& l, const VecT& r) { return glm::dot(l, r); });
+				vec3.set("normalize", [](const VecT& l) { return glm::normalize(l); });
+				vec3.set("length", [](const VecT& l) { return glm::length(l); });
+				vec3.set("distance", [](const VecT& l, const VecT& r) { return glm::distance(l, r); });
+
+				vec3.set(sol::meta_function::unary_minus, [](const VecT& self) { return -self; });
+
+				vec3.set(sol::meta_function::addition, [](const VecT& l, const VecT& r) { return l + r; });
+				vec3.set(sol::meta_function::subtraction, [](const VecT& l, const VecT& r) { return l - r; });
+				vec3.set(sol::meta_function::multiplication,
+					sol::overload(
+						[](const VecT& l, const VecT& r) { return l * r; },
+						[](const VecT& l, float r) { return l * r; })
+				);
+
+				vec3.set(sol::meta_function::to_string, [](const VecT& l) { return std::string("{") + std::to_string(l.x) + ", " + std::to_string(l.y) + ", " + std::to_string(l.z) + ", " + std::to_string(l.z) + "}"; });
+			}
 
 			{
 				auto vec3 = g_luaState.new_usertype<Vec3>("Vec3",
@@ -152,6 +190,33 @@ namespace pbe {
 					[](const Quat& self, const Vec4& v) { return self * v; })
 			);
 			quat.set(sol::meta_function::to_string, [](const Quat& l) { return std::string("{") + std::to_string(l.w) + ", " + std::to_string(l.x) + ", " + std::to_string(l.y) + ", " + std::to_string(l.z) + "}"; });
+		}
+
+		void RegisterColor(sol::state& luaState)
+		{
+			{
+				auto color = luaState.new_usertype<Color>("Color",
+					sol::constructors<
+						  Color(float, float, float)
+						, Color(float, float, float, float)
+						, Color(const Vec3&)
+						, Color(const Vec4&)
+					>()
+					);
+
+				color.set(sol::base_classes, sol::bases<Vec4>());
+
+				color.set("r", &Color::r);
+				color.set("g", &Color::g);
+				color.set("b", &Color::b);
+				color.set("a", &Color::a);
+
+				color.set("Red", sol::property([]() { return Color_Red; }));
+				color.set("Green", sol::property([]() { return Color_Green; }));
+				color.set("Blue", sol::property([]() { return Color_Blue; }));
+
+				color.set(sol::meta_function::to_string, [](const Color& l) { return std::string("Color {") + std::to_string(l.r) + ", " + std::to_string(l.g) + ", " + std::to_string(l.b) + ", " + std::to_string(l.w) + "}"; });
+			}
 		}
 
 		void RegisterComponent(sol::state& g_luaState)
@@ -301,6 +366,17 @@ namespace pbe {
 			input.set("isMouseButtonPressed", [](int button) { return Input::IsMouseButtonPressed(button); });
 			input.set("getMousePosition", []() { auto [x, y] = Input::GetMousePosition(); return Vec2(x, y); });
 			input.set("getMouseDelta", []() { auto [x, y] = Input::GetMouseDelta(); return Vec2(x, y); });
+		}
+
+		void RegisterRendPrim(sol::state& luaState)
+		{
+			auto input = luaState.create_table("RendPrim");
+
+			input.set("drawLine", [](const Vec3& from, const Vec3& to, const Vec4& color) { RendPrim::DrawLine(from, to, Color::FromVec4(color)); });
+			input.set("drawAABB", [](const Vec3& min, const Vec3& max, const Vec4& color) { RendPrim::DrawAABB(AABB{min, max}, Color::FromVec4(color)); });
+			input.set("drawCircle", [](const Vec3& center, const Vec3& normal, float radius, uint nSegments, const Color& color) { RendPrim::DrawCircle(center, normal, radius, nSegments, color); });
+			input.set("drawSphere", [](const Vec3& center, float radius, uint nSegments, const Color& color) { RendPrim::DrawSphere(center, radius, nSegments, Color::FromVec4(color)); });
+			input.set("drawCone", [](const Vec3& center, const Vec3& forward, float angle, float radius, uint nSegments, const Color& color) { RendPrim::DrawCone(center, forward, angle, radius, nSegments, color); });
 		}
 	}
 }

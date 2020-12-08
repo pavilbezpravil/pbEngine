@@ -6,6 +6,7 @@
 #include "SamplerManager.h"
 #include "ColorBuffer.h"
 #include "Renderer.h"
+#include "RendPrim.h"
 
 namespace pbe {
 
@@ -68,11 +69,13 @@ namespace pbe {
 		}
 
 		InitBaseRootSignature();
+
+		RendPrim::Init();
 	}
 
 	void SceneRenderer::Shutdown()
 	{
-		
+		RendPrim::Term();
 	}
 
 	void SceneRenderer::BeginScene(const Ref<Scene>& scene, const CameraInfo& cameraInfo,
@@ -117,7 +120,7 @@ namespace pbe {
 		}
 
 		Light directLight = _environment.lights[directLightIdx];
-		
+
 		const float shadowHalfBounds = 20;
 		const float shadowDepth = 40;
 		auto shadowProj = glm::orthoRH_ZO(-shadowHalfBounds, shadowHalfBounds,
@@ -218,6 +221,8 @@ namespace pbe {
 		// context.SetDynamicSRV((uint)BaseDescriptor::gLights, _environment.lights.size() * sizeof(Light), _environment.lights.data());
 
 		DrawAllMesh(context);
+
+		RendPrim::RenderPrimitives(context, _cameraInfo.viewProj);
 
 		context.Finish();
 	}

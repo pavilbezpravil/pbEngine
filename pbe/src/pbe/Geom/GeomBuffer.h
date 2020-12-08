@@ -13,10 +13,15 @@ namespace pbe {
 
 	static_assert(sizeof(GeomFace) == 3 * sizeof(uint));
 
+	using IndexType = uint;
+	#define SIZEOF_INDEX sizeof(IndexType)
+	
 	struct GeomBuffer {
 		void Create(FVF fvf, int size = 0, int nIndexes = 0);
+		void Clear();
 
 		void AddVertex();
+		void AddVertexes(uint n);
 		void AddIndexes(uint n);
 		void AddFace();
 
@@ -35,8 +40,14 @@ namespace pbe {
 		const Vec3& GetNormal(int i) const;
 		Vec3& NormalMut(int i);
 
-		uint NumFace() const;
+		const Vec4& GetColor(int i) const;
+		Vec4& ColorMut(int i);
 
+		uint NumIndexes() const;
+		const uint& GetIndex(int i) const;
+		uint& IndexMut(int i);
+
+		uint NumFace() const;
 		const GeomFace& GetFace(int face) const;
 		GeomFace& FaceMut(int face);
 

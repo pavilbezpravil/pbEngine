@@ -7,7 +7,8 @@ namespace pbe {
 	{
 		int fvf_size_map[]
 		{
-			 3 * 4, 3 * 4, 2 * 4
+			// pos, norm , uv   , color
+			 3 * 4, 3 * 4, 2 * 4, 4 * 4
 		};
 	}
 
@@ -21,6 +22,9 @@ namespace pbe {
 		}
 		if (fvf & FVF_UV) {
 			stride += fvf_size_map[2];
+		}
+		if (fvf & FVF_COLOR) {
+			stride += fvf_size_map[3];
 		}
 		return stride;
 	}
@@ -49,6 +53,12 @@ namespace pbe {
 		}
 		if (fvf & FVF_NORMAL) {
 			inputLayout.push_back({ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT     , 0, fvfGetOffset(fvf, FVF_NORMAL), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+		}
+		if (fvf & FVF_UV) {
+			inputLayout.push_back({ "UV", 0, DXGI_FORMAT_R32G32_FLOAT     , 0, fvfGetOffset(fvf, FVF_UV), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+		}
+		if (fvf & FVF_COLOR) {
+			inputLayout.push_back({ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT     , 0, fvfGetOffset(fvf, FVF_COLOR), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
 		}
 
 		return inputLayout;
