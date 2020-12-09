@@ -24,4 +24,9 @@ namespace pbe {
 	{
 	}
 
+	bool UUID::Valid() const
+	{
+		return m_UUID != UUID_INVALID;
+	}
+
 }

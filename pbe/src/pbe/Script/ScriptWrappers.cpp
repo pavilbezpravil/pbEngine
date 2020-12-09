@@ -246,15 +246,20 @@ namespace pbe {
 				);
 
 			auto trans = g_luaState.new_usertype<TransformComponent>("TransformComponent",
-				"translation", &TransformComponent::Translation,
-				"rotation", &TransformComponent::Rotation,
-				"scale", &TransformComponent::Scale,
-				"move", [](TransformComponent& self, const Vec3& v) { self.Translation += v; }
+				"position", sol::property(&TransformComponent::WorldPosition, [](TransformComponent& tc, const Vec3& position) { tc.UpdatePosition(position, Space::World); }),
+				"rotation", sol::property(&TransformComponent::WorldRotation, [](TransformComponent& tc, const Vec3& rotation) { tc.UpdateRotation(rotation, Space::World); }),
+				"scale", sol::property(&TransformComponent::WorldScale, [](TransformComponent& tc, const Vec3& scale) { tc.UpdateScale(scale, Space::World); }),
+				"localPosition", &TransformComponent::LocalPosition,
+				"localRotation", &TransformComponent::LocalRotation,
+				"localScale", &TransformComponent::LocalScale
 				);
 
-			trans.set("forward", sol::property(&TransformComponent::Forward));
-			trans.set("up", sol::property(&TransformComponent::Up));
-			trans.set("right", sol::property(&TransformComponent::Right));
+			trans.set("forward", sol::property(&TransformComponent::WorldForward));
+			trans.set("up", sol::property(&TransformComponent::WorldUp));
+			trans.set("right", sol::property(&TransformComponent::WorldRight));
+			trans.set("localForward", sol::property(&TransformComponent::WorldForward));
+			trans.set("localUp", sol::property(&TransformComponent::WorldUp));
+			trans.set("localRight", sol::property(&TransformComponent::WorldRight));
 		}
 
 		template <typename T>

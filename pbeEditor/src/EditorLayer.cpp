@@ -241,7 +241,8 @@ namespace pbe {
 		ImGui::SameLine();
 
 		ImGui::SetNextItemWidth(80);
-		ImGui::Combo("Translate mode", &m_GizmoTranslationSpace, "Local\0World\0");
+		ImGui::Combo("Translate mode", (int*)&m_GizmoTransSpace, "Local\0World\0");
+		m_SceneHierarchyPanel->SetTransformSpace(m_GizmoTransSpace);
 
 		m_ViewportPanelMouseOver = ImGui::IsWindowHovered();
 		m_ViewportPanelFocused = ImGui::IsWindowFocused();
@@ -308,25 +309,25 @@ namespace pbe {
 
 			bool snap = Input::IsKeyPressed(HZ_KEY_LEFT_CONTROL);
 
-			auto& entityTransform = selection.Entity.GetComponent<TransformComponent>().GetTransform();
+			Mat4 entityTransform = selection.Entity.GetComponent<TransformComponent>().GetWorldTransform();
 			float snapValue = GetSnapValue();
 			float snapValues[3] = { snapValue, snapValue, snapValue };
 			if (m_SelectionMode == SelectionMode::Entity) {
 				ImGuizmo::Manipulate(glm::value_ptr(m_EditorCamera.GetViewMatrix()),
 					glm::value_ptr(m_EditorCamera.GetProjectionMatrix()),
 					(ImGuizmo::OPERATION)m_GizmoType,
-					(ImGuizmo::MODE)m_GizmoTranslationSpace,
+					(ImGuizmo::MODE)m_GizmoTransSpace,
 					glm::value_ptr(entityTransform),
 					nullptr,
 					snap ? snapValues : nullptr);
 
-				selection.Entity.GetComponent<TransformComponent>().SetTransform(entityTransform);
+				selection.Entity.GetComponent<TransformComponent>().SetWorldTransform(entityTransform);
 			} else {
 				glm::mat4 transformBase = entityTransform * selection.Mesh->Transform;
 				ImGuizmo::Manipulate(glm::value_ptr(m_EditorCamera.GetViewMatrix()),
 					glm::value_ptr(m_EditorCamera.GetProjectionMatrix()),
 					(ImGuizmo::OPERATION)m_GizmoType,
-					(ImGuizmo::MODE)m_GizmoTranslationSpace,
+					(ImGuizmo::MODE)m_GizmoTransSpace,
 					glm::value_ptr(transformBase),
 					nullptr,
 					snap ? snapValues : nullptr);
@@ -729,8 +730,8 @@ namespace pbe {
 					for (uint32_t i = 0; i < submeshes.size(); i++) {
 						auto& submesh = submeshes[i];
 						Ray ray = {
-							glm::inverse(entity.GetComponent<TransformComponent>().GetTransform() * submesh.Transform) * glm::vec4(origin, 1.0f),
-							glm::inverse(glm::mat3(entity.GetComponent<TransformComponent>().GetTransform()) * glm::mat3(submesh.Transform)) * direction
+							glm::inverse(entity.GetComponent<TransformComponent>().GetWorldTransform() * submesh.Transform) * glm::vec4(origin, 1.0f),
+							glm::inverse(glm::mat3(entity.GetComponent<TransformComponent>().GetWorldTransform()) * glm::mat3(submesh.Transform)) * direction
 						};
 
 						float t;

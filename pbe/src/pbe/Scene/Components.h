@@ -11,6 +11,7 @@
 
 namespace pbe {
 
+	class Scene;
 
 #define COMPONENT_CLASS_TYPE(ComponentType) static const char* GetName() { return STRINGIFY(ComponentType); }
 
@@ -36,29 +37,80 @@ namespace pbe {
 		COMPONENT_CLASS_TYPE(TagComponent)
 	};
 
+	// must be equal ImGuiGizmo
+	enum class Space {
+		Local = 0,
+		World = 1,
+	};
+	
 	struct TransformComponent
 	{
-		Vec3 Translation = {0, 0, 0};
-		Quat Rotation = glm::quat(1, 0, 0, 0);
-		Vec3 Scale = {1, 1, 1};
+		UUID ownUUID = UUID_INVALID;
+		Scene* pScene = NULL;
+
+		UUID ParentUUID = UUID_INVALID;
+		std::vector<UUID> ChildUUIDs;
+
+		void Attach(UUID uuid);
+		void Dettach();
+
+		void UpdateChilds() const;
+
+		bool HasParent() const;
+		bool HasChilds() const;
+
+		Vec3 HierPosition = Vec3_Zero;
+		Quat HierRotation = glm::quat(1, 0, 0, 0);
+		Vec3 HierScale = Vec3_One;
+
+		Vec3 LocalPosition = Vec3_Zero;
+		Quat LocalRotation = glm::quat(1, 0, 0, 0);
+		Vec3 LocalScale = Vec3_One;
+
+		void UpdatePosition(const Vec3& position, Space space = Space::Local);
+		void UpdateRotation(const Quat& rotation, Space space = Space::Local);
+		void UpdateScale(const Vec3& scale, Space space = Space::Local);
+
+		Vec3 Position(Space space = Space::Local) const;
+		Quat Rotation(Space space = Space::Local) const;
+		Vec3 Scale(Space space = Space::Local) const;
+
+		Vec3 WorldPosition() const { return Position(Space::World); }
+		Quat WorldRotation() const { return Rotation(Space::World); }
+		Vec3 WorldScale() const { return Scale(Space::World); }
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent& other) = default;
-		TransformComponent(const Vec3& translation)
-			: Translation(translation) {}
-		TransformComponent(const Quat& rotation)
-			: Rotation(rotation) {}
+		// TransformComponent(const Vec3& translation)
+		// 	: Translation(translation) {}
+		// TransformComponent(const Quat& rotation)
+		// 	: Rotation(rotation) {}
 
-		Vec3 Forward() const { return Rotation * Vec3_ZNeg; }
-		Vec3 Up() const { return Rotation * Vec3_Y; }
-		Vec3 Right() const { return Rotation * Vec3_X; }
+		Vec3 LocalForward() const { return Forward(Space::Local); }
+		Vec3 LocalUp() const { return Up(Space::Local); }
+		Vec3 LocalRight() const { return Right(Space::Local); }
 
-		Mat4 GetTransform() const;
-		void SetTransform(const Mat4& trans);
+		Vec3 WorldForward() const { return Forward(Space::World); }
+		Vec3 WorldUp() const { return Up(Space::World); }
+		Vec3 WorldRight() const { return Right(Space::World); }
+
+		Mat4 GetLocalTransform() const { return GetTransform(Space::Local); }
+		void SetLocalTransform(const Mat4& trans) { return SetTransform(trans, Space::Local); }
+
+		Mat4 GetWorldTransform() const { return GetTransform(Space::World); }
+		void SetWorldTransform(const Mat4& trans) { return SetTransform(trans, Space::World); }
 
 		operator glm::mat4 () const { return GetTransform(); }
 
 		COMPONENT_CLASS_TYPE(TransformComponent)
+
+	private:
+		Vec3 Forward(Space space = Space::Local) const { return Rotation(space) * Vec3_ZNeg; }
+		Vec3 Up(Space space = Space::Local) const { return Rotation(space) * Vec3_Y; }
+		Vec3 Right(Space space = Space::Local) const { return Rotation(space) * Vec3_X; }
+
+		Mat4 GetTransform(Space space = Space::Local) const;
+		void SetTransform(const Mat4& trans, Space space = Space::Local);
 	};
 
 	struct MeshComponent

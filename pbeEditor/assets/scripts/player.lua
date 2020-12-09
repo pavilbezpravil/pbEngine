@@ -26,10 +26,10 @@ function onUpdate(self, dt)
     local q = Quat.angleAxis(mouseDelta.x * self.mouseSensitivity, Vec3.YNeg)
     trans.rotation = q * trans.rotation
 
-    local spherePos = trans.translation + trans.forward * 4
+    local spherePos = trans.position + trans.forward * 4
     RendPrim.drawSphere(spherePos, 0.5, 16, Color.Red)
     RendPrim.drawLine(spherePos - trans.right * 1.2, spherePos + trans.right * 1.2, Color.Green)
 
     local speed = 2
-    trans.translation = trans.translation + direction * speed * dt
+    trans.position = trans.position + direction * speed * dt
 end

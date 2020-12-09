@@ -176,9 +176,23 @@ namespace pbe {
 			out << YAML::BeginMap; // TransformComponent
 
 			auto& tc = entity.GetComponent<TransformComponent>();
-			out << YAML::Key << "Position" << YAML::Value << tc.Translation;
-			out << YAML::Key << "Rotation" << YAML::Value << tc.Rotation;
-			out << YAML::Key << "Scale" << YAML::Value << tc.Scale;
+			out << YAML::Key << "Position" << YAML::Value << tc.LocalPosition;
+			out << YAML::Key << "Rotation" << YAML::Value << tc.LocalRotation;
+			out << YAML::Key << "Scale" << YAML::Value << tc.LocalScale;
+
+			if (tc.ParentUUID.Valid()) {
+				out << YAML::Key << "ParentUUID" << YAML::Value << tc.ParentUUID;
+			}
+
+			if (!tc.ChildUUIDs.empty()) {
+				out << YAML::Key << "ChildUUIDs" << YAML::Value;
+				out << YAML::BeginSeq;
+				// out << YAML::Flow;
+				for (UUID uuid : tc.ChildUUIDs) {
+					out << uuid;
+				}
+				out << YAML::EndSeq;
+			}
 
 			out << YAML::EndMap; // TransformComponent
 		}
@@ -194,41 +208,6 @@ namespace pbe {
 			if (s_ScriptEngine->HasEntityInstData(entity))
 			{
 				EntityInstanceData& data = s_ScriptEngine->GetEntityInstData(entity);
-
-				// const auto& fields = data.pDesc->ModuleFieldMap;
-				// out << YAML::Key << "StoredFields" << YAML::Value;
-				// out << YAML::BeginSeq;
-				// for (const auto&[name, field] : fields)
-				// {
-				// 	out << YAML::BeginMap; // Field
-				// 	out << YAML::Key << "Name" << YAML::Value << name;
-				// 	out << YAML::Key << "Type" << YAML::Value << (uint32_t)field.Type;
-				// 	out << YAML::Key << "Data" << YAML::Value;
-				//
-				// 	// switch (field.Type)
-				// 	// {
-				// 	// case FieldType::Int:
-				// 	// 	out << field.GetStoredValue<int>();
-				// 	// 	break;
-				// 	// case FieldType::UnsignedInt:
-				// 	// 	out << field.GetStoredValue<uint32_t>();
-				// 	// 	break;
-				// 	// case FieldType::Float:
-				// 	// 	out << field.GetStoredValue<float>();
-				// 	// 	break;
-				// 	// case FieldType::Vec2:
-				// 	// 	out << field.GetStoredValue<glm::vec2>();
-				// 	// 	break;
-				// 	// case FieldType::Vec3:
-				// 	// 	out << field.GetStoredValue<glm::vec3>();
-				// 	// 	break;
-				// 	// case FieldType::Vec4:
-				// 	// 	out << field.GetStoredValue<glm::vec4>();
-				// 	// 	break;
-				// 	// }
-				// 	out << YAML::EndMap; // Field
-				// }
-				// out << YAML::EndSeq;
 			}
 
 			out << YAML::EndMap; // ScriptComponent
@@ -353,7 +332,7 @@ namespace pbe {
 		{
 			for (auto entity : entities)
 			{
-				uint64_t uuid = entity["Entity"].as<uint64_t>();
+				uint64 uuid = entity["Entity"].as<uint64>();
 
 				std::string name;
 				auto tagComponent = entity["TagComponent"];
@@ -369,14 +348,30 @@ namespace pbe {
 				{
 					// Entities always have transforms
 					auto& tc = deserializedEntity.GetComponent<TransformComponent>();
-					tc.Translation = transformComponent["Position"].as<glm::vec3>();
-					tc.Rotation = transformComponent["Rotation"].as<glm::quat>();
-					tc.Scale = transformComponent["Scale"].as<glm::vec3>();
+					tc.LocalPosition = transformComponent["Position"].as<glm::vec3>();
+					tc.LocalRotation = transformComponent["Rotation"].as<glm::quat>();
+					tc.LocalScale = transformComponent["Scale"].as<glm::vec3>();
+
+					auto parentUUID = transformComponent["ParentUUID"];
+					if (parentUUID) {
+						tc.ParentUUID = parentUUID.as<uint64>();
+					}
+
+					auto childUUIDs = transformComponent["ChildUUIDs"];
+					if (childUUIDs) {
+						tc.ChildUUIDs.reserve(childUUIDs.size());
+						for (YAML::Node nodeUUID : childUUIDs) {
+							tc.ChildUUIDs.push_back(nodeUUID.as<uint64>());
+						}
+					}
 
 					HZ_CORE_INFO("  Entity Transform:");
-					HZ_CORE_INFO("    Translation: {0}, {1}, {2}", tc.Translation.x, tc.Translation.y, tc.Translation.z);
-					HZ_CORE_INFO("    Rotation: {0}, {1}, {2} {3}", tc.Rotation.w, tc.Rotation.x, tc.Rotation.y, tc.Rotation.z);
-					HZ_CORE_INFO("    Scale: {0}, {1}, {2}", tc.Scale.x, tc.Scale.y, tc.Scale.z);
+					HZ_CORE_INFO("    Translation: {0}, {1}, {2}", tc.LocalPosition.x, tc.LocalPosition.y, tc.LocalPosition.z);
+					HZ_CORE_INFO("    Rotation: {0}, {1}, {2} {3}", tc.LocalRotation.w, tc.LocalRotation.x, tc.LocalRotation.y, tc.LocalRotation.z);
+					HZ_CORE_INFO("    Scale: {0}, {1}, {2}", tc.LocalScale.x, tc.LocalScale.y, tc.LocalScale.z);
+					for (UUID uuid : tc.ChildUUIDs) {
+						HZ_CORE_INFO("    ChildUUIDs: {0}", uuid);
+					}
 				}
 
 				auto scriptComponent = entity["ScriptComponent"];
@@ -389,23 +384,7 @@ namespace pbe {
 
 					if (s_ScriptEngine->PathExist(moduleName))
 					{
-						// auto storedFields = scriptComponent["StoredFields"];
-						// if (storedFields)
-						// {
-						// 	for (auto field : storedFields)
-						// 	{
-						// 		std::string name = field["Name"].as<std::string>();
-						// 		FieldType type = (FieldType)field["Type"].as<uint32_t>();
-						// 		EntityInstanceData& data = s_ScriptEngine->GetEntityInstData(m_Scene->GetUUID(), uuid);
-						// 		auto& moduleFieldMap = data.ModuleFieldMap;
-						// 		auto& publicFields = moduleFieldMap[moduleName];
-						// 		if (publicFields.find(name) == publicFields.end())
-						// 		{
-						// 			PublicField pf = { name, type };
-						// 			publicFields.emplace(name, std::move(pf));
-						// 		}
-						// 	}
-						// }
+
 					}
 				}
 
@@ -460,6 +439,15 @@ namespace pbe {
 				}
 			}
 		}
+
+		for (auto e : m_Scene->GetAllEntitiesWith<TransformComponent>()) {
+			Entity entity = { e, m_Scene.Raw() };
+			const TransformComponent& trans = entity.GetComponent<TransformComponent>();
+			if (!trans.HasParent()) {
+				trans.UpdateChilds();
+			}
+		}
+
 		return true;
 	}
 

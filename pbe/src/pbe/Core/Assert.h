@@ -14,10 +14,14 @@
 	#define HZ_ASSERT(...) HZ_EXPAND_VARGS( HZ_GET_ASSERT_MACRO(__VA_ARGS__)(__VA_ARGS__) )
 	#define HZ_CORE_ASSERT(...) HZ_EXPAND_VARGS( HZ_GET_ASSERT_MACRO(__VA_ARGS__)(__VA_ARGS__) )
 
+	#define HZ_UNIMPLEMENTED() HZ_CORE_ASSERT(FALSE)
+
 	#define HZ_NOPE() HZ_CORE_ASSERT(TRUE)
 #else
 	#define HZ_ASSERT(...)
 	#define HZ_CORE_ASSERT(...)
+
+	#define HZ_UNIMPLEMENTED()
 
 	#define HZ_NOPE()
 #endif

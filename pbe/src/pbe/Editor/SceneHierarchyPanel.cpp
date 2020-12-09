@@ -14,8 +14,7 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-// TODO:
-// - Eventually change imgui node IDs to be entity/asset GUID
+#include "pbe/Core/Utility.h"
 
 namespace pbe {
 
@@ -38,6 +37,11 @@ namespace pbe {
 			if (entityMap.find(selectedEntityID) != entityMap.end())
 				m_SelectionContext = entityMap.at(selectedEntityID);
 		}
+	}
+
+	void SceneHierarchyPanel::SetTransformSpace(Space space)
+	{
+		m_TransSpace = space;
 	}
 
 	void SceneHierarchyPanel::SetSelected(Entity entity)
@@ -63,9 +67,24 @@ namespace pbe {
 			uint32_t entityCount = 0, meshCount = 0;
 			m_Context->m_Registry.each([&](auto entity) {
 				Entity e(entity, m_Context.Raw());
-				if (e.HasComponent<IDComponent>())
-					DrawEntityNode(e);
+				if (e.HasComponent<IDComponent>()) {
+					if (!e.GetComponent<TransformComponent>().HasParent()) {
+						DrawEntityNode(e);
+					}
+				}
 			});
+
+			if (m_WasTransAttach) {
+				Entity attachedEntity = m_Context->GetEntityMap().at(m_TransAttachInfo.attached);
+				Entity parentEntity = m_Context->GetEntityMap().at(m_TransAttachInfo.parent);
+
+				auto& attachedTrans = attachedEntity.GetComponent<TransformComponent>();
+				attachedTrans.Attach(parentEntity.GetUUID());
+				HZ_CORE_ASSERT(attachedTrans.ParentUUID == parentEntity.GetUUID());
+				HZ_CORE_ASSERT(vector_find(parentEntity.GetComponent<TransformComponent>().ChildUUIDs, m_TransAttachInfo.attached) != -1);
+
+				m_WasTransAttach = false;
+			}
 
 			if (ImGui::BeginPopupContextWindow(0, 1, false)) {
 				if (ImGui::MenuItem("Create Empty Entity")) {
@@ -107,36 +126,58 @@ namespace pbe {
 
 		ImGuiTreeNodeFlags node_flags = (entity == m_SelectionContext ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
 		bool opened = ImGui::TreeNodeEx((void*)(uint32_t)entity, node_flags, name);
-		if (ImGui::IsItemClicked())
-		{
+		if (ImGui::IsItemClicked()) {
 			m_SelectionContext = entity;
 			if (m_SelectionChangedCallback)
 				m_SelectionChangedCallback(m_SelectionContext);
 		}
 
+		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None | ImGuiDragDropFlags_SourceNoDisableHover)) {
+			ImGui::SetDragDropPayload("EDITOR_ENTITY_TRANS_ATTACH", &entity.GetUUID(), sizeof(UUID));
+			ImGui::Text("Attach to");
+			ImGui::EndDragDropSource();
+		}
+
+		if (ImGui::BeginDragDropTarget()) {
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("EDITOR_ENTITY_TRANS_ATTACH")) {
+				IM_ASSERT(payload->DataSize == sizeof(UUID));
+				UUID attachedUUID = *(const UUID*)payload->Data;
+
+				if (1) {
+					HZ_CORE_INFO("WasTransAttached!");
+					Entity attachedEntity = m_Context->GetEntityMap().at(attachedUUID);
+					Entity parentEntity = m_Context->GetEntityMap().at(entity.GetUUID());
+					HZ_CORE_INFO("Attached entity name: {}", attachedEntity.GetComponent<TagComponent>().Tag);
+					HZ_CORE_INFO("Parent entity name: {}", parentEntity.GetComponent<TagComponent>().Tag);
+				}
+
+				HZ_CORE_ASSERT(!m_WasTransAttach);
+				m_WasTransAttach = true;
+
+				m_TransAttachInfo.attached = attachedUUID;
+				m_TransAttachInfo.parent = entity.GetUUID();
+			}
+			ImGui::EndDragDropTarget();
+		}
+
 		bool entityDeleted = false;
-		if (ImGui::BeginPopupContextItem())
-		{
+		if (ImGui::BeginPopupContextItem()) {
 			if (ImGui::MenuItem("Delete"))
 				entityDeleted = true;
 
 			ImGui::EndPopup();
 		}
-		if (opened)
-		{
-			if (entity.HasComponent<MeshComponent>())
-			{
-				auto mesh = entity.GetComponent<MeshComponent>().Mesh;
-				// if (mesh)
-				// 	DrawMeshNode(mesh);
+
+		if (opened) {
+			auto& trans = entity.GetComponent<TransformComponent>();
+			for (UUID uuid : trans.ChildUUIDs) {
+				DrawEntityNode(m_Context->GetEntityMap().at(uuid));
 			}
 
 			ImGui::TreePop();
 		}
 
-		// Defer deletion until end of node UI
-		if (entityDeleted)
-		{
+		if (entityDeleted) {
 			m_Context->DestroyEntity(entity);
 			if (entity == m_SelectionContext)
 				m_SelectionContext = {};
@@ -465,25 +506,17 @@ namespace pbe {
 
 		ImGui::Separator();
 
-		if (entity.HasComponent<TransformComponent>())
-		{
+		if (entity.HasComponent<TransformComponent>()) {
 			auto& tc = entity.GetComponent<TransformComponent>();
-			if (ImGui::TreeNodeEx((void*)((uint32_t)entity | typeid(TransformComponent).hash_code()), ImGuiTreeNodeFlags_DefaultOpen, "Transform"))
-			{
-				// auto [translation, rotationQuat, scale] = GetTransformDecomposition(tc);
-				// glm::vec3 rotation = glm::degrees(glm::eulerAngles(rotationQuat));
-
+			if (ImGui::TreeNodeEx((void*)((uint32_t)entity | typeid(TransformComponent).hash_code()), ImGuiTreeNodeFlags_DefaultOpen, "Transform")) {
 				ImGui::Columns(2);
-				ImGui::Text("Translation");
+				ImGui::Text("Position");
 				ImGui::NextColumn();
 				ImGui::PushItemWidth(-1);
 
-				bool updateTransform = false;
-
-				if (ImGui::DragFloat3("##translation", glm::value_ptr(tc.Translation), 0.25f))
-				{
-					//tc.Transform[3] = glm::vec4(translation, 1.0f);
-					updateTransform = true;
+				Vec3 position = tc.Position(m_TransSpace);
+				if (ImGui::DragFloat3("##position", glm::value_ptr(position), 0.05f)) {
+					tc.UpdatePosition(position, m_TransSpace);
 				}
 
 				ImGui::PopItemWidth();
@@ -493,15 +526,11 @@ namespace pbe {
 				ImGui::NextColumn();
 				ImGui::PushItemWidth(-1);
 
-				Vec3 eulerAngles = glm::degrees(glm::eulerAngles(tc.Rotation));
-				// tc.Rotation = glm::degrees(eulerAngles);
-				if (ImGui::DragFloat3("##rotation", glm::value_ptr(eulerAngles), 0.25f))
-				{
-					updateTransform = true;
-
-					// tc.Rotation = glm::radians(tc.Rotation);
+				Quat rotation = tc.Rotation(m_TransSpace);
+				Vec3 eulerAngles = glm::degrees(glm::eulerAngles(rotation));
+				if (ImGui::DragFloat3("##rotation", glm::value_ptr(eulerAngles), 1.f)) {
 					eulerAngles = glm::radians(eulerAngles);
-					tc.Rotation = glm::quat(eulerAngles);
+					tc.UpdateRotation(glm::quat(eulerAngles), m_TransSpace);
 				}
 
 				ImGui::PopItemWidth();
@@ -511,9 +540,9 @@ namespace pbe {
 				ImGui::NextColumn();
 				ImGui::PushItemWidth(-1);
 
-				if (ImGui::DragFloat3("##scale", glm::value_ptr(tc.Scale), 0.25f))
-				{
-					updateTransform = true;
+				Vec3 scale = tc.Scale(m_TransSpace);
+				if (ImGui::DragFloat3("##scale", glm::value_ptr(scale), 0.05f)) {
+					tc.UpdateScale(scale, m_TransSpace);
 				}
 
 				ImGui::PopItemWidth();

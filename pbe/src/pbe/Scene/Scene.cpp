@@ -107,28 +107,28 @@ namespace pbe {
 		float pickRadius = 0.2f;
 
 		m_Registry.view<TransformComponent, DirectionLightComponent>().each([&](TransformComponent& trans, DirectionLightComponent& l) {
-			RendPrim::DrawSphere(trans.Translation, pickRadius, 8, pickColor);
-			RendPrim::DrawCircle(trans.Translation, trans.Forward(), 1.f, 8, Color{ l.Color, 1.f });
+			RendPrim::DrawSphere(trans.WorldPosition(), pickRadius, 8, pickColor);
+			RendPrim::DrawCircle(trans.WorldPosition(), trans.WorldForward(), 1.f, 8, Color{ l.Color, 1.f });
 
-			Vec3 from = trans.Translation;
-			RendPrim::DrawLine(from, from + trans.Forward() * 0.4f, Color{ l.Color, 1.f });
+			Vec3 from = trans.WorldPosition();
+			RendPrim::DrawLine(from, from + trans.WorldForward() * 0.4f, Color{ l.Color, 1.f });
 			
-			from = trans.Translation - trans.Right() * 0.2f;
-			RendPrim::DrawLine(from, from + trans.Forward() * 0.4f, Color{ l.Color, 1.f });
+			from = trans.WorldPosition() - trans.WorldRight() * 0.2f;
+			RendPrim::DrawLine(from, from + trans.WorldForward() * 0.4f, Color{ l.Color, 1.f });
 
-			from = trans.Translation + trans.Right() * 0.2f;
-			RendPrim::DrawLine(from, from + trans.Forward() * 0.4f, Color{ l.Color, 1.f });
+			from = trans.WorldPosition() + trans.WorldRight() * 0.2f;
+			RendPrim::DrawLine(from, from + trans.WorldForward() * 0.4f, Color{ l.Color, 1.f });
 			});
 
 		m_Registry.view<TransformComponent, PointLightComponent>().each([&](TransformComponent& trans, PointLightComponent& l) {
-			RendPrim::DrawSphere(trans.Translation, pickRadius, 8, pickColor);
-			RendPrim::DrawSphere(trans.Translation, l.Radius, 8, Color{ l.Color, 1.f });
+			RendPrim::DrawSphere(trans.WorldPosition(), pickRadius, 8, pickColor);
+			RendPrim::DrawSphere(trans.WorldPosition(), l.Radius, 8, Color{ l.Color, 1.f });
 			});
 
 		m_Registry.view<TransformComponent, SpotLightComponent>().each([&](TransformComponent& trans, SpotLightComponent& l) {
-			RendPrim::DrawSphere(trans.Translation, pickRadius, 8, pickColor);
-			RendPrim::DrawLine(trans.Translation, trans.Translation + trans.Forward() * 0.4f, Color{ 0, 0, 1, 1 });
-			RendPrim::DrawCone(trans.Translation, trans.Forward(), l.CutOff, l.Radius, 8, Color{ l.Color, 1.f });
+			RendPrim::DrawSphere(trans.WorldPosition(), pickRadius, 8, pickColor);
+			RendPrim::DrawLine(trans.WorldPosition(), trans.WorldPosition() + trans.WorldForward() * 0.4f, Color{ 0, 0, 1, 1 });
+			RendPrim::DrawCone(trans.WorldPosition(), trans.WorldForward(), l.CutOff, l.Radius, 8, Color{ l.Color, 1.f });
 			});
 	}
 
@@ -140,8 +140,8 @@ namespace pbe {
 			m_Registry.view<TransformComponent, DirectionLightComponent>().each([&environment](TransformComponent &trans, DirectionLightComponent &l) {
 				if (l.Enable) {
 					environment.lights.push_back({});
-					environment.lights.back().InitAsDirectLight(trans.Forward()
-						, trans.Up()
+					environment.lights.back().InitAsDirectLight(trans.WorldForward()
+						, trans.WorldUp()
 						, l.Color * l.Multiplier);
 				}
 				});
@@ -149,7 +149,7 @@ namespace pbe {
 			m_Registry.view<TransformComponent, PointLightComponent>().each([&environment](TransformComponent &trans, PointLightComponent &l) {
 				if (l.Enable) {
 					environment.lights.push_back({});
-					environment.lights.back().InitAsPointLight(trans.Translation
+					environment.lights.back().InitAsPointLight(trans.WorldPosition()
 						, l.Color * l.Multiplier
 						, l.Radius);
 				}
@@ -158,8 +158,8 @@ namespace pbe {
 			m_Registry.view<TransformComponent, SpotLightComponent>().each([&environment](TransformComponent &trans, SpotLightComponent &l) {
 				if (l.Enable) {
 					environment.lights.push_back({});
-					environment.lights.back().InitAsSpotLight(trans.Translation
-						, trans.Forward()
+					environment.lights.back().InitAsSpotLight(trans.WorldPosition()
+						, trans.WorldForward()
 						, l.Color * l.Multiplier
 						, l.Radius
 						, glm::cos(l.CutOff / 2.f));
@@ -172,7 +172,7 @@ namespace pbe {
 		for (auto entity : group) {
 			auto&[meshComponent, transformComponent] = group.get<MeshComponent, TransformComponent>(entity);
 			if (meshComponent.Mesh) {
-				SceneRenderer::Get().SubmitMesh(meshComponent, transformComponent.GetTransform());
+				SceneRenderer::Get().SubmitMesh(meshComponent, transformComponent.GetWorldTransform());
 			}
 		}
 		SceneRenderer::Get().EndScene();
@@ -187,9 +187,9 @@ namespace pbe {
 		const auto& camera = cameraEntity.GetComponent<CameraComponent>();
 		HZ_CORE_ASSERT(camera.Primary);
 		const auto& trans = cameraEntity.GetComponent<TransformComponent>();
-		Mat4 view = glm::translate(glm::mat4(1.0f), trans.Translation) * glm::toMat4(trans.Rotation);
+		Mat4 view = glm::translate(glm::mat4(1.0f), trans.WorldPosition()) * glm::toMat4(trans.WorldRotation());
 		view = glm::inverse(view);
-		OnRenderScene(camera.Camera.GetProjectionMatrix() * view, trans.Translation);
+		OnRenderScene(camera.Camera.GetProjectionMatrix() * view, trans.WorldPosition());
 	}
 
 	void Scene::OnRenderEditor(const EditorCamera& editorCamera)
@@ -245,7 +245,7 @@ namespace pbe {
 		auto& idComponent = entity.AddComponent<IDComponent>();
 		idComponent.ID = {};
 
-		entity.AddComponent<TransformComponent>();
+		AddTransformComponent(entity);
 		if (!name.empty())
 			entity.AddComponent<TagComponent>(name);
 
@@ -259,7 +259,7 @@ namespace pbe {
 		auto& idComponent = entity.AddComponent<IDComponent>();
 		idComponent.ID = uuid;
 
-		entity.AddComponent<TransformComponent>();
+		AddTransformComponent(entity);
 		if (!name.empty())
 			entity.AddComponent<TagComponent>(name);
 
@@ -270,6 +270,8 @@ namespace pbe {
 
 	void Scene::DestroyEntity(Entity entity)
 	{
+		entity.GetComponent<TransformComponent>().Dettach();
+
 		if (entity.HasComponent<ScriptComponent>())
 			entity.RemoveComponent<ScriptComponent>();
 
@@ -358,6 +360,14 @@ namespace pbe {
 			return s_ActiveScenes.at(uuid);
 
 		return {};
+	}
+
+	void Scene::AddTransformComponent(Entity entity)
+	{
+		entity.AddComponent<TransformComponent>();
+		auto& trans= entity.GetComponent<TransformComponent>();
+		trans.pScene = this;
+		trans.ownUUID = entity.GetUUID();
 	}
 
 }

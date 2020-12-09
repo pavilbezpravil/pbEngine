@@ -12,6 +12,7 @@ namespace pbe {
 		SceneHierarchyPanel(const Ref<Scene>& scene);
 
 		void SetContext(const Ref<Scene>& scene);
+		void SetTransformSpace(Space space);
 		void SetSelected(Entity entity);
 		void SetSelectionChangedCallback(const std::function<void(Entity)>& func) { m_SelectionChangedCallback = func; }
 		void SetEntityDeletedCallback(const std::function<void(Entity)>& func) { m_EntityDeletedCallback = func; }
@@ -25,6 +26,14 @@ namespace pbe {
 	private:
 		Ref<Scene> m_Context;
 		Entity m_SelectionContext;
+		Space m_TransSpace = Space::Local;
+
+		bool m_WasTransAttach = false;
+		struct TransAttachInfo
+		{
+			UUID attached;
+			UUID parent;
+		} m_TransAttachInfo;
 
 		std::function<void(Entity)> m_SelectionChangedCallback, m_EntityDeletedCallback;
 	};

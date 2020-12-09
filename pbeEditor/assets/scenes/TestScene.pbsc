@@ -70,7 +70,7 @@ Entities:
       Rotation: [-0.386876553, 0.729596913, 0.0903289169, -0.556646764]
       Scale: [0.999999762, 1.00000036, 0.999997258]
     DirectionLightComponent:
-      Enable: false
+      Enable: true
       CastShadow: true
       Color: [1, 0.300000012, 0.400000006]
       Multiplier: 1

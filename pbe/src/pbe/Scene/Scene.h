@@ -1,15 +1,13 @@
 #pragma once
 
 #include "pbe/Core/UUID.h"
-#include "pbe/Core/Timestep.h"
-
-#include "pbe/Renderer/Camera.h"
 #include "pbe/Core/Ref.h"
+#include "pbe/Core/Timestep.h"
+#include "pbe/Core/Math/Common.h"
+#include "pbe/Editor/EditorCamera.h"
 
 #include "entt/entt.hpp"
-#include "pbe/Core/Math/Common.h"
 
-#include "pbe/Editor/EditorCamera.h"
 
 namespace pbe {
 
@@ -78,6 +76,8 @@ namespace pbe {
 
 		bool m_IsPlaying = false;
 
+		void AddTransformComponent(Entity entity);
+		
 		friend class Entity;
 		friend class SceneRenderer;
 		friend class SceneSerializer;
@@ -86,5 +86,4 @@ namespace pbe {
 		friend void OnScriptComponentConstruct(entt::registry& registry, entt::entity entity);
 		friend void OnScriptComponentDestroy(entt::registry& registry, entt::entity entity);
 	};
-
 }
