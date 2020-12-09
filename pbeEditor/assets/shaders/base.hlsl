@@ -108,12 +108,14 @@ PS_OUT mainPS(VS_OUT input) {
 			} else if (light.type == LIGHT_TYPE_POINT) {
 				L = normalize(light.position - posW);
 				float distance = length(light.position - posW);
-				attenuation = 1.0 / (distance * distance);
+				// attenuation = 1.0 / (distance * distance);
+				attenuation = 1.0 / (distance);
 				attenuation *= smoothstep(1, 0, distance / light.radius);
 			} else if (light.type == LIGHT_TYPE_SPOT) {
 				L = normalize(light.position - posW);
 				float distance = length(light.position - posW);
-				attenuation = 1.0 / (distance * distance);
+				// attenuation = 1.0 / (distance * distance);
+				attenuation = 1.0 / (distance);
 				attenuation *= smoothstep(1, 0, distance / light.radius);
 
 				float3 lightDirection = normalize(light.up);

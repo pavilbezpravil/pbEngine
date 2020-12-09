@@ -103,29 +103,32 @@ namespace pbe {
 
 	void Scene::OnRenderEntityInfo()
 	{
-		m_Registry.view<TransformComponent, DirectionLightComponent>().each([](TransformComponent& trans, DirectionLightComponent& l) {
-			RendPrim::DrawSphere(trans.Translation, 0.2f, 8, Color{ 15 / 255.f, 133 / 255.f, 212 / 255.f, 255 });
-			RendPrim::DrawCircle(trans.Translation, trans.Forward(), 1.f, 8, Color{ 1, 1, 1, 1 });
-			
+		Color pickColor = Color{ 15 / 255.f, 133 / 255.f, 212 / 255.f, 255 };
+		float pickRadius = 0.2f;
+
+		m_Registry.view<TransformComponent, DirectionLightComponent>().each([&](TransformComponent& trans, DirectionLightComponent& l) {
+			RendPrim::DrawSphere(trans.Translation, pickRadius, 8, pickColor);
+			RendPrim::DrawCircle(trans.Translation, trans.Forward(), 1.f, 8, Color{ l.Color, 1.f });
+
 			Vec3 from = trans.Translation;
-			RendPrim::DrawLine(from, from + trans.Forward() * 0.4f, Color{ 1, 1, 1, 1 });
+			RendPrim::DrawLine(from, from + trans.Forward() * 0.4f, Color{ l.Color, 1.f });
 			
 			from = trans.Translation - trans.Right() * 0.2f;
-			RendPrim::DrawLine(from, from + trans.Forward() * 0.4f, Color{ 1, 1, 1, 1 });
+			RendPrim::DrawLine(from, from + trans.Forward() * 0.4f, Color{ l.Color, 1.f });
 
 			from = trans.Translation + trans.Right() * 0.2f;
-			RendPrim::DrawLine(from, from + trans.Forward() * 0.4f, Color{ 1, 1, 1, 1 });
+			RendPrim::DrawLine(from, from + trans.Forward() * 0.4f, Color{ l.Color, 1.f });
 			});
 
-		m_Registry.view<TransformComponent, PointLightComponent>().each([](TransformComponent& trans, PointLightComponent& l) {
-			RendPrim::DrawSphere(trans.Translation, 0.2f, 8, Color{ 15 / 255.f, 133 / 255.f, 212 / 255.f, 255 });
-			RendPrim::DrawSphere(trans.Translation, l.Radius, 8, Color{ 1, 1, 1, 1 });
+		m_Registry.view<TransformComponent, PointLightComponent>().each([&](TransformComponent& trans, PointLightComponent& l) {
+			RendPrim::DrawSphere(trans.Translation, pickRadius, 8, pickColor);
+			RendPrim::DrawSphere(trans.Translation, l.Radius, 8, Color{ l.Color, 1.f });
 			});
 
-		m_Registry.view<TransformComponent, SpotLightComponent>().each([](TransformComponent& trans, SpotLightComponent& l) {
-			RendPrim::DrawSphere(trans.Translation, 0.2f, 8, Color{ 15 / 255.f, 133 / 255.f, 212 / 255.f, 255 });
+		m_Registry.view<TransformComponent, SpotLightComponent>().each([&](TransformComponent& trans, SpotLightComponent& l) {
+			RendPrim::DrawSphere(trans.Translation, pickRadius, 8, pickColor);
 			RendPrim::DrawLine(trans.Translation, trans.Translation + trans.Forward() * 0.4f, Color{ 0, 0, 1, 1 });
-			RendPrim::DrawCone(trans.Translation, trans.Forward(), l.CutOff, l.Radius, 8, Color{ 1, 1, 1, 1 });
+			RendPrim::DrawCone(trans.Translation, trans.Forward(), l.CutOff, l.Radius, 8, Color{ l.Color, 1.f });
 			});
 	}
 
