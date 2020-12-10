@@ -43,7 +43,7 @@ namespace pbe {
 		Entity CreateEntityWithID(UUID uuid, const std::string& name = "", bool runtimeMap = false);
 		void DestroyEntity(Entity entity);
 
-		void DuplicateEntity(Entity entity);
+		Entity DuplicateEntity(Entity entity);
 
 		template<typename T>
 		auto GetAllEntitiesWith()

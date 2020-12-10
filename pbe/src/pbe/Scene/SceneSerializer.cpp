@@ -341,6 +341,7 @@ namespace pbe {
 
 				HZ_CORE_INFO("Deserialized entity with ID = {0}, name = {1}", uuid, name);
 
+				UUIDAdd(uuid);
 				Entity deserializedEntity = m_Scene->CreateEntityWithID(uuid, name);
 
 				auto transformComponent = entity["TransformComponent"];

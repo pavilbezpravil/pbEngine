@@ -51,7 +51,7 @@ namespace pbe {
 	}
 
 	Scene::Scene(const std::string& debugName)
-		: m_DebugName(debugName)
+		: m_DebugName(debugName), m_SceneID(UUIDGet())
 	{
 		m_Registry.on_construct<ScriptComponent>().connect<&OnScriptComponentConstruct>();
 		m_Registry.on_destroy<ScriptComponent>().connect<&OnScriptComponentDestroy>();
@@ -67,6 +67,8 @@ namespace pbe {
 	Scene::~Scene()
 	{
 		m_Registry.on_destroy<ScriptComponent>().disconnect();
+
+		UUIDFree(m_SceneID);
 
 		m_Registry.clear();
 		s_ActiveScenes.erase(m_SceneID);
@@ -241,16 +243,7 @@ namespace pbe {
 
 	Entity Scene::CreateEntity(const std::string& name)
 	{
-		auto entity = Entity{ m_Registry.create(), this };
-		auto& idComponent = entity.AddComponent<IDComponent>();
-		idComponent.ID = {};
-
-		AddTransformComponent(entity);
-		if (!name.empty())
-			entity.AddComponent<TagComponent>(name);
-
-		m_EntityIDMap[idComponent.ID] = entity;
-		return entity;
+		return CreateEntityWithID(UUIDGet(), name);
 	}
 
 	Entity Scene::CreateEntityWithID(UUID uuid, const std::string& name, bool runtimeMap)
@@ -274,6 +267,11 @@ namespace pbe {
 
 		if (entity.HasComponent<ScriptComponent>())
 			entity.RemoveComponent<ScriptComponent>();
+
+		auto& idComponent = entity.GetComponent<IDComponent>();
+		HZ_CORE_ASSERT(m_EntityIDMap.find(idComponent.ID) != m_EntityIDMap.end());
+		m_EntityIDMap.erase(idComponent.ID);
+		UUIDFree(idComponent.ID);
 
 		m_Registry.destroy(entity.m_EntityHandle);
 	}
@@ -301,7 +299,7 @@ namespace pbe {
 		}
 	}
 
-	void Scene::DuplicateEntity(Entity entity)
+	Entity Scene::DuplicateEntity(Entity entity)
 	{
 		Entity newEntity;
 		if (entity.HasComponent<TagComponent>())
@@ -316,6 +314,24 @@ namespace pbe {
 		CopyComponentIfExists<DirectionLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<PointLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<SpotLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+
+		// duplicate childs
+		const auto* trans = &entity.GetComponent<TransformComponent>();
+		auto* newTrans = &newEntity.GetComponent<TransformComponent>();
+		newTrans->ownUUID = newEntity.GetUUID();
+		newTrans->ParentUUID = UUID_INVALID;
+		HZ_CORE_ASSERT(trans->ChildUUIDs.size() == newTrans->ChildUUIDs.size());
+		for (int i = 0; i < trans->ChildUUIDs.size(); ++i) {
+			Entity newChildEntity = DuplicateEntity(GetEntityMap().at(trans->ChildUUIDs[i]));
+
+			// suka. create entity can trigger reallocate components buffers, so we must use ref carefully
+			trans = &entity.GetComponent<TransformComponent>();
+			newTrans = &newEntity.GetComponent<TransformComponent>();
+
+			newTrans->ChildUUIDs[i] = newChildEntity.GetUUID();
+			newChildEntity.GetComponent<TransformComponent>().ParentUUID = newEntity.GetUUID();
+		}
+		return newEntity;
 	}
 
 	Entity Scene::FindEntityByTag(const std::string& tag)
@@ -364,8 +380,7 @@ namespace pbe {
 
 	void Scene::AddTransformComponent(Entity entity)
 	{
-		entity.AddComponent<TransformComponent>();
-		auto& trans= entity.GetComponent<TransformComponent>();
+		auto& trans = entity.AddComponent<TransformComponent>();
 		trans.pScene = this;
 		trans.ownUUID = entity.GetUUID();
 	}

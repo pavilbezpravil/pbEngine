@@ -80,8 +80,8 @@ namespace pbe {
 				if (m_TransAttachInfo.parent == UUID_INVALID) { // dettach
 					attachedTrans.Dettach();
 				} else { // attach
+					attachedTrans.Attach(m_TransAttachInfo.parent);
 					Entity parentEntity = m_Context->GetEntityMap().at(m_TransAttachInfo.parent);
-					attachedTrans.Attach(parentEntity.GetUUID());
 					HZ_CORE_ASSERT(attachedTrans.ParentUUID == parentEntity.GetUUID());
 					HZ_CORE_ASSERT(vector_find(parentEntity.GetComponent<TransformComponent>().ChildUUIDs, m_TransAttachInfo.attached) != -1);
 				}

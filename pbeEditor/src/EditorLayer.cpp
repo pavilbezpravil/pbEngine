@@ -672,8 +672,7 @@ namespace pbe {
 			switch (e.GetKeyCode())
 			{
 				case KeyCode::D:
-					if (m_SelectionContext.size())
-					{
+					if (m_SelectionContext.size()) {
 						Entity selectedEntity = m_SelectionContext[0].Entity;
 						m_EditorScene->DuplicateEntity(selectedEntity);
 					}

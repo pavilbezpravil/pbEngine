@@ -17,7 +17,7 @@ namespace pbe {
 
 	struct IDComponent
 	{
-		UUID ID = 0;
+		UUID ID;
 
 		COMPONENT_CLASS_TYPE(IDComponent)
 	};
