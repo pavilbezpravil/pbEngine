@@ -293,6 +293,7 @@ namespace pbe {
 
 		ImGui::End();
 	}
+
 	void EditorLayer::OnImGuiSceneHierarchy() {
 		m_SceneHierarchyPanel->OnImGuiRender();
 	}

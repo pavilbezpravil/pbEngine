@@ -249,9 +249,9 @@ namespace pbe {
 				"position", sol::property(&TransformComponent::WorldPosition, [](TransformComponent& tc, const Vec3& position) { tc.UpdatePosition(position, Space::World); }),
 				"rotation", sol::property(&TransformComponent::WorldRotation, [](TransformComponent& tc, const Vec3& rotation) { tc.UpdateRotation(rotation, Space::World); }),
 				"scale", sol::property(&TransformComponent::WorldScale, [](TransformComponent& tc, const Vec3& scale) { tc.UpdateScale(scale, Space::World); }),
-				"localPosition", &TransformComponent::LocalPosition,
-				"localRotation", &TransformComponent::LocalRotation,
-				"localScale", &TransformComponent::LocalScale
+				"localPosition", sol::property([](const TransformComponent& tc) { return tc.LocalPosition; }, [](TransformComponent& tc, const Vec3& position) { tc.UpdatePosition(position, Space::Local); }),
+				"localRotation", sol::property([](const TransformComponent& tc) { return tc.LocalRotation; }, [](TransformComponent& tc, const Vec3& rotation) { tc.UpdateRotation(rotation, Space::Local); }),
+				"localScale", sol::property([](const TransformComponent& tc) { return tc.LocalScale; }, [](TransformComponent& tc, const Vec3& scale) { tc.UpdateScale(scale, Space::Local); })
 				);
 
 			trans.set("forward", sol::property(&TransformComponent::WorldForward));

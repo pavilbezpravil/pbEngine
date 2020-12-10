@@ -29,6 +29,10 @@ namespace pbe
 		ParentUUID = uuid;
 		parentTrans.ChildUUIDs.push_back(ownUUID);
 
+		HierPosition = parentTrans.WorldPosition();
+		HierRotation = parentTrans.WorldRotation();
+		HierScale = parentTrans.WorldScale();
+
 		UpdatePosition(position, Space::World);
 		UpdateRotation(rotation, Space::World);
 		UpdateScale(scale, Space::World);
