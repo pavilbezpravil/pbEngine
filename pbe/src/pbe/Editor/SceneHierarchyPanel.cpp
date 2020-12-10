@@ -127,7 +127,11 @@ namespace pbe {
 		if (entity.HasComponent<TagComponent>())
 			name = entity.GetComponent<TagComponent>().Tag.c_str();
 
-		ImGuiTreeNodeFlags node_flags = (entity == m_SelectionContext ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
+		const auto& trans = entity.GetComponent<TransformComponent>();
+
+		ImGuiTreeNodeFlags node_flags = (entity == m_SelectionContext ? ImGuiTreeNodeFlags_Selected : 0)
+										| ImGuiTreeNodeFlags_OpenOnArrow
+										| (trans.HasChilds() ? 0 : ImGuiTreeNodeFlags_Leaf);
 		bool opened = ImGui::TreeNodeEx((void*)(uint32_t)entity, node_flags, name);
 		if (ImGui::IsItemClicked()) {
 			m_SelectionContext = entity;
@@ -179,7 +183,6 @@ namespace pbe {
 		}
 
 		if (opened) {
-			auto& trans = entity.GetComponent<TransformComponent>();
 			for (UUID uuid : trans.ChildUUIDs) {
 				DrawEntityNode(m_Context->GetEntityMap().at(uuid));
 			}
