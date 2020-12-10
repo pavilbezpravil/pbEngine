@@ -19,7 +19,7 @@ namespace pbe {
 	public:
 		Scene(const std::string& debugName = "Scene");
 		~Scene();
-		
+
 		void Init();
 
 		void OnUpdate(Timestep ts);
@@ -77,6 +77,7 @@ namespace pbe {
 		bool m_IsPlaying = false;
 
 		void AddTransformComponent(Entity entity);
+		void DestroyAllEntities();
 		
 		friend class Entity;
 		friend class SceneRenderer;
@@ -86,4 +87,5 @@ namespace pbe {
 		friend void OnScriptComponentConstruct(entt::registry& registry, entt::entity entity);
 		friend void OnScriptComponentDestroy(entt::registry& registry, entt::entity entity);
 	};
+
 }

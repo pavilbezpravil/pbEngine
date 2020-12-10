@@ -52,7 +52,8 @@ namespace pbe {
 		std::vector<UUID> ChildUUIDs;
 
 		void Attach(UUID uuid);
-		void Dettach();
+		void DettachFromParent();
+		void DettachChilds();
 
 		void UpdateChilds() const;
 

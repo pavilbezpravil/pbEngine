@@ -327,6 +327,14 @@ namespace pbe {
 		std::string sceneName = data["Scene"].as<std::string>();
 		HZ_CORE_INFO("Deserializing scene '{0}'", sceneName);
 
+		std::unordered_set<uint64> addedUUIDs;
+		auto newUUID = [&](uint64 uuid) {
+			if (addedUUIDs.find(uuid) == addedUUIDs.end()) {
+				UUIDAdd(uuid);
+				addedUUIDs.insert(uuid);
+			}
+		};
+
 		auto entities = data["Entities"];
 		if (entities)
 		{
@@ -341,7 +349,7 @@ namespace pbe {
 
 				HZ_CORE_INFO("Deserialized entity with ID = {0}, name = {1}", uuid, name);
 
-				UUIDAdd(uuid);
+				newUUID(uuid);
 				Entity deserializedEntity = m_Scene->CreateEntityWithID(uuid, name);
 
 				auto transformComponent = entity["TransformComponent"];
@@ -355,14 +363,18 @@ namespace pbe {
 
 					auto parentUUID = transformComponent["ParentUUID"];
 					if (parentUUID) {
-						tc.ParentUUID = parentUUID.as<uint64>();
+						uint64 parent = parentUUID.as<uint64>();
+						newUUID(parent);
+						tc.ParentUUID = parent;
 					}
 
 					auto childUUIDs = transformComponent["ChildUUIDs"];
 					if (childUUIDs) {
 						tc.ChildUUIDs.reserve(childUUIDs.size());
 						for (YAML::Node nodeUUID : childUUIDs) {
-							tc.ChildUUIDs.push_back(nodeUUID.as<uint64>());
+							uint64 childUUID = nodeUUID.as<uint64>();
+							newUUID(childUUID);
+							tc.ChildUUIDs.push_back(childUUID);
 						}
 					}
 

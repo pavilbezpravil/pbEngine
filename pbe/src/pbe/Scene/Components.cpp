@@ -14,7 +14,7 @@ namespace pbe
 	{
 		HZ_CORE_ASSERT(ownUUID != uuid);
 		HZ_CORE_ASSERT(uuid != UUID_INVALID);
-		Dettach();
+		DettachFromParent();
 		// if (uuid == UUID_INVALID) {
 		// 	return;
 		// }
@@ -38,7 +38,7 @@ namespace pbe
 		UpdateScale(scale, Space::World);
 	}
 
-	void TransformComponent::Dettach()
+	void TransformComponent::DettachFromParent()
 	{
 		if (!HasParent()) {
 			return;
@@ -60,6 +60,21 @@ namespace pbe
 		UpdatePosition(position, Space::World);
 		UpdateRotation(rotation, Space::World);
 		UpdateScale(scale, Space::World);
+	}
+
+	void TransformComponent::DettachChilds()
+	{
+		if (!HasChilds()) {
+			return;
+		}
+
+		std::vector<UUID> childs = ChildUUIDs;
+		for (UUID uuid : childs) {
+			Entity e = pScene->GetEntityMap().at(uuid);
+			auto& trans = e.GetComponent<TransformComponent>();
+
+			trans.DettachFromParent();
+		}
 	}
 
 	void TransformComponent::UpdateChilds() const

@@ -521,12 +521,11 @@ namespace pbe {
 	{
 		auto& app = Application::Get();
 		std::string filepath = app.OpenFile("pbe Scene (*.pbsc)\0*.pbsc\0");
-		if (!filepath.empty())
-		{
-			Ref<Scene> newScene = Ref<Scene>::Create();
-			SceneSerializer serializer(newScene);
+		if (!filepath.empty()) {
+			m_SceneHierarchyPanel->SetContext({});
+			m_EditorScene = Ref<Scene>::Create();
+			SceneSerializer serializer(m_EditorScene);
 			serializer.Deserialize(filepath);
-			m_EditorScene = newScene;
 			std::filesystem::path path = filepath;
 			UpdateWindowTitle(path.filename().string());
 			m_SceneHierarchyPanel->SetContext(m_EditorScene);

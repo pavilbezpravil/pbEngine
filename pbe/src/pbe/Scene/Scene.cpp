@@ -66,6 +66,8 @@ namespace pbe {
 
 	Scene::~Scene()
 	{
+		DestroyAllEntities();
+
 		m_Registry.on_destroy<ScriptComponent>().disconnect();
 
 		UUIDFree(m_SceneID);
@@ -263,7 +265,8 @@ namespace pbe {
 
 	void Scene::DestroyEntity(Entity entity)
 	{
-		entity.GetComponent<TransformComponent>().Dettach();
+		entity.GetComponent<TransformComponent>().DettachFromParent();
+		entity.GetComponent<TransformComponent>().DettachChilds();
 
 		if (entity.HasComponent<ScriptComponent>())
 			entity.RemoveComponent<ScriptComponent>();
@@ -383,6 +386,22 @@ namespace pbe {
 		auto& trans = entity.AddComponent<TransformComponent>();
 		trans.pScene = this;
 		trans.ownUUID = entity.GetUUID();
+	}
+
+	void Scene::DestroyAllEntities()
+	{
+		auto& entsMap = GetEntityMap();
+
+		std::vector<Entity> entities;
+		entities.reserve(entsMap.size());
+
+		for (auto& [uuid, entity] : entsMap) {
+			entities.push_back(entity);
+		}
+
+		for (Entity entity : entities) {
+			DestroyEntity(entity);
+		}
 	}
 
 }

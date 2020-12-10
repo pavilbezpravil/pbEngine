@@ -78,7 +78,7 @@ namespace pbe {
 				Entity attachedEntity = m_Context->GetEntityMap().at(m_TransAttachInfo.attached);
 				auto& attachedTrans = attachedEntity.GetComponent<TransformComponent>();
 				if (m_TransAttachInfo.parent == UUID_INVALID) { // dettach
-					attachedTrans.Dettach();
+					attachedTrans.DettachFromParent();
 				} else { // attach
 					attachedTrans.Attach(m_TransAttachInfo.parent);
 					Entity parentEntity = m_Context->GetEntityMap().at(m_TransAttachInfo.parent);
