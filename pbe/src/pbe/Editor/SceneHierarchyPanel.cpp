@@ -76,12 +76,15 @@ namespace pbe {
 
 			if (m_WasTransAttach) {
 				Entity attachedEntity = m_Context->GetEntityMap().at(m_TransAttachInfo.attached);
-				Entity parentEntity = m_Context->GetEntityMap().at(m_TransAttachInfo.parent);
-
 				auto& attachedTrans = attachedEntity.GetComponent<TransformComponent>();
-				attachedTrans.Attach(parentEntity.GetUUID());
-				HZ_CORE_ASSERT(attachedTrans.ParentUUID == parentEntity.GetUUID());
-				HZ_CORE_ASSERT(vector_find(parentEntity.GetComponent<TransformComponent>().ChildUUIDs, m_TransAttachInfo.attached) != -1);
+				if (m_TransAttachInfo.parent == UUID_INVALID) { // dettach
+					attachedTrans.Dettach();
+				} else { // attach
+					Entity parentEntity = m_Context->GetEntityMap().at(m_TransAttachInfo.parent);
+					attachedTrans.Attach(parentEntity.GetUUID());
+					HZ_CORE_ASSERT(attachedTrans.ParentUUID == parentEntity.GetUUID());
+					HZ_CORE_ASSERT(vector_find(parentEntity.GetComponent<TransformComponent>().ChildUUIDs, m_TransAttachInfo.attached) != -1);
+				}
 
 				m_WasTransAttach = false;
 			}
@@ -132,7 +135,7 @@ namespace pbe {
 				m_SelectionChangedCallback(m_SelectionContext);
 		}
 
-		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None | ImGuiDragDropFlags_SourceNoDisableHover)) {
+		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
 			ImGui::SetDragDropPayload("EDITOR_ENTITY_TRANS_ATTACH", &entity.GetUUID(), sizeof(UUID));
 			ImGui::Text("Attach to");
 			ImGui::EndDragDropSource();
@@ -164,7 +167,14 @@ namespace pbe {
 		if (ImGui::BeginPopupContextItem()) {
 			if (ImGui::MenuItem("Delete"))
 				entityDeleted = true;
+			if (ImGui::MenuItem("Dettach")) {
+				HZ_CORE_ASSERT(!m_WasTransAttach);
+				m_WasTransAttach = true;
 
+				m_TransAttachInfo.attached = entity.GetUUID();
+				m_TransAttachInfo.parent = UUID_INVALID;
+			}
+				
 			ImGui::EndPopup();
 		}
 

@@ -25,6 +25,6 @@ int vector_find(const std::vector<T>& vec, const T& element)
 template<typename T>
 void vector_fast_erase(std::vector<T>& vec, int pos)
 {
-	vec.back() = vec[pos];
+	vec[pos] = vec.back();
 	vec.pop_back();
 }

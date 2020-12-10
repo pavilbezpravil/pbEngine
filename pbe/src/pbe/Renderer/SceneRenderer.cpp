@@ -48,7 +48,7 @@ namespace pbe {
 	void SceneRenderer::Init()
 	{
 		_shadowBuffer = Ref<DepthBuffer>::Create(1.f);
-		_shadowBuffer->Create(L"Shadow buffer", 512, 512, DXGI_FORMAT_D16_UNORM);
+		_shadowBuffer->Create(L"Shadow buffer", 512 * 2, 512 * 2, DXGI_FORMAT_D16_UNORM);
 
 		{
 			std::vector<D3D_SHADER_MACRO> defines;
@@ -121,8 +121,8 @@ namespace pbe {
 
 		Light directLight = _environment.lights[directLightIdx];
 
-		const float shadowHalfBounds = 20;
-		const float shadowDepth = 40;
+		const float shadowHalfBounds = 30;
+		const float shadowDepth = 100;
 		auto shadowProj = glm::orthoRH_ZO(-shadowHalfBounds, shadowHalfBounds,
 			-shadowHalfBounds, shadowHalfBounds,
 			0.f, shadowDepth);

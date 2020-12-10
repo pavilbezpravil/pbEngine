@@ -13,7 +13,11 @@ namespace pbe
 	void TransformComponent::Attach(UUID uuid)
 	{
 		HZ_CORE_ASSERT(ownUUID != uuid);
+		HZ_CORE_ASSERT(uuid != UUID_INVALID);
 		Dettach();
+		// if (uuid == UUID_INVALID) {
+		// 	return;
+		// }
 
 		Vec3 position = Position(Space::World);
 		Quat rotation = Rotation(Space::World);
