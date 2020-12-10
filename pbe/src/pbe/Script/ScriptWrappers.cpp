@@ -247,10 +247,10 @@ namespace pbe {
 
 			auto trans = g_luaState.new_usertype<TransformComponent>("TransformComponent",
 				"position", sol::property(&TransformComponent::WorldPosition, [](TransformComponent& tc, const Vec3& position) { tc.UpdatePosition(position, Space::World); }),
-				"rotation", sol::property(&TransformComponent::WorldRotation, [](TransformComponent& tc, const Vec3& rotation) { tc.UpdateRotation(rotation, Space::World); }),
+				"rotation", sol::property(&TransformComponent::WorldRotation, [](TransformComponent& tc, const Quat& rotation) { tc.UpdateRotation(rotation, Space::World); }),
 				"scale", sol::property(&TransformComponent::WorldScale, [](TransformComponent& tc, const Vec3& scale) { tc.UpdateScale(scale, Space::World); }),
 				"localPosition", sol::property([](const TransformComponent& tc) { return tc.LocalPosition; }, [](TransformComponent& tc, const Vec3& position) { tc.UpdatePosition(position, Space::Local); }),
-				"localRotation", sol::property([](const TransformComponent& tc) { return tc.LocalRotation; }, [](TransformComponent& tc, const Vec3& rotation) { tc.UpdateRotation(rotation, Space::Local); }),
+				"localRotation", sol::property([](const TransformComponent& tc) { return tc.LocalRotation; }, [](TransformComponent& tc, const Quat& rotation) { tc.UpdateRotation(rotation, Space::Local); }),
 				"localScale", sol::property([](const TransformComponent& tc) { return tc.LocalScale; }, [](TransformComponent& tc, const Vec3& scale) { tc.UpdateScale(scale, Space::Local); })
 				);
 

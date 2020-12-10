@@ -783,8 +783,7 @@ namespace pbe {
 
 	void EditorLayer::OnEntityDeleted(Entity e)
 	{
-		if (m_SelectionContext[0].Entity == e)
-		{
+		if (!m_SelectionContext.empty() && m_SelectionContext[0].Entity == e) {
 			m_SelectionContext.clear();
 			m_EditorScene->SetSelectedEntity({});
 		}

@@ -160,16 +160,23 @@ namespace pbe {
 
 		void RenderPrimitives(GraphicsContext& context, const Mat4& viewProj)
 		{
+			if (lineBuffer.NumIndexes() == 0) {
+				return;
+			}
+
 			uint nVertex = lineBuffer.NumVertex();
 			if (lineVB2.GetElementSize() < nVertex) {
 				lineVB2.Create(L"RendPrim_lineBufferVB", nVertex, lineBuffer.GetStride());
 			}
+
 			uint nIndexes = lineBuffer.NumIndexes();
 			if (lineIB2.GetElementSize() < nIndexes) {
 				lineIB2.Create(L"RendPrim_lineBufferIB", nIndexes, SIZEOF_INDEX);
 			}
 			context.WriteBuffer(lineVB2, 0, lineBuffer.GetRawVertexData(), nVertex * lineBuffer.GetStride());
 			context.WriteBuffer(lineIB2, 0, lineBuffer.GetRawIndexesData(), nIndexes * SIZEOF_INDEX);
+			context.TransitionResource(lineVB2, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+			context.TransitionResource(lineIB2, D3D12_RESOURCE_STATE_INDEX_BUFFER, true);
 
 			cbPass pass;
 			pass.gVP = viewProj;

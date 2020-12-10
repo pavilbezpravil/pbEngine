@@ -84,8 +84,6 @@ namespace pbe {
 		void OnUpdateEntity(Entity entity, Timestep ts);
 		void OnDestroyEntity(Entity entity);
 
-		void OnScriptComponentDestroyed(Entity entity);
-
 		bool PathExist(const std::string& modulePath); // todo: move to fs
 		
 		bool IsModuleKnown(const std::string& modulePath);

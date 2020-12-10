@@ -47,7 +47,7 @@ namespace pbe {
 		Scene* scene = s_ActiveScenes[sceneID];
 
 		auto entityID = registry.get<IDComponent>(entity).ID;
-		s_ScriptEngine->OnScriptComponentDestroyed(Entity{ entity, scene });
+		s_ScriptEngine->ShutdownScriptEntity(Entity{ entity, scene });
 	}
 
 	Scene::Scene(const std::string& debugName)

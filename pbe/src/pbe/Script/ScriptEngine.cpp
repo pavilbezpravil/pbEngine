@@ -246,12 +246,6 @@ namespace pbe {
 		LuaSafeCall(func, entity);
 	}
 
-	void ScriptEngine::OnScriptComponentDestroyed(Entity entity)
-	{
-		HZ_CORE_ASSERT(!GetEntityInstData(entity).instantiated && !GetEntityInstData(entity).awaked);
-		// RemoveEntityInstData(entity);
-	}
-
 	bool ScriptEngine::PathExist(const std::string& modulePath)
 	{
 		std::filesystem::path p{modulePath};

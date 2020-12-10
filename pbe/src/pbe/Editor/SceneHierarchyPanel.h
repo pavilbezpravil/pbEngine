@@ -35,6 +35,8 @@ namespace pbe {
 			UUID parent;
 		} m_TransAttachInfo;
 
+		UUID m_DeletedEntity = UUID_INVALID;
+
 		std::function<void(Entity)> m_SelectionChangedCallback, m_EntityDeletedCallback;
 	};
 

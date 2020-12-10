@@ -89,6 +89,18 @@ namespace pbe {
 				m_WasTransAttach = false;
 			}
 
+			if (m_DeletedEntity != UUID_INVALID) {
+				Entity deletedEntity = m_Context->GetEntityMap().at(m_DeletedEntity);
+
+				m_EntityDeletedCallback(deletedEntity);
+
+				m_Context->DestroyEntity(deletedEntity);
+				if (deletedEntity == m_SelectionContext)
+					m_SelectionContext = {};
+
+				m_DeletedEntity = UUID_INVALID;
+			}
+
 			if (ImGui::BeginPopupContextWindow(0, 1, false)) {
 				if (ImGui::MenuItem("Create Empty Entity")) {
 					m_Context->CreateEntity("Empty Entity");
@@ -130,7 +142,8 @@ namespace pbe {
 		const auto& trans = entity.GetComponent<TransformComponent>();
 
 		ImGuiTreeNodeFlags node_flags = (entity == m_SelectionContext ? ImGuiTreeNodeFlags_Selected : 0)
-										| ImGuiTreeNodeFlags_OpenOnArrow
+										| ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick
+										| ImGuiTreeNodeFlags_SpanFullWidth
 										| (trans.HasChilds() ? 0 : ImGuiTreeNodeFlags_Leaf);
 		bool opened = ImGui::TreeNodeEx((void*)(uint32_t)entity, node_flags, name);
 		if (ImGui::IsItemClicked()) {
@@ -150,7 +163,7 @@ namespace pbe {
 				IM_ASSERT(payload->DataSize == sizeof(UUID));
 				UUID attachedUUID = *(const UUID*)payload->Data;
 
-				if (1) {
+				if (0) {
 					HZ_CORE_INFO("WasTransAttached!");
 					Entity attachedEntity = m_Context->GetEntityMap().at(attachedUUID);
 					Entity parentEntity = m_Context->GetEntityMap().at(entity.GetUUID());
@@ -167,10 +180,12 @@ namespace pbe {
 			ImGui::EndDragDropTarget();
 		}
 
-		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem()) {
-			if (ImGui::MenuItem("Delete"))
-				entityDeleted = true;
+			if (ImGui::MenuItem("Delete")) {
+				HZ_CORE_ASSERT(m_DeletedEntity == UUID_INVALID);
+				m_DeletedEntity = entity.GetUUID();
+			}
+
 			if (ImGui::MenuItem("Dettach")) {
 				HZ_CORE_ASSERT(!m_WasTransAttach);
 				m_WasTransAttach = true;
@@ -188,14 +203,6 @@ namespace pbe {
 			}
 
 			ImGui::TreePop();
-		}
-
-		if (entityDeleted) {
-			m_Context->DestroyEntity(entity);
-			if (entity == m_SelectionContext)
-				m_SelectionContext = {};
-
-			m_EntityDeletedCallback(entity);
 		}
 	}
 
@@ -229,8 +236,7 @@ namespace pbe {
 		glm::mat4 localTransform = Mat4FromAssimpMat4(node->mTransformation);
 		glm::mat4 transform = parentTransform * localTransform;
 
-		if (ImGui::TreeNode(node->mName.C_Str()))
-		{
+		if (ImGui::TreeNode(node->mName.C_Str())) {
 			{
 				auto [translation, rotation, scale] = GetTransformDecomposition(transform);
 				ImGui::Text("World Transform");
@@ -461,7 +467,10 @@ namespace pbe {
 			bool removeComponent = false;
 
 			auto& component = entity.GetComponent<T>();
-			bool open = ImGui::TreeNodeEx((void*)((uint32_t)entity | typeid(T).hash_code()), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap, name.c_str());
+			bool open = ImGui::TreeNodeEx((void*)((uint32_t)entity | typeid(T).hash_code()), 
+				ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap 
+				| ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanFullWidth
+				, name.c_str());
 			ImGui::SameLine();
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
@@ -521,7 +530,9 @@ namespace pbe {
 
 		if (entity.HasComponent<TransformComponent>()) {
 			auto& tc = entity.GetComponent<TransformComponent>();
-			if (ImGui::TreeNodeEx((void*)((uint32_t)entity | typeid(TransformComponent).hash_code()), ImGuiTreeNodeFlags_DefaultOpen, "Transform")) {
+			if (ImGui::TreeNodeEx((void*)((uint32_t)entity | typeid(TransformComponent).hash_code()), 
+				ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanFullWidth,
+				"Transform")) {
 				ImGui::Columns(2);
 				ImGui::Text("Position");
 				ImGui::NextColumn();
