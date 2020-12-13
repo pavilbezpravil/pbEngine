@@ -152,6 +152,11 @@ namespace pbe {
 		DestroyContext(scene);
 	}
 
+	void ScriptEngine::SetContext(Scene* scene)
+	{
+		Script::SetScriptWrapperContext(scene);
+	}
+
 	EntityInstanceData& SceneScriptContext::GetInstData(Entity e)
 	{
 		HZ_CORE_ASSERT(instanceDataMap.count(e.GetUUID()));

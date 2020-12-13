@@ -383,6 +383,13 @@ namespace pbe {
 				break;
 			}
 		}
+
+		if (m_EditorScene) {
+			m_EditorScene->OnNextFrame();
+		}
+		if (m_RuntimeScene) {
+			m_RuntimeScene->OnNextFrame();
+		}
 	}
 
 	bool EditorLayer::Property(const std::string& name, bool& value)
@@ -625,7 +632,9 @@ namespace pbe {
 		if (m_SceneState == SceneState::Edit) {
 			m_EditorScene->OnEvent(e);
 		} else if (m_SceneState == SceneState::Play) {
-			m_RuntimeScene->OnEvent(e);
+			if (!m_EditorCameraInPlay) {
+				m_RuntimeScene->OnEvent(e);
+			}
 		}
 
 		EventDispatcher dispatcher(e);

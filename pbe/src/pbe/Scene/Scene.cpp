@@ -114,25 +114,6 @@ namespace pbe {
 	Scene::Scene(const std::string& debugName)
 		: m_DebugName(debugName), m_SceneID(UUIDGet())
 	{
-
-		m_Registry.on_construct<MeshComponent>().connect<&OnMeshComponentConstruct>();
-		m_Registry.on_destroy<MeshComponent>().connect<&OnMeshComponentDestroy>();
-		
-		m_Registry.on_construct<ScriptComponent>().connect<&OnScriptComponentConstruct>();
-		m_Registry.on_destroy<ScriptComponent>().connect<&OnScriptComponentDestroy>();
-
-		m_Registry.on_construct<BoxColliderComponent>().connect<&OnBoxColliderComponentConstruct>();
-		m_Registry.on_destroy<BoxColliderComponent>().connect<&OnBoxColliderComponentDestroy>();
-
-		m_Registry.on_construct<SphereColliderComponent>().connect<&OnSphereColliderComponentConstruct>();
-		m_Registry.on_destroy<SphereColliderComponent>().connect<&OnSphereColliderComponentDestroy>();
-		
-		m_Registry.on_construct<RigidbodyComponent>().connect<&OnRigidbodyComponentConstruct>();
-		m_Registry.on_destroy<RigidbodyComponent>().connect<&OnRigidbodyComponentDestroy>();
-		
-		m_SceneEntity = m_Registry.create();
-		m_Registry.emplace<SceneComponent>(m_SceneEntity, m_SceneID);
-
 		s_ActiveScenes[m_SceneID] = this;
 
 		Init();
@@ -154,6 +135,26 @@ namespace pbe {
 
 	void Scene::Init()
 	{
+		m_Registry.on_construct<MeshComponent>().connect<&OnMeshComponentConstruct>();
+		m_Registry.on_destroy<MeshComponent>().connect<&OnMeshComponentDestroy>();
+
+		m_Registry.on_construct<ScriptComponent>().connect<&OnScriptComponentConstruct>();
+		m_Registry.on_destroy<ScriptComponent>().connect<&OnScriptComponentDestroy>();
+
+		m_Registry.on_construct<BoxColliderComponent>().connect<&OnBoxColliderComponentConstruct>();
+		m_Registry.on_destroy<BoxColliderComponent>().connect<&OnBoxColliderComponentDestroy>();
+
+		m_Registry.on_construct<SphereColliderComponent>().connect<&OnSphereColliderComponentConstruct>();
+		m_Registry.on_destroy<SphereColliderComponent>().connect<&OnSphereColliderComponentDestroy>();
+
+		m_Registry.on_construct<RigidbodyComponent>().connect<&OnRigidbodyComponentConstruct>();
+		m_Registry.on_destroy<RigidbodyComponent>().connect<&OnRigidbodyComponentDestroy>();
+
+		m_SceneEntity = m_Registry.create();
+		m_Registry.emplace<SceneComponent>(m_SceneEntity, m_SceneID);
+		
+		pSceneInput = Ref<SceneInput>::Create();
+		
 		pPhysicsScene = physics::s_Physics->CreateScene();
 		m_Registry.emplace<PhysicsSceneComponent>(m_SceneEntity, pPhysicsScene.Raw());
 		s_ScriptEngine->InitScene(this);
@@ -181,13 +182,19 @@ namespace pbe {
 		
 		// Update all entities
 		{
+			s_ScriptEngine->SetContext(this);
 			auto view = m_Registry.view<ScriptComponent>();
-			for (auto entity : view)
-			{
+			for (auto entity : view) {
 				UUID entityID = m_Registry.get<IDComponent>(entity).ID;
 				s_ScriptEngine->OnUpdateEntity(Entity{ entity, this }, ts);
 			}
+			s_ScriptEngine->SetContext(NULL);
 		}
+	}
+
+	void Scene::OnNextFrame()
+	{
+		pSceneInput->OnNextFrame();
 	}
 
 	void Scene::OnRenderEntitySceneInfo()
@@ -291,6 +298,17 @@ namespace pbe {
 
 	void Scene::OnEvent(Event& e)
 	{
+		pSceneInput->OnEvent(e);
+	}
+
+	void Scene::OnLoseFocus()
+	{
+		pSceneInput->OnLoseFocus();
+	}
+	
+	void Scene::OnEnterFocus()
+	{
+		pSceneInput->OnEnterFocus();
 	}
 
 	void Scene::OnRuntimeStart()
@@ -484,6 +502,11 @@ namespace pbe {
 			Entity e = entity;
 			e.GetComponent<TransformComponent>().pScene = target.Raw();
 		}
+	}
+
+	Ref<SceneInput> Scene::GetInput()
+	{
+		return pSceneInput;
 	}
 
 	Ref<Scene> Scene::GetScene(UUID uuid)

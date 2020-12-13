@@ -38,6 +38,13 @@ namespace pbe {
 			}
 		}
 
+		static Scene* s_ScriptsWrapperContext = NULL;
+		
+		void SetScriptWrapperContext(Scene* scene)
+		{
+			s_ScriptsWrapperContext = scene;
+		}
+
 		void LoadSystemScripts(sol::state& g_luaState)
 		{
 			HZ_CORE_INFO("    LoadSystemScripts");
@@ -367,10 +374,10 @@ namespace pbe {
 
 			auto input = g_luaState.create_table("Input");
 
-			input.set("isKeyPressed", [](const KeyCode& keyCode) { return Input::IsKeyPressed(keyCode); });
-			input.set("isMouseButtonPressed", [](int button) { return Input::IsMouseButtonPressed(button); });
-			input.set("getMousePosition", []() { auto [x, y] = Input::GetMousePosition(); return Vec2(x, y); });
-			input.set("getMouseDelta", []() { auto [x, y] = Input::GetMouseDelta(); return Vec2(x, y); });
+			input.set("isKeyPressed", [](const KeyCode& keyCode) { return s_ScriptsWrapperContext->GetInput()->IsKeyPressed(keyCode); });
+			input.set("isMouseButtonPressed", [](int button) { return s_ScriptsWrapperContext->GetInput()->IsMouseButtonPressed(button); });
+			input.set("getMousePosition", []() { return s_ScriptsWrapperContext->GetInput()->GetMousePos(); });
+			input.set("getMouseDelta", []() { return s_ScriptsWrapperContext->GetInput()->GetMouseDelta(); });
 		}
 
 		void RegisterRendPrim(sol::state& luaState)

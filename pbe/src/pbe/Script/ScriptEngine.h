@@ -79,6 +79,8 @@ namespace pbe {
 		void InitScene(Scene* scene);
 		void ShutdownScene(Scene* scene);
 
+		void SetContext(Scene* scene);
+
 		void OnAwakeEntity(Entity entity);
 		void OnCreateEntity(Entity entity);
 		void OnUpdateEntity(Entity entity, Timestep ts);

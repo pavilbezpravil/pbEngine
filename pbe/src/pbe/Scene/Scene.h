@@ -8,6 +8,7 @@
 #include "pbe/Physics/PhysicsScene.h"
 
 #include "entt/entt.hpp"
+#include "pbe/Input/SceneInput.h"
 
 
 namespace pbe {
@@ -26,13 +27,17 @@ namespace pbe {
 		physics::PhysicsScene* GetPhysicsScene();
 		
 		void OnUpdate(Timestep ts);
+		void OnNextFrame();
 
 		// todo: tmp
 		void OnRenderEntitySceneInfo();
 		void OnRenderScene(const Mat4& viewProj, const Vec3& camPos);
 		void OnRenderRuntime();
 		void OnRenderEditor(const EditorCamera& editorCamera);
+		
 		void OnEvent(Event& e);
+		void OnLoseFocus();
+		void OnEnterFocus();
 
 		// Runtime
 		void OnRuntimeStart();
@@ -62,6 +67,8 @@ namespace pbe {
 
 		UUID GetUUID() const { return m_SceneID; }
 
+		Ref<SceneInput> GetInput();
+
 		static Ref<Scene> GetScene(UUID uuid);
 
 	private:
@@ -75,6 +82,7 @@ namespace pbe {
 		EntityMap m_EntityIDMap;
 
 		Ref<physics::PhysicsScene> pPhysicsScene;
+		Ref<SceneInput> pSceneInput;
 
 		bool m_IsPlaying = false;
 

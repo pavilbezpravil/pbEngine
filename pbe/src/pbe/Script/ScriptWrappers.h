@@ -1,10 +1,6 @@
 #pragma once
 
 #include "pbe/Script/ScriptEngine.h"
-#include "pbe/Core/KeyCodes.h"
-
-#include <glm/glm.hpp>
-
 
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
@@ -42,6 +38,8 @@ namespace pbe { namespace Script {
 	public:
 		LuaEntity(Entity e) : Entity(e) {}
 	};
+
+	void SetScriptWrapperContext(Scene* scene);
 
 	void LoadSystemScripts(sol::state& g_luaState);
 	void RegisterGameFunction(sol::state& g_luaState);
