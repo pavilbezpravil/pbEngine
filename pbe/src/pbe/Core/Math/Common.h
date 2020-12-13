@@ -17,14 +17,14 @@ using Mat4 = glm::mat4;
 using Quat = glm::quat;
 
 const Vec2 Vec2_One  = Vec2(1, 1);
-const Vec2 Vec2_Zero = Vec2(1, 1);
+const Vec2 Vec2_Zero = Vec2(0, 0);
 const Vec2 Vec2_X    = Vec2(1, 0);
 const Vec2 Vec2_XNeg = Vec2(-1, 0);
 const Vec2 Vec2_Y    = Vec2(0, 1);
 const Vec2 Vec2_YNeg = Vec2(0, -1);
 
 const Vec3 Vec3_One  = Vec3(1, 1, 1);
-const Vec3 Vec3_Zero = Vec3(1, 1, 1);
+const Vec3 Vec3_Zero = Vec3(0, 0, 0);
 const Vec3 Vec3_X    = Vec3(1, 0, 0);
 const Vec3 Vec3_XNeg = Vec3(-1, 0, 0);
 const Vec3 Vec3_Y    = Vec3(0, 1, 0);
@@ -33,7 +33,7 @@ const Vec3 Vec3_Z    = Vec3(0, 0, 1);
 const Vec3 Vec3_ZNeg = Vec3(0, 0, -1);
 
 const Vec4 Vec4_One  = Vec4(1, 1, 1, 1);
-const Vec4 Vec4_Zero = Vec4(1, 1, 1, 1);
+const Vec4 Vec4_Zero = Vec4(0, 0, 0, 0);
 const Vec3 Vec4_X    = Vec4(1, 0, 0, 0);
 const Vec3 Vec4_XNeg = Vec4(-1, 0, 0, 0);
 const Vec3 Vec4_Y    = Vec4(0, 1, 0, 0);

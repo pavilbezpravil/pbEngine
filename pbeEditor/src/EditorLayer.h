@@ -104,6 +104,8 @@ namespace pbe {
 		bool m_ViewportPanelMouseOver = false;
 		bool m_ViewportPanelFocused = false;
 
+		bool m_EditorCameraInPlay = true;
+
 		enum class SceneState
 		{
 			Edit = 0, Play = 1, Pause = 2

@@ -13,6 +13,7 @@
 
 // dx12
 #include "Input.h"
+#include "pbe/Physics/PhysicsScene.h"
 #include "pbe/Renderer/CommandContext.h"
 #include "pbe/Renderer/GraphicsCore.h"
 #include "pbe/Renderer/ColorBuffer.h"
@@ -40,12 +41,17 @@ namespace pbe {
 		m_ImGuiLayer = new ImGuiLayer("ImGui");
 		PushOverlay(m_ImGuiLayer);
 
+		physics::Init();
+
 		ScriptEngine::Init();
 	}
 
 	Application::~Application()
 	{
 		m_LayerStack.Clear();
+
+		physics::Term();
+
 		ScriptEngine::Shutdown();
 		Renderer::Get().Shutdown();
 

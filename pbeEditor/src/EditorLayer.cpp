@@ -244,6 +244,9 @@ namespace pbe {
 		ImGui::Combo("Translate mode", (int*)&m_GizmoTransSpace, "Local\0World\0");
 		m_SceneHierarchyPanel->SetTransformSpace(m_GizmoTransSpace);
 
+		ImGui::SameLine();
+		ImGui::Checkbox("Editor camera in play", &m_EditorCameraInPlay);
+
 		m_ViewportPanelMouseOver = ImGui::IsWindowHovered();
 		m_ViewportPanelFocused = ImGui::IsWindowFocused();
 
@@ -322,8 +325,11 @@ namespace pbe {
 					nullptr,
 					snap ? snapValues : nullptr);
 
-				selection.Entity.GetComponent<TransformComponent>().SetWorldTransform(entityTransform);
+				if (ImGuizmo::IsUsing()) {
+					selection.Entity.GetComponent<TransformComponent>().SetWorldTransform(entityTransform);
+				}
 			} else {
+				HZ_UNIMPLEMENTED();
 				glm::mat4 transformBase = entityTransform * selection.Mesh->Transform;
 				ImGuizmo::Manipulate(glm::value_ptr(m_EditorCamera.GetViewMatrix()),
 					glm::value_ptr(m_EditorCamera.GetProjectionMatrix()),
@@ -360,7 +366,12 @@ namespace pbe {
 				// 	m_EditorCamera.OnUpdate(ts);
 
 				m_RuntimeScene->OnUpdate(ts);
-				m_RuntimeScene->OnRenderRuntime();
+				if (m_EditorCameraInPlay) {
+					m_EditorCamera.OnUpdate(ts);
+					m_RuntimeScene->OnRenderEditor(m_EditorCamera);
+				} else {
+					m_RuntimeScene->OnRenderRuntime();
+				}
 				break;
 			}
 			case SceneState::Pause:
@@ -494,8 +505,6 @@ namespace pbe {
 		selection.Entity = entity;
 		m_SelectionContext.clear();
 		m_SelectionContext.push_back(selection);
-
-		m_EditorScene->SetSelectedEntity(entity);
 	}
 
 	void EditorLayer::NewScene()
@@ -509,8 +518,6 @@ namespace pbe {
 			std::filesystem::path path = filepath;
 			UpdateWindowTitle(path.filename().string());
 			m_SceneHierarchyPanel->SetContext(m_EditorScene);
-
-			m_EditorScene->SetSelectedEntity({});
 			m_SelectionContext.clear();
 
 			m_SceneFilePath = filepath;
@@ -530,7 +537,6 @@ namespace pbe {
 			UpdateWindowTitle(path.filename().string());
 			m_SceneHierarchyPanel->SetContext(m_EditorScene);
 
-			m_EditorScene->SetSelectedEntity({});
 			m_SelectionContext.clear();
 
 			m_SceneFilePath = filepath;
@@ -612,15 +618,13 @@ namespace pbe {
 
 	void EditorLayer::OnEvent(Event& e)
 	{
-		if (m_SceneState == SceneState::Edit)
-		{
-			if (m_ViewportPanelMouseOver)
-				m_EditorCamera.OnEvent(e);
-
-			m_EditorScene->OnEvent(e);
+		if (m_ViewportPanelMouseOver || m_EditorCameraInPlay) {
+			m_EditorCamera.OnEvent(e);
 		}
-		else if (m_SceneState == SceneState::Play)
-		{
+		
+		if (m_SceneState == SceneState::Edit) {
+			m_EditorScene->OnEvent(e);
+		} else if (m_SceneState == SceneState::Play) {
 			m_RuntimeScene->OnEvent(e);
 		}
 
@@ -631,10 +635,8 @@ namespace pbe {
 
 	bool EditorLayer::OnKeyPressedEvent(KeyPressedEvent& e)
 	{
-		if (m_ViewportPanelFocused || m_ViewportPanelMouseOver)
-		{
-			switch (e.GetKeyCode())
-			{
+		if (m_ViewportPanelFocused || m_ViewportPanelMouseOver) {
+			switch (e.GetKeyCode()) {
 				case KeyCode::Q:
 					m_GizmoType = -1;
 					break;
@@ -650,17 +652,20 @@ namespace pbe {
 				case KeyCode::Escape:
 					if (!m_SelectionContext.empty()) {
 						m_SelectionContext.clear();
-						m_EditorScene->SetSelectedEntity({});
 						m_SceneHierarchyPanel->SetSelected({});
+
+						ImGuizmo::SetRect(0, 0, 0, 0); // todo: ImGuizmo::IsOver problem
 					}
 					break;
 				case KeyCode::Delete:
 					if (!m_SelectionContext.empty()) {
 						Entity selectedEntity = m_SelectionContext[0].Entity;
-						m_EditorScene->DestroyEntity(selectedEntity);
+						// m_EditorScene->DestroyEntity(selectedEntity);
+						m_EditorScene->DestroyEntityHierarchy(selectedEntity);
 						m_SelectionContext.clear();
-						m_EditorScene->SetSelectedEntity({});
 						m_SceneHierarchyPanel->SetSelected({});
+
+						ImGuizmo::SetRect(0, 0, 0, 0); // todo: ImGuizmo::IsOver problem
 					}
 					break;
 			}
@@ -668,8 +673,7 @@ namespace pbe {
 
 		if (Input::IsKeyPressed(HZ_KEY_LEFT_CONTROL))
 		{
-			switch (e.GetKeyCode())
-			{
+			switch (e.GetKeyCode()) {
 				case KeyCode::D:
 					if (m_SelectionContext.size()) {
 						Entity selectedEntity = m_SelectionContext[0].Entity;
@@ -707,6 +711,8 @@ namespace pbe {
 	bool EditorLayer::OnMouseButtonPressed(MouseButtonPressedEvent& e)
 	{
 		auto [mx, my] = Input::GetMousePosition();
+		// HZ_CORE_INFO("GizmoUsing = {}", ImGuizmo::IsUsing());
+		// HZ_CORE_INFO("GizmoOver = {}", ImGuizmo::IsOver());
 		if (e.GetMouseButton() == HZ_MOUSE_BUTTON_LEFT && !Input::IsKeyPressed(KeyCode::LeftAlt) && !ImGuizmo::IsOver() && m_SceneState != SceneState::Play)
 		{
 			auto [mouseX, mouseY] = GetMouseViewportSpace();
@@ -715,7 +721,6 @@ namespace pbe {
 				auto [origin, direction] = CastRay(mouseX, mouseY);
 
 				m_SelectionContext.clear();
-				m_EditorScene->SetSelectedEntity({});
 				auto meshEntities = m_EditorScene->GetAllEntitiesWith<MeshComponent>();
 				for (auto e : meshEntities)
 				{
@@ -777,14 +782,12 @@ namespace pbe {
 	void EditorLayer::OnSelected(const SelectedSubmesh& selectionContext)
 	{
 		m_SceneHierarchyPanel->SetSelected(selectionContext.Entity);
-		m_EditorScene->SetSelectedEntity(selectionContext.Entity);
 	}
 
 	void EditorLayer::OnEntityDeleted(Entity e)
 	{
 		if (!m_SelectionContext.empty() && m_SelectionContext[0].Entity == e) {
 			m_SelectionContext.clear();
-			m_EditorScene->SetSelectedEntity({});
 		}
 	}
 

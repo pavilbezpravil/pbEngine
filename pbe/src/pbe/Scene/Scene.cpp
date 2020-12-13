@@ -13,6 +13,8 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+
+#include "pbe/Renderer/GraphicsCore.h"
 #include "pbe/Renderer/RendPrim.h"
 
 
@@ -27,35 +29,107 @@ namespace pbe {
 		UUID SceneID;
 	};
 
-	static void OnScriptComponentConstruct(entt::registry& registry, entt::entity entity)
+	struct PhysicsSceneComponent
+	{
+		physics::PhysicsScene* PhysicsScene = NULL;
+	};
+
+	static Scene* GetSceneFromRegistry(entt::registry& registry)
 	{
 		auto sceneView = registry.view<SceneComponent>();
 		UUID sceneID = registry.get<SceneComponent>(sceneView.front()).SceneID;
+		return s_ActiveScenes[sceneID];
+	}
 
-		Scene* scene = s_ActiveScenes[sceneID];
+	static physics::PhysicsScene* GetPhysicsSceneFromRegistry(entt::registry& registry)
+	{
+		auto sceneView = registry.view<PhysicsSceneComponent>();
+		return registry.get<PhysicsSceneComponent>(sceneView.front()).PhysicsScene;
+	}
 
-		auto entityID = registry.get<IDComponent>(entity).ID;
-		HZ_CORE_ASSERT(scene->m_EntityIDMap.find(entityID) != scene->m_EntityIDMap.end());
-		s_ScriptEngine->InitScriptEntity(scene->m_EntityIDMap.at(entityID));
+	static Entity GetEntityFromRegistry(entt::registry& registry, entt::entity entity)
+	{
+		Scene* scene = GetSceneFromRegistry(registry);
+		return Entity{ entity, scene };
+	}
+
+	static void OnMeshComponentConstruct(entt::registry& registry, entt::entity entity)
+	{
+		// todo:
+	}
+
+	static void OnMeshComponentDestroy(entt::registry& registry, entt::entity entity)
+	{
+		// todo:
+		Graphics::g_CommandManager.IdleGPU();
+	}
+	
+	static void OnScriptComponentConstruct(entt::registry& registry, entt::entity entity)
+	{
+		s_ScriptEngine->InitScriptEntity(GetEntityFromRegistry(registry, entity));
 	}
 
 	static void OnScriptComponentDestroy(entt::registry& registry, entt::entity entity)
 	{
-		auto sceneView = registry.view<SceneComponent>();
-		UUID sceneID = registry.get<SceneComponent>(sceneView.front()).SceneID;
-
-		Scene* scene = s_ActiveScenes[sceneID];
-
-		auto entityID = registry.get<IDComponent>(entity).ID;
-		s_ScriptEngine->ShutdownScriptEntity(Entity{ entity, scene });
+		s_ScriptEngine->ShutdownScriptEntity(GetEntityFromRegistry(registry, entity));
 	}
 
+	static void OnBoxColliderComponentConstruct(entt::registry& registry, entt::entity entity)
+	{
+		Entity e = GetEntityFromRegistry(registry, entity);
+		GetPhysicsSceneFromRegistry(registry)->OnGeomConstruct(e, PxGeometryType::eBOX);
+	}
+
+	static void OnBoxColliderComponentDestroy(entt::registry& registry, entt::entity entity)
+	{
+		Entity e = GetEntityFromRegistry(registry, entity);
+		GetPhysicsSceneFromRegistry(registry)->OnGeomDestroy(e, PxGeometryType::eBOX);
+	}
+
+	static void OnSphereColliderComponentConstruct(entt::registry& registry, entt::entity entity)
+	{
+		Entity e = GetEntityFromRegistry(registry, entity);
+		GetPhysicsSceneFromRegistry(registry)->OnGeomConstruct(e, PxGeometryType::eSPHERE);
+	}
+
+	static void OnSphereColliderComponentDestroy(entt::registry& registry, entt::entity entity)
+	{
+		Entity e = GetEntityFromRegistry(registry, entity);
+		GetPhysicsSceneFromRegistry(registry)->OnGeomDestroy(e, PxGeometryType::eSPHERE);
+	}
+
+	static void OnRigidbodyComponentConstruct(entt::registry& registry, entt::entity entity)
+	{
+		Entity e = GetEntityFromRegistry(registry, entity);
+		GetPhysicsSceneFromRegistry(registry)->OnRigidbodyConstruct(e);
+	}
+
+	static void OnRigidbodyComponentDestroy(entt::registry& registry, entt::entity entity)
+	{
+		Entity e = GetEntityFromRegistry(registry, entity);
+		e.GetComponent<RigidbodyComponent>()._pandingForDestroy = true;
+		GetPhysicsSceneFromRegistry(registry)->OnRigidbodyDestroy(e);
+	}
+	
 	Scene::Scene(const std::string& debugName)
 		: m_DebugName(debugName), m_SceneID(UUIDGet())
 	{
+
+		m_Registry.on_construct<MeshComponent>().connect<&OnMeshComponentConstruct>();
+		m_Registry.on_destroy<MeshComponent>().connect<&OnMeshComponentDestroy>();
+		
 		m_Registry.on_construct<ScriptComponent>().connect<&OnScriptComponentConstruct>();
 		m_Registry.on_destroy<ScriptComponent>().connect<&OnScriptComponentDestroy>();
 
+		m_Registry.on_construct<BoxColliderComponent>().connect<&OnBoxColliderComponentConstruct>();
+		m_Registry.on_destroy<BoxColliderComponent>().connect<&OnBoxColliderComponentDestroy>();
+
+		m_Registry.on_construct<SphereColliderComponent>().connect<&OnSphereColliderComponentConstruct>();
+		m_Registry.on_destroy<SphereColliderComponent>().connect<&OnSphereColliderComponentDestroy>();
+		
+		m_Registry.on_construct<RigidbodyComponent>().connect<&OnRigidbodyComponentConstruct>();
+		m_Registry.on_destroy<RigidbodyComponent>().connect<&OnRigidbodyComponentDestroy>();
+		
 		m_SceneEntity = m_Registry.create();
 		m_Registry.emplace<SceneComponent>(m_SceneEntity, m_SceneID);
 
@@ -68,6 +142,7 @@ namespace pbe {
 	{
 		DestroyAllEntities();
 
+		// todo: way?
 		m_Registry.on_destroy<ScriptComponent>().disconnect();
 
 		UUIDFree(m_SceneID);
@@ -79,7 +154,14 @@ namespace pbe {
 
 	void Scene::Init()
 	{
+		pPhysicsScene = physics::s_Physics->CreateScene();
+		m_Registry.emplace<PhysicsSceneComponent>(m_SceneEntity, pPhysicsScene.Raw());
 		s_ScriptEngine->InitScene(this);
+	}
+
+	physics::PhysicsScene* Scene::GetPhysicsScene()
+	{
+		return pPhysicsScene.Raw();
 	}
 
 	static std::tuple<glm::vec3, glm::quat, glm::vec3> GetTransformDecomposition(const glm::mat4& transform)
@@ -94,6 +176,9 @@ namespace pbe {
 
 	void Scene::OnUpdate(Timestep ts)
 	{
+		pPhysicsScene->Simulation(ts.GetSeconds());
+		pPhysicsScene->SyncPhysicsWithScene();
+		
 		// Update all entities
 		{
 			auto view = m_Registry.view<ScriptComponent>();
@@ -105,7 +190,7 @@ namespace pbe {
 		}
 	}
 
-	void Scene::OnRenderEntityInfo()
+	void Scene::OnRenderEntitySceneInfo()
 	{
 		Color pickColor = Color{ 15 / 255.f, 133 / 255.f, 212 / 255.f, 255 };
 		float pickRadius = 0.2f;
@@ -137,7 +222,7 @@ namespace pbe {
 	}
 
 	void Scene::OnRenderScene(const Mat4& viewProj, const Vec3& camPos)
-	{
+	{	
 		SceneRenderer::Environment environment;
 
 		{
@@ -198,7 +283,9 @@ namespace pbe {
 
 	void Scene::OnRenderEditor(const EditorCamera& editorCamera)
 	{
-		OnRenderEntityInfo();
+		OnRenderEntitySceneInfo();
+		pPhysicsScene->RenderPhysicsInfo();
+
 		OnRenderScene(editorCamera.GetViewProjection(), editorCamera.GetPosition());
 	}
 
@@ -265,11 +352,16 @@ namespace pbe {
 
 	void Scene::DestroyEntity(Entity entity)
 	{
-		entity.GetComponent<TransformComponent>().DettachFromParent();
-		entity.GetComponent<TransformComponent>().DettachChilds();
+		auto& trans = entity.GetComponent<TransformComponent>();
+		trans.DettachFromParent();
+		trans.DettachChilds();
 
 		if (entity.HasComponent<ScriptComponent>())
 			entity.RemoveComponent<ScriptComponent>();
+
+		entity.RemoveComponentIfExist<SphereColliderComponent>();
+		entity.RemoveComponentIfExist<BoxColliderComponent>();
+		entity.RemoveComponentIfExist<RigidbodyComponent>();
 
 		auto& idComponent = entity.GetComponent<IDComponent>();
 		HZ_CORE_ASSERT(m_EntityIDMap.find(idComponent.ID) != m_EntityIDMap.end());
@@ -277,6 +369,19 @@ namespace pbe {
 		UUIDFree(idComponent.ID);
 
 		m_Registry.destroy(entity.m_EntityHandle);
+	}
+
+	void Scene::DestroyEntityHierarchy(Entity entity)
+	{
+		auto& trans = entity.GetComponent<TransformComponent>();
+		if (trans.HasChilds()) {
+			auto childs = trans.ChildUUIDs;
+			for (UUID uuid : childs) {
+				DestroyEntityHierarchy(GetEntityMap().at(uuid));
+			}
+		}
+
+		DestroyEntity(entity);
 	}
 
 	template<typename T>
@@ -317,6 +422,9 @@ namespace pbe {
 		CopyComponentIfExists<DirectionLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<PointLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<SpotLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<BoxColliderComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<SphereColliderComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<RigidbodyComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 
 		// duplicate childs
 		const auto* trans = &entity.GetComponent<TransformComponent>();
@@ -339,10 +447,9 @@ namespace pbe {
 
 	Entity Scene::FindEntityByTag(const std::string& tag)
 	{
-		// TODO: If this becomes used often, consider indexing by tag
+		// todo: if this becomes used often, consider indexing by tag
 		auto view = m_Registry.view<TagComponent>();
-		for (auto entity : view)
-		{
+		for (auto entity : view) {
 			const auto& canditate = view.get<TagComponent>(entity).Tag;
 			if (canditate == tag)
 				return Entity(entity, this);
@@ -351,13 +458,11 @@ namespace pbe {
 		return Entity{};
 	}
 
-	// Copy to runtime
 	void Scene::CopyTo(Ref<Scene>& target)
 	{
 		std::unordered_map<UUID, entt::entity> enttMap;
 		auto idComponents = m_Registry.view<IDComponent>();
-		for (auto entity : idComponents)
-		{
+		for (auto entity : idComponents) {
 			auto uuid = m_Registry.get<IDComponent>(entity).ID;
 			Entity e = target->CreateEntityWithID(uuid, "", true);
 			enttMap[uuid] = e.m_EntityHandle;
@@ -371,6 +476,14 @@ namespace pbe {
 		CopyComponent<DirectionLightComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<PointLightComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<SpotLightComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<SphereColliderComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<BoxColliderComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<RigidbodyComponent>(target->m_Registry, m_Registry, enttMap);
+
+		for (auto& [uuid, entity] : target->GetEntityMap()) {
+			Entity e = entity;
+			e.GetComponent<TransformComponent>().pScene = target.Raw();
+		}
 	}
 
 	Ref<Scene> Scene::GetScene(UUID uuid)

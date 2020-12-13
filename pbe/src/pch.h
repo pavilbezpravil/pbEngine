@@ -16,6 +16,8 @@
 
 #include <fstream>
 
+#include <PxPhysicsAPI.h>
+
 #include <pbe/Core/Base.h>
 #include <pbe/Core/Types.h>
 #include <pbe/Core/Log.h>

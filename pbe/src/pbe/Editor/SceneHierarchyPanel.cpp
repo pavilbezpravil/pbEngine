@@ -89,16 +89,21 @@ namespace pbe {
 				m_WasTransAttach = false;
 			}
 
-			if (m_DeletedEntity != UUID_INVALID) {
-				Entity deletedEntity = m_Context->GetEntityMap().at(m_DeletedEntity);
+			if (m_WasDeleteEntity) {
+				Entity deletedEntity = m_Context->GetEntityMap().at(m_DeleteEntityInfo.deletedEntity);
 
 				m_EntityDeletedCallback(deletedEntity);
 
-				m_Context->DestroyEntity(deletedEntity);
+				if (m_DeleteEntityInfo.hierDelete) {
+					m_Context->DestroyEntityHierarchy(deletedEntity);
+				} else {
+					m_Context->DestroyEntity(deletedEntity);
+				}
+				
 				if (deletedEntity == m_SelectionContext)
 					m_SelectionContext = {};
 
-				m_DeletedEntity = UUID_INVALID;
+				m_WasDeleteEntity = false;
 			}
 
 			if (ImGui::BeginPopupContextWindow(0, 1, false)) {
@@ -125,6 +130,9 @@ namespace pbe {
 					AddComponent<DirectionLightComponent>(m_SelectionContext ,"Direction Light");
 					AddComponent<PointLightComponent>(m_SelectionContext ,"Point Light");
 					AddComponent<SpotLightComponent>(m_SelectionContext ,"Spot Light");
+					AddComponent<BoxColliderComponent>(m_SelectionContext ,"Box Collider");
+					AddComponent<SphereColliderComponent>(m_SelectionContext ,"Sphere Collider");
+					AddComponent<RigidbodyComponent>(m_SelectionContext ,"Rigidbody");
 
 					ImGui::EndPopup();
 				}
@@ -145,6 +153,7 @@ namespace pbe {
 										| ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick
 										| ImGuiTreeNodeFlags_SpanFullWidth
 										| (trans.HasChilds() ? 0 : ImGuiTreeNodeFlags_Leaf);
+
 		bool opened = ImGui::TreeNodeEx((void*)(uint32_t)entity, node_flags, name);
 		if (ImGui::IsItemClicked()) {
 			m_SelectionContext = entity;
@@ -181,9 +190,21 @@ namespace pbe {
 		}
 
 		if (ImGui::BeginPopupContextItem()) {
+			bool wasDelete = false;
+			
 			if (ImGui::MenuItem("Delete")) {
-				HZ_CORE_ASSERT(m_DeletedEntity == UUID_INVALID);
-				m_DeletedEntity = entity.GetUUID();
+				wasDelete = true;
+				m_DeleteEntityInfo.hierDelete = false;
+			}
+			if (ImGui::MenuItem("Delete Hierarchy")) {
+				wasDelete = true;
+				m_DeleteEntityInfo.hierDelete = true;
+			}
+
+			if (wasDelete) {
+				HZ_CORE_ASSERT(m_WasDeleteEntity == false);
+				m_DeleteEntityInfo.deletedEntity = entity.GetUUID();
+				m_WasDeleteEntity = true;
 			}
 
 			if (ImGui::MenuItem("Dettach")) {
@@ -688,6 +709,43 @@ namespace pbe {
 			if (ImGui::DragFloat("CutOff", &cutOff, 1, 0, 360)) {
 				dl.CutOff = glm::radians(cutOff);
 			}
+		});
+
+		auto DrawColliderBase = [](ColliderComponentBase& cc)
+		{
+			ImGui::Checkbox("Is Trigger", &cc.IsTrigger);
+			if (ImGui::DragFloat3("Center", glm::value_ptr(cc.Center), 0.05)) {
+				cc.UpdateCenter();
+			}
+		};
+
+		DrawComponent<BoxColliderComponent>("Box Collider", entity, [&](BoxColliderComponent& bc)
+		{
+			DrawColliderBase(bc);
+			
+			if (ImGui::DragFloat3("Size", glm::value_ptr(bc.Size), 0.05, 0, 1000)) {
+				bc.UpdateSize();
+			}
+		});
+
+		DrawComponent<SphereColliderComponent>("Sphere Collider", entity, [&](SphereColliderComponent& bc)
+		{
+			DrawColliderBase(bc);
+			
+			if (ImGui::DragFloat("Radius", &bc.Radius, 0.05, 0, 1000)) {
+				bc.UpdateRadius();
+			}
+		});
+
+		DrawComponent<RigidbodyComponent>("Rigidbody", entity, [&](RigidbodyComponent& rb)
+		{
+			ImGui::DragFloat("Mass", &rb.Mass, 0.5, 0, 10000);
+			ImGui::DragFloat("Drag", &rb.Drag, 0.01, 0, 1);
+			ImGui::DragFloat("Angular Drag", &rb.AngularDrag, 0.01, 0, 1);
+			
+			ImGui::Checkbox("Use Gravity", &rb.UseGravity);
+			ImGui::Checkbox("Is Kinematic", &rb.IsKinematic);
+			
 		});
 
 		DrawComponent<ScriptComponent>("Script", entity, [=](ScriptComponent& sc) mutable

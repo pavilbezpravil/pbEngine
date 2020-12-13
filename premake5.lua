@@ -29,14 +29,28 @@ IncludeDir["spdlog"] = "pbe/vendor/spdlog/include"
 IncludeDir["WinPixEventRuntime"] = "pbe/vendor/WinPixEventRuntime/Include/WinPixEventRuntime"
 IncludeDir["Lua"] = "pbe/vendor/lua-5.4.1/src"
 IncludeDir["Sol2"] = "pbe/vendor/sol2/single/include"
+IncludeDir["PhysX"] = "pbe/vendor/PhysX/include"
+IncludeDir["pxshared"] = "pbe/vendor/PhysX/pxshared/include"
 
 LibraryDir = {}
-LibraryDir["WinPixEventRuntime"] = "vendor/WinPixEventRuntime/bin/WinPixEventRuntime.lib"
+LibraryDir["WinPixEventRuntime"] = "pbe/vendor/WinPixEventRuntime/bin"
+
+filter "configurations:Debug"
+	LibraryDir["PhysX"] = "pbe/vendor/PhysX/bin/debug"
+filter {}
+
+-- filter "configurations:Release"
+-- 	LibraryDir["PhysX"] = "pbe/vendor/PhysX/bin/release"
+-- filter {}
+
+-- filter "configurations:Dist"
+-- 	LibraryDir["PhysX"] = "pbe/vendor/PhysX/bin/release"
+-- filter {}
 
 group "Dependencies"
-include "pbe/vendor/GLFW"
-include "pbe/vendor/ImGui"
-include "pbe/vendor/lua-5.4.1"
+	include "pbe/vendor/GLFW"
+	include "pbe/vendor/ImGui"
+	include "pbe/vendor/lua-5.4.1"
 group ""
 
 group "Core"
@@ -79,12 +93,19 @@ project "pbe"
 		"%{IncludeDir.WinPixEventRuntime}",
 		"%{IncludeDir.Lua}",
 		"%{IncludeDir.Sol2}",
+		"%{IncludeDir.PhysX}",
+		"%{IncludeDir.pxshared}",
 		"%{IncludeDir.FastNoise}",
 		"%{prj.name}/vendor/assimp/include",
 		"%{prj.name}/vendor/stb/include",
 		"%{prj.name}/vendor/yaml-cpp/include",
 	}
-	
+
+	libdirs {
+		"%{LibraryDir.WinPixEventRuntime}",
+		"%{LibraryDir.PhysX}",
+	}
+
 	links 
 	{ 
 		"GLFW",
@@ -92,7 +113,17 @@ project "pbe"
 		"Lua",
 		"d3d12",
 		"dxgi",
-		"%{LibraryDir.WinPixEventRuntime}",
+		"WinPixEventRuntime",
+		-- "LowLevel_static_64",
+		-- "LowLevelAABB_static_64",
+		-- "LowLevelDynamics_static_64",
+		"PhysX_64",
+		"PhysXCharacterKinematic_static_64",
+		-- "PhysXCommon_64",
+		-- "PhysXCooking_64",
+		"PhysXExtensions_static_64",
+		"PhysXFoundation_64",
+		"PhysXPvdSDK_static_64",
 	}
 	
 	defines 
@@ -126,18 +157,6 @@ project "pbe"
 		defines "HZ_DIST"
 		optimize "On"
 
-project "pbe-ScriptCore"
-	location "pbe-ScriptCore"
-	kind "SharedLib"
-	language "C#"
-
-	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
-
-	files 
-	{
-		"%{prj.name}/src/**.cs", 
-	}
 group ""
 
 group "Tools"
@@ -171,13 +190,18 @@ project "pbeEditor"
 		"pbe/vendor",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.spdlog}",
-		"%{IncludeDir.glm}"
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.PhysX}",
+		"%{IncludeDir.pxshared}",
 	}
+
+	print(LibraryDir["WinPixEventRuntime"] )
 
 	postbuildcommands 
 	{
 		-- '{COPY} "../pbeEditor/assets" "%{cfg.targetdir}/assets"',
-		'{COPY} "pbe/vendor/WinPixEventRuntime/bin" "%{cfg.targetdir}"'
+		'{COPY} "../%{LibraryDir.WinPixEventRuntime}/WinPixEventRuntime.dll" "%{cfg.targetdir}"',
+		'{COPY} "../%{LibraryDir.PhysX}/dll" "%{cfg.targetdir}"',
 	}
 	
 	filter "system:windows"
@@ -229,20 +253,4 @@ project "pbeEditor"
 		{
 			'{COPY} "../pbe/vendor/assimp/bin/Release/assimp-vc141-mtd.dll" "%{cfg.targetdir}"',
 		}
-group ""
-
-project "pbe-ScriptCore"
-	location "pbe-ScriptCore"
-	kind "SharedLib"
-	language "C#"
-	systemversion("latest")
-
-	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
-
-	files 
-	{
-		"%{prj.name}/src/**.cs", 
-	}
-
 group ""

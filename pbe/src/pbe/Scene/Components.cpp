@@ -118,6 +118,7 @@ namespace pbe
 			LocalPosition = invHierRotation * (position - HierPosition) / HierScale;
 		}
 		UpdateChilds();
+		NotifyTransformChanged();
 	}
 
 	void TransformComponent::UpdateRotation(const Quat& rotation, Space space)
@@ -129,6 +130,7 @@ namespace pbe
 			LocalRotation = invHierRotation * rotation;
 		}
 		UpdateChilds();
+		NotifyTransformChanged();
 	}
 
 	void TransformComponent::UpdateScale(const Vec3& scale, Space space)
@@ -139,6 +141,7 @@ namespace pbe
 			LocalScale = scale / HierScale;
 		}
 		UpdateChilds();
+		NotifyTransformChanged();
 	}
 
 	Vec3 TransformComponent::Position(Space space) const
@@ -186,4 +189,37 @@ namespace pbe
 		UpdateScale(scale, space);
 	}
 
+	void TransformComponent::NotifyTransformChanged()
+	{
+		// if (OnTransformChanged) {
+		// 	OnTransformChanged();
+		// }
+
+		// todo: tmp solution
+		Entity e = pScene->GetEntityMap().at(ownUUID);
+		pScene->GetPhysicsScene()->OnEntityTransformChanged(e);
+	}
+
+	void ColliderComponentBase::UpdateCenter()
+	{
+		_shape->setLocalPose(PxTransform(Vec3ToPx(Center)));
+	}
+
+	void SphereColliderComponent::UpdateRadius()
+	{
+		PxSphereGeometry sphereGeom;
+		bool success = _shape->getSphereGeometry(sphereGeom);
+		HZ_CORE_ASSERT(success);
+		sphereGeom.radius = Radius;
+		_shape->setGeometry(sphereGeom);
+	}
+
+	void BoxColliderComponent::UpdateSize()
+	{
+		PxBoxGeometry boxGeom;
+		bool success = _shape->getBoxGeometry(boxGeom);
+		HZ_CORE_ASSERT(success);
+		boxGeom.halfExtents = Vec3ToPx(Size) * 0.5;
+		_shape->setGeometry(boxGeom);
+	}
 }

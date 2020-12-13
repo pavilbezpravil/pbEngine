@@ -281,6 +281,47 @@ namespace pbe {
 			out << YAML::EndMap;
 		}
 
+		if (entity.HasComponent<BoxColliderComponent>())
+		{
+			out << YAML::Key << "BoxColliderComponent";
+			out << YAML::BeginMap;
+
+			auto& boxColliderComponent = entity.GetComponent<BoxColliderComponent>();
+			out << YAML::Key << "IsTrigger" << YAML::Value << boxColliderComponent.IsTrigger;
+			out << YAML::Key << "Center" << YAML::Value << boxColliderComponent.Center;
+			out << YAML::Key << "Size" << YAML::Value << boxColliderComponent.Size;
+			
+			out << YAML::EndMap;
+		}
+
+		if (entity.HasComponent<SphereColliderComponent>())
+		{
+			out << YAML::Key << "SphereColliderComponent";
+			out << YAML::BeginMap;
+
+			auto& sphereColliderComponent = entity.GetComponent<SphereColliderComponent>();
+			out << YAML::Key << "IsTrigger" << YAML::Value << sphereColliderComponent.IsTrigger;
+			out << YAML::Key << "Center" << YAML::Value << sphereColliderComponent.Center;
+			out << YAML::Key << "Radius" << YAML::Value << sphereColliderComponent.Radius;
+			
+			out << YAML::EndMap;
+		}
+		
+		if (entity.HasComponent<RigidbodyComponent>())
+		{
+			out << YAML::Key << "RigidbodyComponent";
+			out << YAML::BeginMap;
+
+			auto& rigidbodyComponent = entity.GetComponent<RigidbodyComponent>();
+			out << YAML::Key << "Mass" << YAML::Value << rigidbodyComponent.Mass;
+			out << YAML::Key << "Drag" << YAML::Value << rigidbodyComponent.Drag;
+			out << YAML::Key << "AngularDrag" << YAML::Value << rigidbodyComponent.AngularDrag;
+			out << YAML::Key << "UseGravity" << YAML::Value << rigidbodyComponent.UseGravity;
+			out << YAML::Key << "IsKinematic" << YAML::Value << rigidbodyComponent.IsKinematic;
+
+			out << YAML::EndMap;
+		}
+		
 		out << YAML::EndMap; // Entity
 	}
 
@@ -378,12 +419,15 @@ namespace pbe {
 						}
 					}
 
-					HZ_CORE_INFO("  Entity Transform:");
-					HZ_CORE_INFO("    Translation: {0}, {1}, {2}", tc.LocalPosition.x, tc.LocalPosition.y, tc.LocalPosition.z);
-					HZ_CORE_INFO("    Rotation: {0}, {1}, {2} {3}", tc.LocalRotation.w, tc.LocalRotation.x, tc.LocalRotation.y, tc.LocalRotation.z);
-					HZ_CORE_INFO("    Scale: {0}, {1}, {2}", tc.LocalScale.x, tc.LocalScale.y, tc.LocalScale.z);
-					for (UUID uuid : tc.ChildUUIDs) {
-						HZ_CORE_INFO("    ChildUUIDs: {0}", uuid);
+					if (0)
+					{
+						HZ_CORE_INFO("  Entity Transform:");
+						HZ_CORE_INFO("    Translation: {0}, {1}, {2}", tc.LocalPosition.x, tc.LocalPosition.y, tc.LocalPosition.z);
+						HZ_CORE_INFO("    Rotation: {0}, {1}, {2} {3}", tc.LocalRotation.w, tc.LocalRotation.x, tc.LocalRotation.y, tc.LocalRotation.z);
+						HZ_CORE_INFO("    Scale: {0}, {1}, {2}", tc.LocalScale.x, tc.LocalScale.y, tc.LocalScale.z);
+						for (UUID uuid : tc.ChildUUIDs) {
+							HZ_CORE_INFO("    ChildUUIDs: {0}", uuid);
+						}
 					}
 				}
 
@@ -449,6 +493,44 @@ namespace pbe {
 					ReadLightComponentBase(component, spotLightComponent);
 					component.Radius = spotLightComponent["Radius"].as<float>();
 					component.CutOff = spotLightComponent["CutOff"].as<float>();
+				}
+
+				auto ReadColliderComponentBase = [](ColliderComponentBase& l, auto& yamlLightComponent)
+				{
+					l.IsTrigger = yamlLightComponent["IsTrigger"].as<bool>();
+				};
+
+				if (auto boxColliderComponent = entity["BoxColliderComponent"])
+				{
+					auto& component = deserializedEntity.AddComponent<BoxColliderComponent>();
+					ReadColliderComponentBase(component, boxColliderComponent);
+					component.Center = boxColliderComponent["Center"].as<Vec3>();
+					component.Size = boxColliderComponent["Size"].as<Vec3>();
+
+					component.UpdateCenter();
+					component.UpdateSize();
+				}
+
+				if (auto sphereColliderComponent = entity["SphereColliderComponent"])
+				{
+					auto& component = deserializedEntity.AddComponent<SphereColliderComponent>();
+					ReadColliderComponentBase(component, sphereColliderComponent);
+					component.Center = sphereColliderComponent["Center"].as<Vec3>();
+					component.Radius = sphereColliderComponent["Radius"].as<float>();
+
+					component.UpdateCenter();
+					component.UpdateRadius();
+				}
+
+				if (auto rigidbodyComponent = entity["RigidbodyComponent"])
+				{
+					auto& component = deserializedEntity.AddComponent<RigidbodyComponent>();
+					component.Mass = rigidbodyComponent["Mass"].as<float>();
+					component.Drag = rigidbodyComponent["Drag"].as<float>();
+					component.AngularDrag = rigidbodyComponent["AngularDrag"].as<float>();
+					
+					component.UseGravity = rigidbodyComponent["UseGravity"].as<bool>();
+					component.IsKinematic = rigidbodyComponent["IsKinematic"].as<bool>();
 				}
 			}
 		}

@@ -5,6 +5,7 @@
 #include "pbe/Core/Timestep.h"
 #include "pbe/Core/Math/Common.h"
 #include "pbe/Editor/EditorCamera.h"
+#include "pbe/Physics/PhysicsScene.h"
 
 #include "entt/entt.hpp"
 
@@ -22,10 +23,12 @@ namespace pbe {
 
 		void Init();
 
+		physics::PhysicsScene* GetPhysicsScene();
+		
 		void OnUpdate(Timestep ts);
 
 		// todo: tmp
-		void OnRenderEntityInfo();
+		void OnRenderEntitySceneInfo();
 		void OnRenderScene(const Mat4& viewProj, const Vec3& camPos);
 		void OnRenderRuntime();
 		void OnRenderEditor(const EditorCamera& editorCamera);
@@ -42,6 +45,7 @@ namespace pbe {
 		Entity CreateEntity(const std::string& name = "");
 		Entity CreateEntityWithID(UUID uuid, const std::string& name = "", bool runtimeMap = false);
 		void DestroyEntity(Entity entity);
+		void DestroyEntityHierarchy(Entity entity);
 
 		Entity DuplicateEntity(Entity entity);
 
@@ -60,8 +64,6 @@ namespace pbe {
 
 		static Ref<Scene> GetScene(UUID uuid);
 
-		// Editor-specific
-		void SetSelectedEntity(entt::entity entity) { m_SelectedEntity = entity; }
 	private:
 		UUID m_SceneID;
 		entt::entity m_SceneEntity;
@@ -72,7 +74,7 @@ namespace pbe {
 
 		EntityMap m_EntityIDMap;
 
-		entt::entity m_SelectedEntity;
+		Ref<physics::PhysicsScene> pPhysicsScene;
 
 		bool m_IsPlaying = false;
 
