@@ -268,7 +268,7 @@ namespace pbe {
 		for (auto entity : group) {
 			auto&[meshComponent, transformComponent] = group.get<MeshComponent, TransformComponent>(entity);
 			if (meshComponent.Mesh) {
-				SceneRenderer::Get().SubmitMesh(meshComponent, transformComponent.GetWorldTransform());
+				SceneRenderer::Get().SubmitMesh(meshComponent, transformComponent.GetWorldTransform().GetMat4());
 			}
 		}
 		SceneRenderer::Get().EndScene();

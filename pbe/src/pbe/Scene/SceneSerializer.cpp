@@ -176,9 +176,9 @@ namespace pbe {
 			out << YAML::BeginMap; // TransformComponent
 
 			auto& tc = entity.GetComponent<TransformComponent>();
-			out << YAML::Key << "Position" << YAML::Value << tc.LocalPosition;
-			out << YAML::Key << "Rotation" << YAML::Value << tc.LocalRotation;
-			out << YAML::Key << "Scale" << YAML::Value << tc.LocalScale;
+			out << YAML::Key << "Position" << YAML::Value << tc.Local.Position;
+			out << YAML::Key << "Rotation" << YAML::Value << tc.Local.Rotation;
+			out << YAML::Key << "Scale" << YAML::Value << tc.Local.Scale;
 
 			if (tc.ParentUUID.Valid()) {
 				out << YAML::Key << "ParentUUID" << YAML::Value << tc.ParentUUID;
@@ -398,9 +398,9 @@ namespace pbe {
 				{
 					// Entities always have transforms
 					auto& tc = deserializedEntity.GetComponent<TransformComponent>();
-					tc.LocalPosition = transformComponent["Position"].as<glm::vec3>();
-					tc.LocalRotation = transformComponent["Rotation"].as<glm::quat>();
-					tc.LocalScale = transformComponent["Scale"].as<glm::vec3>();
+					tc.Local.Position = transformComponent["Position"].as<glm::vec3>();
+					tc.Local.Rotation = transformComponent["Rotation"].as<glm::quat>();
+					tc.Local.Scale = transformComponent["Scale"].as<glm::vec3>();
 
 					auto parentUUID = transformComponent["ParentUUID"];
 					if (parentUUID) {
@@ -422,9 +422,9 @@ namespace pbe {
 					if (0)
 					{
 						HZ_CORE_INFO("  Entity Transform:");
-						HZ_CORE_INFO("    Translation: {0}, {1}, {2}", tc.LocalPosition.x, tc.LocalPosition.y, tc.LocalPosition.z);
-						HZ_CORE_INFO("    Rotation: {0}, {1}, {2} {3}", tc.LocalRotation.w, tc.LocalRotation.x, tc.LocalRotation.y, tc.LocalRotation.z);
-						HZ_CORE_INFO("    Scale: {0}, {1}, {2}", tc.LocalScale.x, tc.LocalScale.y, tc.LocalScale.z);
+						HZ_CORE_INFO("    Translation: {0}, {1}, {2}", tc.Local.Position.x, tc.Local.Position.y, tc.Local.Position.z);
+						HZ_CORE_INFO("    Rotation: {0}, {1}, {2} {3}", tc.Local.Rotation.w, tc.Local.Rotation.x, tc.Local.Rotation.y, tc.Local.Rotation.z);
+						HZ_CORE_INFO("    Scale: {0}, {1}, {2}", tc.Local.Scale.x, tc.Local.Scale.y, tc.Local.Scale.z);
 						for (UUID uuid : tc.ChildUUIDs) {
 							HZ_CORE_INFO("    ChildUUIDs: {0}", uuid);
 						}

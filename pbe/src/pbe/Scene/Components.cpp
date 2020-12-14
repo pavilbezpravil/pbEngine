@@ -29,9 +29,9 @@ namespace pbe
 		ParentUUID = uuid;
 		parentTrans.ChildUUIDs.push_back(ownUUID);
 
-		HierPosition = parentTrans.WorldPosition();
-		HierRotation = parentTrans.WorldRotation();
-		HierScale = parentTrans.WorldScale();
+		Hier.Position = parentTrans.WorldPosition();
+		Hier.Rotation = parentTrans.WorldRotation();
+		Hier.Scale = parentTrans.WorldScale();
 
 		UpdatePosition(position, Space::World);
 		UpdateRotation(rotation, Space::World);
@@ -91,9 +91,9 @@ namespace pbe
 			Entity e = pScene->GetEntityMap().at(uuid);
 			auto& trans = e.GetComponent<TransformComponent>();
 
-			trans.HierPosition = totalPosition;
-			trans.HierRotation = totalRotation;
-			trans.HierScale = totalScale;
+			trans.Hier.Position = totalPosition;
+			trans.Hier.Rotation = totalRotation;
+			trans.Hier.Scale = totalScale;
 
 			trans.UpdateChilds();
 		}
@@ -112,10 +112,10 @@ namespace pbe
 	void TransformComponent::UpdatePosition(const Vec3& position, Space space)
 	{
 		if (!HasParent() || space == Space::Local) {
-			LocalPosition = position;
+			Local.Position = position;
 		} else {
-			Quat invHierRotation = glm::inverse(HierRotation);
-			LocalPosition = invHierRotation * (position - HierPosition) / HierScale;
+			Quat invHierRotation = glm::inverse(Hier.Rotation);
+			Local.Position = invHierRotation * (position - Hier.Position) / Hier.Scale;
 		}
 		UpdateChilds();
 		NotifyTransformChanged();
@@ -124,10 +124,10 @@ namespace pbe
 	void TransformComponent::UpdateRotation(const Quat& rotation, Space space)
 	{
 		if (!HasParent() || space == Space::Local) {
-			LocalRotation = rotation;
+			Local.Rotation = rotation;
 		} else {
-			Quat invHierRotation = glm::inverse(HierRotation);
-			LocalRotation = invHierRotation * rotation;
+			Quat invHierRotation = glm::inverse(Hier.Rotation);
+			Local.Rotation = invHierRotation * rotation;
 		}
 		UpdateChilds();
 		NotifyTransformChanged();
@@ -136,9 +136,9 @@ namespace pbe
 	void TransformComponent::UpdateScale(const Vec3& scale, Space space)
 	{
 		if (!HasParent() || space == Space::Local) {
-			LocalScale = scale;
+			Local.Scale = scale;
 		} else {
-			LocalScale = scale / HierScale;
+			Local.Scale = scale / Hier.Scale;
 		}
 		UpdateChilds();
 		NotifyTransformChanged();
@@ -147,46 +147,48 @@ namespace pbe
 	Vec3 TransformComponent::Position(Space space) const
 	{
 		if (!HasParent() || space == Space::Local) {
-			return LocalPosition;
+			return Local.Position;
 		} else {
-			return HierPosition + HierRotation * (LocalPosition * HierScale);
+			return Hier.Position + Hier.Rotation * (Local.Position * Hier.Scale);
 		}
 	}
 
 	Quat TransformComponent::Rotation(Space space) const
 	{
 		if (!HasParent() || space == Space::Local) {
-			return LocalRotation;
+			return Local.Rotation;
 		} else {
-			return HierRotation * LocalRotation;
+			return Hier.Rotation * Local.Rotation;
 		}
 	}
 
 	Vec3 TransformComponent::Scale(Space space) const
 	{
 		if (!HasParent() || space == Space::Local) {
-			return LocalScale;
+			return Local.Scale;
 		} else {
-			return HierScale * LocalScale;
+			return Hier.Scale * Local.Scale;
 		}
 	}
 
-	Mat4 TransformComponent::GetTransform(Space space) const
+	Transform TransformComponent::GetTransform(Space space) const
 	{
-		Mat4 rotation = glm::toMat4(Rotation(space));
-
-		return glm::translate(glm::mat4(1.0), Position(space))
-			* rotation
-			* glm::scale(glm::mat4(1.0), Scale(space));
+		if (space == Space::Local) {
+			return Local;
+		} else {
+			return Transform(Position(space), Rotation(space), Scale(space));
+		}
 	}
 
-	void TransformComponent::SetTransform(const Mat4& trans, Space space)
+	void TransformComponent::SetTransform(const Transform& trans, Space space)
 	{
-		auto [position, rotation, scale] = GetTransformDecomposition(trans);
-
-		UpdatePosition(position, space);
-		UpdateRotation(rotation, space);
-		UpdateScale(scale, space);
+		if (space == Space::Local) {
+			Local = trans;
+		} else {
+			UpdatePosition(trans.Position, space);
+			UpdateRotation(trans.Rotation, space);
+			UpdateScale(trans.Scale, space);
+		}
 	}
 
 	void TransformComponent::NotifyTransformChanged()

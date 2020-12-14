@@ -313,7 +313,7 @@ namespace pbe {
 
 			bool snap = Input::IsKeyPressed(HZ_KEY_LEFT_CONTROL);
 
-			Mat4 entityTransform = selection.Entity.GetComponent<TransformComponent>().GetWorldTransform();
+			Mat4 entityTransform = selection.Entity.GetComponent<TransformComponent>().GetWorldTransform().GetMat4();
 			float snapValue = GetSnapValue();
 			float snapValues[3] = { snapValue, snapValue, snapValue };
 			if (m_SelectionMode == SelectionMode::Entity) {
@@ -326,7 +326,7 @@ namespace pbe {
 					snap ? snapValues : nullptr);
 
 				if (ImGuizmo::IsUsing()) {
-					selection.Entity.GetComponent<TransformComponent>().SetWorldTransform(entityTransform);
+					selection.Entity.GetComponent<TransformComponent>().SetWorldTransform(Transform(entityTransform));
 				}
 			} else {
 				HZ_UNIMPLEMENTED();
@@ -742,9 +742,10 @@ namespace pbe {
 					float lastT = std::numeric_limits<float>::max();
 					for (uint32_t i = 0; i < submeshes.size(); i++) {
 						auto& submesh = submeshes[i];
+						Mat4 worldTransMat4 = entity.GetComponent<TransformComponent>().GetWorldTransform().GetMat4();
 						Ray ray = {
-							glm::inverse(entity.GetComponent<TransformComponent>().GetWorldTransform() * submesh.Transform) * glm::vec4(origin, 1.0f),
-							glm::inverse(glm::mat3(entity.GetComponent<TransformComponent>().GetWorldTransform()) * glm::mat3(submesh.Transform)) * direction
+							glm::inverse(worldTransMat4 * submesh.Transform) * glm::vec4(origin, 1.0f),
+							glm::inverse(glm::mat3(worldTransMat4) * glm::mat3(submesh.Transform)) * direction
 						};
 
 						float t;

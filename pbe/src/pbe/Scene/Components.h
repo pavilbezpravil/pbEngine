@@ -5,6 +5,7 @@
 
 
 #include "pbe/Core/UUID.h"
+#include "pbe/Core/Math/Transform.h"
 #include "pbe/Renderer/Texture.h"
 #include "pbe/Renderer/Mesh.h"
 #include "pbe/Scene/SceneCamera.h"
@@ -52,13 +53,8 @@ namespace pbe {
 		UUID ParentUUID = UUID_INVALID;
 		std::vector<UUID> ChildUUIDs;
 
-		Vec3 HierPosition = Vec3_Zero;
-		Quat HierRotation = glm::quat(1, 0, 0, 0);
-		Vec3 HierScale = Vec3_One;
-
-		Vec3 LocalPosition = Vec3_Zero;
-		Quat LocalRotation = glm::quat(1, 0, 0, 0);
-		Vec3 LocalScale = Vec3_One;
+		Transform Hier;
+		Transform Local;
 
 		// std::function<void()> OnTransformChanged = NULL;
 		
@@ -91,13 +87,13 @@ namespace pbe {
 		Vec3 WorldUp() const { return Up(Space::World); }
 		Vec3 WorldRight() const { return Right(Space::World); }
 
-		Mat4 GetLocalTransform() const { return GetTransform(Space::Local); }
-		void SetLocalTransform(const Mat4& trans) { return SetTransform(trans, Space::Local); }
+		Transform GetLocalTransform() const { return GetTransform(Space::Local); }
+		void SetLocalTransform(const Transform& trans) { return SetTransform(trans, Space::Local); }
 
-		Mat4 GetWorldTransform() const { return GetTransform(Space::World); }
-		void SetWorldTransform(const Mat4& trans) { return SetTransform(trans, Space::World); }
+		Transform GetWorldTransform() const { return GetTransform(Space::World); }
+		void SetWorldTransform(const Transform& trans) { return SetTransform(trans, Space::World); }
 
-		operator glm::mat4 () const { return GetTransform(); }
+		// operator glm::mat4 () const { return GetTransform(); }
 
 		COMPONENT_CLASS_TYPE(TransformComponent)
 
@@ -106,8 +102,8 @@ namespace pbe {
 		Vec3 Up(Space space = Space::Local) const { return Rotation(space) * Vec3_Y; }
 		Vec3 Right(Space space = Space::Local) const { return Rotation(space) * Vec3_X; }
 
-		Mat4 GetTransform(Space space = Space::Local) const;
-		void SetTransform(const Mat4& trans, Space space = Space::Local);
+		Transform GetTransform(Space space = Space::Local) const;
+		void SetTransform(const Transform& trans, Space space = Space::Local);
 		
 		void NotifyTransformChanged();
 	};

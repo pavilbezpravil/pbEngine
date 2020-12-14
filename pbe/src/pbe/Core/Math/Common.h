@@ -43,6 +43,8 @@ const Vec3 Vec4_ZNeg = Vec4(0, 0, -1, 0);
 const Vec3 Vec4_W    = Vec4(0, 0, 0, 1);
 const Vec3 Vec4_WNeg = Vec4(0, 0, 0, -1);
 
+const Quat Quat_Identity = Quat(1, 0, 0, 0);
+
 std::tuple<glm::vec3, glm::quat, glm::vec3> GetTransformDecomposition(const glm::mat4& transform);
 
 namespace Math
