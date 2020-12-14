@@ -330,6 +330,7 @@ namespace pbe
 		Physics::~Physics()
 		{
 			material->release();
+			PxCloseExtensions();
 			gDispatcher->release();
 			mPhysics->release();
 			mPvd->release();
