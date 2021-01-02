@@ -83,17 +83,16 @@ namespace pbe {
 	void Application::Run()
 	{
 		OnInit();
-		while (m_Running)
-		{
+		
+		while (m_Running) {
 			// dx12
-			GraphicsContext& Context = GraphicsContext::Begin(L"Present");
-
-			Context.ClearColor(Graphics::GetCurrentBB());
-
-			Context.Finish();
-
-			if (!m_Minimized)
 			{
+				GraphicsContext& Context = GraphicsContext::Begin(L"Clear BB");
+				Context.ClearColor(Graphics::GetCurrentBB());
+				Context.Finish();
+			}
+
+			if (!m_Minimized) {
 				for (Layer* layer : m_LayerStack)
 					layer->OnUpdate(m_TimeStep);
 
