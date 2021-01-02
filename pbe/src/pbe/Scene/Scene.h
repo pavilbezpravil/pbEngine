@@ -9,6 +9,7 @@
 
 #include "entt/entt.hpp"
 #include "pbe/Input/SceneInput.h"
+#include "pbe/Renderer/RendScene.h"
 
 
 namespace pbe {
@@ -83,6 +84,7 @@ namespace pbe {
 
 		Ref<physics::PhysicsScene> pPhysicsScene;
 		Ref<SceneInput> pSceneInput;
+		Ref<RendScene> pRendScene;
 
 		bool m_IsPlaying = false;
 

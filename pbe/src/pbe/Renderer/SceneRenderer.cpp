@@ -87,7 +87,7 @@ namespace pbe {
 		_environment = environment;
 
 		if (environment.lights.size() > _lightsGPUBuffer.GetElementCount()) {
-			_lightsGPUBuffer.Create(L"Scene Lights", environment.lights.size(), sizeof(Light));
+			_lightsGPUBuffer.Create(L"Scene Lights", environment.lights.size(), sizeof(RendLight));
 		}
 	}
 
@@ -109,7 +109,7 @@ namespace pbe {
 		int directLightIdx = -1;
 
 		for (int i = 0; i < _environment.lights.size(); ++i) {
-			if (_environment.lights[i].type == Light::Direction) {
+			if (_environment.lights[i].type == RendLight::Direction) {
 				directLightIdx = i;
 				break;
 			}
@@ -119,7 +119,7 @@ namespace pbe {
 			return Mat4(1.f);
 		}
 
-		Light directLight = _environment.lights[directLightIdx];
+		RendLight directLight = _environment.lights[directLightIdx];
 
 		const float shadowHalfBounds = 30;
 		const float shadowDepth = 100;
@@ -215,10 +215,10 @@ namespace pbe {
 
 		context.SetDynamicDescriptor((uint)BaseDescriptor::texDepth, 0, _shadowBuffer->GetDepthSRV());
 
-		context.WriteBuffer(_lightsGPUBuffer, 0, _environment.lights.data(), _environment.lights.size() * sizeof(Light));
+		context.WriteBuffer(_lightsGPUBuffer, 0, _environment.lights.data(), _environment.lights.size() * sizeof(RendLight));
 		context.TransitionResource(_lightsGPUBuffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		context.SetBufferSRV((uint)BaseDescriptor::gLights, _lightsGPUBuffer);
-		// context.SetDynamicSRV((uint)BaseDescriptor::gLights, _environment.lights.size() * sizeof(Light), _environment.lights.data());
+		// context.SetDynamicSRV((uint)BaseDescriptor::gLights, _environment.lights.size() * sizeof(RendLight), _environment.lights.data());
 
 		DrawAllMesh(context);
 

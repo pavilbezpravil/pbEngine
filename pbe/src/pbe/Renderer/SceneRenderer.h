@@ -1,64 +1,16 @@
 #pragma once
 
+#include "RendObj.h"
 #include "DepthBuffer.h"
 #include "PipelineState.h"
 #include "RootSignature.h"
 #include "pbe/Core/Singleton.h"
 #include "pbe/Scene/Scene.h"
-#include "pbe/Renderer/Mesh.h"
-#include "pbe/Renderer/DepthBuffer.h"
-#include "pbe/Renderer/PipelineState.h"
-#include "pbe/Scene/SceneCamera.h"
-#include "pbe/Scene/Components.h"
 
 
 namespace pbe {
 
 	class Renderer;
-
-	struct Light
-	{
-		enum Type
-		{
-			Direction,
-			Point,
-			Spot,
-		};
-
-		Vec3 positionOrDirection = { 0.0f, 0.0f, 0.0f };
-		float radius;
-		Vec3 radiance = { 0.0f, 0.0f, 0.0f };
-		float cutOff;
-		Type type;
-
-		Vec3 up; // in case spot light is direction
-
-		void InitAsDirectLight(const Vec3& direction, const Vec3& up, const Vec3& radiance)
-		{
-			type = Light::Direction;
-			positionOrDirection = direction;
-			this->up = up;
-			this->radiance = radiance;
-		}
-
-		void InitAsPointLight(const Vec3& position, const Vec3& radiance, float radius)
-		{
-			type = Light::Point;
-			positionOrDirection = position;
-			this->radiance = radiance;
-			this->radius = radius;
-		}
-
-		void InitAsSpotLight(const Vec3& position, const Vec3& direction, const Vec3& radiance, float radius, float cutOff)
-		{
-			type = Light::Spot;
-			positionOrDirection = position;
-			this->radiance = radiance;
-			this->radius = radius;
-			this->cutOff = cutOff;
-			up = direction;
-		}
-	};
 
 	class SceneRenderer : public Singleton<SceneRenderer>
 	{
@@ -67,7 +19,7 @@ namespace pbe {
 	public:
 		struct Environment
 		{
-			std::vector<Light> lights;
+			std::vector<RendLight> lights;
 		};
 
 		struct CameraInfo

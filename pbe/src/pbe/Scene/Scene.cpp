@@ -154,6 +154,7 @@ namespace pbe {
 		m_Registry.emplace<SceneComponent>(m_SceneEntity, m_SceneID);
 		
 		pSceneInput = Ref<SceneInput>::Create();
+		pRendScene = Ref<RendScene>::Create();
 		
 		pPhysicsScene = physics::s_Physics->CreateScene();
 		m_Registry.emplace<PhysicsSceneComponent>(m_SceneEntity, pPhysicsScene.Raw());
