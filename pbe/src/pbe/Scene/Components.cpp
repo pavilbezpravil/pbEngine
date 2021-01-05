@@ -171,6 +171,16 @@ namespace pbe
 		}
 	}
 
+	void TransformComponent::Move(const Vec3& move, Space space)
+	{
+		UpdatePosition(Position(space) + move, space);
+	}
+
+	void TransformComponent::Rotate(const Quat& rotation, Space space)
+	{
+		UpdateRotation(rotation * Rotation(space), space);
+	}
+
 	Transform TransformComponent::GetTransform(Space space) const
 	{
 		if (space == Space::Local) {

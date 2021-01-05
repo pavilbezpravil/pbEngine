@@ -321,6 +321,19 @@ namespace pbe {
 
 			out << YAML::EndMap;
 		}
+
+		if (entity.HasComponent<AIControllerComponent>())
+		{
+			out << YAML::Key << "AIControllerComponent";
+			out << YAML::BeginMap;
+
+			auto& aiControllerComponent = entity.GetComponent<AIControllerComponent>();
+			if (aiControllerComponent.AIController->GetBehaviorTree()) {
+				out << YAML::Key << "BehaviorTreeFilepath" << YAML::Value << aiControllerComponent.AIController->GetBehaviorTree()->GetFilepath();
+			}
+			
+			out << YAML::EndMap;
+		}
 		
 		out << YAML::EndMap; // Entity
 	}
@@ -531,6 +544,19 @@ namespace pbe {
 					
 					component.UseGravity = rigidbodyComponent["UseGravity"].as<bool>();
 					component.IsKinematic = rigidbodyComponent["IsKinematic"].as<bool>();
+				}
+
+				if (auto aiControllerComponent = entity["AIControllerComponent"])
+				{
+					auto& component = deserializedEntity.AddComponent<AIControllerComponent>();
+					component.AIController = Ref<AI::Controller>::Create(deserializedEntity);
+					if (auto nodeFilepath = aiControllerComponent["BehaviorTreeFilepath"]) {
+						auto filepath = nodeFilepath.as<std::string>();
+						auto bt = Ref<AI::BehaviorTree>::Create(filepath);
+						if (bt && bt->Deserialize(bt->GetFilepath())) {
+							component.AIController->SetBehaviorTree(bt);
+						}
+					}
 				}
 			}
 		}

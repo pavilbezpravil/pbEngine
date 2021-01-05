@@ -5,7 +5,9 @@ namespace pbe
 {
 	namespace AI
 	{
-		class BehaviorTree : public pbe::RefCounted //, public Node
+		class Controller;
+		
+		class BehaviorTree : public RefCounted //, public Node
 		{
 		public:
 			BehaviorTree(const std::string& filepath) : blackboard(std::make_shared<Blackboard>())
@@ -14,10 +16,12 @@ namespace pbe
 			}
 			// BehaviorTree(const Node::Ptr& rootNode) : BehaviorTree() { root = rootNode; }
 
+			BehaviorTree(const BehaviorTree& o) = default;
+
 			void reset();
 			
 			// Status update() { return root->tick(); }
-			void update() { root->tick(); }
+			void update(Controller* aiController);
 
 			void setRoot(const Node::Ptr& node) { root = node; }
 			Node::Ptr& getRoot() { return root; }

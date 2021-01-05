@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "Task.h"
+#include "AIController.h"
+#include "pbe/Scene/Entity.h"
 
 namespace pbe
 {
@@ -34,7 +36,25 @@ namespace pbe
 			return s_methods;
 		}
 
-		Node::Status SetValue::tick(Blackboard::Ptr& blackboard)
+		Node::Status MoveTo::tick(Controller* aiController, Blackboard* blackboard)
+		{
+			float dt = 1.f / 60.f; // todo:
+
+			Vec3 target = Vec3_X * 10.f;
+			float speed = 1.f;
+			
+			Entity e = aiController->GetOwner();
+			auto& trans = e.GetComponent<TransformComponent>();
+			// Vec3 direction = glm::normalize((target - trans.WorldPosition()));
+			Vec3 direction = trans.WorldForward();
+
+			trans.Move(direction * speed * dt, Space::World);
+
+			bool closeEnought = (target - trans.WorldPosition()).length() < 0.2f;
+			return closeEnought ? Node::Status::Success : Node::Status::Running;
+		}
+
+		Node::Status SetValue::tick(Controller* aiController, Blackboard* blackboard)
 		{
 			blackboard->GetValue("Value") = 180;
 			
@@ -48,14 +68,14 @@ namespace pbe
 			return Node::Status::Success;
 		}
 
-		Node::Status NDecrementValue::tick(Blackboard::Ptr& blackboard)
+		Node::Status NDecrementValue::tick(Controller* aiController, Blackboard* blackboard)
 		{
 			int& value = blackboard->GetValue("Value").As<int>();
 			--value;
 			return value > 0 ? Node::Status::Running : Node::Status::Success;
 		}
 
-		Node::Status PrintEnd::tick(Blackboard::Ptr& blackboard)
+		Node::Status PrintEnd::tick(Controller* aiController, Blackboard* blackboard)
 		{
 			HZ_CORE_INFO("PrindEnd");
 			return Node::Status::Success;

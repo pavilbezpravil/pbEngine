@@ -9,6 +9,8 @@ namespace pbe
 {
 	namespace AI
 	{
+		class Controller;
+		
 		class Node
 		{
 		public:
@@ -154,8 +156,8 @@ namespace pbe
 		public:
 			Task(const std::string& taskName) : taskName(taskName) {}
 			
-			virtual void init() {};
-			virtual Node::Status tick(Blackboard::Ptr& blackboard) = 0;
+			virtual void init() {}
+			virtual Node::Status tick(Controller* aiController, Blackboard* blackboard) = 0;
 			
 			using Ptr = std::shared_ptr<Task>;
 
@@ -170,7 +172,7 @@ namespace pbe
 		public:
 			Leaf(Blackboard::Ptr blackboard = NULL, Task::Ptr pTask = NULL) : Node(Type::Leaf), blackboard(blackboard), pTask(pTask) {}
 
-			Status update() override { return pTask ? pTask->tick(blackboard) : Status::Success; }
+			Status update() override { return pTask ? pTask->tick(blackboard->aiController, blackboard.get()) : Status::Success; }
 
 			void SetBlackboard(Blackboard::Ptr bb) { blackboard = bb; }
 			void SetTask(Task::Ptr task) { pTask = task; name = pTask->GetTaskName();  }

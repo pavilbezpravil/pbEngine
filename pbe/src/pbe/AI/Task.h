@@ -46,22 +46,19 @@ namespace pbe
 
 
 		TASK_CLASS(MoveTo)
-			Node::Status tick(Blackboard::Ptr& blackboard) override
-			{
-				return Node::Status::Success;
-			}
+		Node::Status tick(Controller* aiController, Blackboard* blackboard) override;
 		};
 
 		TASK_CLASS(SetValue)
-		Node::Status tick(Blackboard::Ptr& blackboard) override;
+		Node::Status tick(Controller* aiController, Blackboard* blackboard) override;
 		};
 	
 		TASK_CLASS(NDecrementValue)
-		Node::Status tick(Blackboard::Ptr& blackboard) override;
+		Node::Status tick(Controller* aiController, Blackboard* blackboard) override;
 		};
 
 		TASK_CLASS(PrintEnd)
-		Node::Status tick(Blackboard::Ptr& blackboard) override;
+		Node::Status tick(Controller* aiController, Blackboard* blackboard) override;
 		};
 		
 	}

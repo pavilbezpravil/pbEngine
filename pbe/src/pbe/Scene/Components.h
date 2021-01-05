@@ -3,14 +3,18 @@
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
-
 #include "pbe/Core/UUID.h"
 #include "pbe/Core/Math/Transform.h"
-#include "pbe/Renderer/Texture.h"
 #include "pbe/Renderer/Mesh.h"
 #include "pbe/Scene/SceneCamera.h"
+#include "pbe/AI/AIController.h"
 
 namespace pbe {
+
+	// namespace AI
+	// {
+	// 	class Controller;
+	// };
 
 	class Scene;
 
@@ -93,6 +97,9 @@ namespace pbe {
 		Transform GetWorldTransform() const { return GetTransform(Space::World); }
 		void SetWorldTransform(const Transform& trans) { return SetTransform(trans, Space::World); }
 
+		void Move(const Vec3& move, Space space = Space::Local);
+		void Rotate(const Quat& rotation, Space space = Space::Local);
+		
 		// operator glm::mat4 () const { return GetTransform(); }
 
 		COMPONENT_CLASS_TYPE(TransformComponent)
@@ -226,6 +233,13 @@ namespace pbe {
 		bool _pandingForDestroy = false; // internal
 
 		COMPONENT_CLASS_TYPE(RigidbodyComponent)
+	};
+
+	struct AIControllerComponent
+	{
+		Ref<AI::Controller> AIController;
+
+		COMPONENT_CLASS_TYPE(AIControllerComponent)
 	};
 	
 }

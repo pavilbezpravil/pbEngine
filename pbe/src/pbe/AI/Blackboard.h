@@ -7,6 +7,8 @@ namespace pbe
 {
 	namespace AI
 	{
+		class Controller;
+
 		struct BlackboardValue : std::variant<int, float, std::string>
 		{
 			typedef std::variant<int, float, std::string> Base;
@@ -57,6 +59,9 @@ namespace pbe
 			void SetValue(const std::string& key, const BlackboardValue& value);
 			void SetValue(const std::string& key, BlackboardValue&& value);
 
+			// todo: tmp
+			Controller* aiController = NULL;
+			
 			using Ptr = std::shared_ptr<Blackboard>;
 			
 		private:

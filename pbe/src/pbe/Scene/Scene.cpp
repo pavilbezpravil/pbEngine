@@ -110,6 +110,20 @@ namespace pbe {
 		e.GetComponent<RigidbodyComponent>()._pandingForDestroy = true;
 		GetPhysicsSceneFromRegistry(registry)->OnRigidbodyDestroy(e);
 	}
+
+	static void OnAIControllerComponentConstruct(entt::registry& registry, entt::entity entity)
+	{
+		Entity e = GetEntityFromRegistry(registry, entity);
+		auto& aiController = e.GetComponent<AIControllerComponent>().AIController;
+		if (aiController) {
+			aiController->SetOwner(e);
+		}
+	}
+
+	static void OnAIControllerComponentDestroy(entt::registry& registry, entt::entity entity)
+	{
+
+	}
 	
 	Scene::Scene(const std::string& debugName)
 		: m_DebugName(debugName), m_SceneID(UUIDGet())
@@ -150,6 +164,9 @@ namespace pbe {
 		m_Registry.on_construct<RigidbodyComponent>().connect<&OnRigidbodyComponentConstruct>();
 		m_Registry.on_destroy<RigidbodyComponent>().connect<&OnRigidbodyComponentDestroy>();
 
+		m_Registry.on_construct<AIControllerComponent>().connect<&OnAIControllerComponentConstruct>();
+		m_Registry.on_destroy<AIControllerComponent>().connect<&OnAIControllerComponentDestroy>();
+		
 		m_SceneEntity = m_Registry.create();
 		m_Registry.emplace<SceneComponent>(m_SceneEntity, m_SceneID);
 		
@@ -181,15 +198,19 @@ namespace pbe {
 		pPhysicsScene->Simulation(ts.GetSeconds());
 		pPhysicsScene->SyncPhysicsWithScene();
 		
-		// Update all entities
 		{
+			// Script update
 			s_ScriptEngine->SetContext(this);
-			auto view = m_Registry.view<ScriptComponent>();
-			for (auto entity : view) {
-				UUID entityID = m_Registry.get<IDComponent>(entity).ID;
+			for (auto entity : m_Registry.view<ScriptComponent>()) {
 				s_ScriptEngine->OnUpdateEntity(Entity{ entity, this }, ts);
 			}
 			s_ScriptEngine->SetContext(NULL);
+
+			// Ai update
+			for (auto entity : m_Registry.view<AIControllerComponent>()) {
+				auto aiContoller = m_Registry.get<AIControllerComponent>(entity).AIController;
+				aiContoller->Update();
+			}
 		}
 	}
 
@@ -381,6 +402,7 @@ namespace pbe {
 		entity.RemoveComponentIfExist<SphereColliderComponent>();
 		entity.RemoveComponentIfExist<BoxColliderComponent>();
 		entity.RemoveComponentIfExist<RigidbodyComponent>();
+		entity.RemoveComponentIfExist<AIControllerComponent>();
 
 		auto& idComponent = entity.GetComponent<IDComponent>();
 		HZ_CORE_ASSERT(m_EntityIDMap.find(idComponent.ID) != m_EntityIDMap.end());
@@ -404,15 +426,17 @@ namespace pbe {
 	}
 
 	template<typename T>
-	static void CopyComponent(entt::registry& dstRegistry, entt::registry& srcRegistry, const std::unordered_map<UUID, entt::entity>& enttMap)
+	static void CopyComponent(entt::registry& dstRegistry, entt::registry& srcRegistry, const std::unordered_map<UUID, entt::entity>& enttMap, void (*f)(T&, T&) = {})
 	{
 		auto components = srcRegistry.view<T>();
-		for (auto srcEntity : components)
-		{
+		for (auto srcEntity : components) {
 			entt::entity destEntity = enttMap.at(srcRegistry.get<IDComponent>(srcEntity).ID);
 
 			auto& srcComponent = srcRegistry.get<T>(srcEntity);
 			auto& destComponent = dstRegistry.emplace_or_replace<T>(destEntity, srcComponent);
+			if (f) {
+				f(destComponent, srcComponent);
+			}
 		}
 	}
 
@@ -444,6 +468,7 @@ namespace pbe {
 		CopyComponentIfExists<BoxColliderComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<SphereColliderComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<RigidbodyComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<AIControllerComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 
 		// duplicate childs
 		const auto* trans = &entity.GetComponent<TransformComponent>();
@@ -498,6 +523,7 @@ namespace pbe {
 		CopyComponent<SphereColliderComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<BoxColliderComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<RigidbodyComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<AIControllerComponent>(target->m_Registry, m_Registry, enttMap);
 
 		for (auto& [uuid, entity] : target->GetEntityMap()) {
 			Entity e = entity;

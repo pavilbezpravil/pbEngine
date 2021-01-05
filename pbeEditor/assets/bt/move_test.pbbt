@@ -3,18 +3,14 @@ Nodes:
   - ID: 1
     Type: Decorator
     DecoratorType: Root
-    ChildID: 18
-  - ID: 7
+    ChildID: 42
+  - ID: 32
+    Type: Leaf
+    TaskName: MoveTo
+  - ID: 39
     Type: Leaf
     TaskName: PrintEnd
-  - ID: 10
-    Type: Composite
-    CompositeType: Selector
-    ChildIDs: [14, 7]
-  - ID: 14
-    Type: Leaf
-    TaskName: SetValue
-  - ID: 18
+  - ID: 42
     Type: Composite
     CompositeType: Sequence
-    ChildIDs: [7, 14]
+    ChildIDs: [32, 39]

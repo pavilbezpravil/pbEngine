@@ -1,0 +1,192 @@
+Scene: Scene Name
+Entities:
+  - Entity: 5720288110274156399
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [9.36658573, 0.253296673, -18.7200756]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      AssetPath: assets\meshes\Cube.fbx
+    BoxColliderComponent:
+      IsTrigger: false
+      Center: [0, 0, 0]
+      Size: [2, 2, 2]
+    RigidbodyComponent:
+      Mass: 1
+      Drag: 0.0199999996
+      AngularDrag: 0.0500000007
+      UseGravity: true
+      IsKinematic: false
+  - Entity: 6455046331667980720
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [9.36658573, 0.253296673, -12.5674095]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      AssetPath: assets\meshes\Cube.fbx
+    BoxColliderComponent:
+      IsTrigger: false
+      Center: [0, 0, 0]
+      Size: [2, 2, 2]
+    RigidbodyComponent:
+      Mass: 1
+      Drag: 0.0199999996
+      AngularDrag: 0.0500000007
+      UseGravity: true
+      IsKinematic: false
+  - Entity: 7052314053800456438
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [9.36658573, 0.253296673, -7.8060708]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      AssetPath: assets\meshes\Cube.fbx
+    BoxColliderComponent:
+      IsTrigger: false
+      Center: [0, 0, 0]
+      Size: [2, 2, 2]
+    RigidbodyComponent:
+      Mass: 1
+      Drag: 0.0199999996
+      AngularDrag: 0.0500000007
+      UseGravity: true
+      IsKinematic: false
+  - Entity: 1989339459758869741
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [9.36658573, 0.253296673, -1.57696676]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      AssetPath: assets\meshes\Cube.fbx
+    BoxColliderComponent:
+      IsTrigger: false
+      Center: [0, 0, 0]
+      Size: [2, 2, 2]
+    RigidbodyComponent:
+      Mass: 1
+      Drag: 0.0199999996
+      AngularDrag: 0.0500000007
+      UseGravity: true
+      IsKinematic: false
+  - Entity: 12553034354518934200
+    TagComponent:
+      Tag: Point Light
+    TransformComponent:
+      Position: [4.45141983, 8.30150795, -1.96214437]
+      Rotation: [-0.100575693, -0.68009007, 0.723753333, 0.0595243052]
+      Scale: [1.77543032, 1.23143375, 1.60335898]
+    PointLightComponent:
+      Enable: true
+      CastShadow: true
+      Color: [1, 1, 1]
+      Multiplier: 0.899999976
+      Radius: 43.5999985
+  - Entity: 18192538842181847723
+    TagComponent:
+      Tag: Direction Light
+    TransformComponent:
+      Position: [-12.3108387, 9.00801754, 3.8755517]
+      Rotation: [-0.386876553, 0.729596913, 0.0903289169, -0.556646764]
+      Scale: [0.999999762, 1.00000036, 0.999997258]
+    DirectionLightComponent:
+      Enable: false
+      CastShadow: true
+      Color: [1, 0.300000012, 0.400000006]
+      Multiplier: 1
+  - Entity: 14861106311124567279
+    TagComponent:
+      Tag: Sphere
+    TransformComponent:
+      Position: [6.84564495, 2.69428277, -3.2344532]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      AssetPath: assets\meshes\Sphere.fbx
+    SphereColliderComponent:
+      IsTrigger: false
+      Center: [0, 0, 0]
+      Radius: 1
+  - Entity: 9485364303251281187
+    TagComponent:
+      Tag: Plane
+    TransformComponent:
+      Position: [0, -1.43539262, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [101.298531, 101.298531, 101.298531]
+    MeshComponent:
+      AssetPath: assets\meshes\Plane.fbx
+    BoxColliderComponent:
+      IsTrigger: false
+      Center: [0, 0, 0]
+      Size: [200.100006, 1, 201.699997]
+  - Entity: 2219156810950803229
+    TagComponent:
+      Tag: Cone
+    TransformComponent:
+      Position: [0.142352283, -4.76837158e-07, -0.385745049]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+      ChildUUIDs:
+        - 14339502257984627181
+    MeshComponent:
+      AssetPath: assets\meshes\Cone.fbx
+    BoxColliderComponent:
+      IsTrigger: false
+      Center: [0, 0, 0]
+      Size: [2, 2, 2]
+    AIControllerComponent:
+      BehaviorTreeFilepath: assets\bt\move_test.pbbt
+  - Entity: 14339502257984627181
+    TagComponent:
+      Tag: Spot Light
+    TransformComponent:
+      Position: [0, 0, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [0.999994516, 0.999995768, 0.999984145]
+      ParentUUID: 2219156810950803229
+    SpotLightComponent:
+      Enable: true
+      CastShadow: true
+      Color: [0, 0.316602468, 1]
+      Multiplier: 15
+      Radius: 14.8000002
+      CutOff: 1.18446767
+  - Entity: 3475196139392903098
+    TagComponent:
+      Tag: Player
+    TransformComponent:
+      Position: [0, 0, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    ScriptComponent:
+      ScriptPath: assets\scripts\player.lua
+    CameraComponent:
+      Camera: some camera data...
+      Primary: true
+  - Entity: 15987760965303442119
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [9.36658573, 0.253296673, -24.9191799]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      AssetPath: assets\meshes\Cube.fbx
+    BoxColliderComponent:
+      IsTrigger: false
+      Center: [0, 0, 0]
+      Size: [2, 2, 2]
+    RigidbodyComponent:
+      Mass: 1
+      Drag: 0.0199999996
+      AngularDrag: 0.0500000007
+      UseGravity: true
+      IsKinematic: false

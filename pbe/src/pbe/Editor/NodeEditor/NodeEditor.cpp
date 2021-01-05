@@ -718,13 +718,14 @@ namespace pbe
 
 		// todo:
 		if (!pContext) {
-			NewContext("tmp.pbbt");
-			AddRoot();
-			// return;
+			// NewContext("tmp.pbbt");
+			// AddRoot();
+			return;
 		}
 
 		if (executeTree) {
-			pContext->update();
+			// todo:
+			pContext->update(NULL);
 		}
 		
 		UpdateTouch();

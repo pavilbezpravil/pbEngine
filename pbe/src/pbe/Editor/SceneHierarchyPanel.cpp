@@ -49,12 +49,17 @@ namespace pbe {
 		m_SelectionContext = entity;
 	}
 
+	// template<typename T, typename F = std::function<void(Entity&, T&)>>
+	// template<typename T, typename F = void (*)(Entity&, T&)>
 	template<typename T>
-	static void AddComponent(Entity m_SelectionContext, const char* name)
+	static void AddComponent(Entity m_SelectionContext, const char* name, void (*f)(Entity&, T&) = {})
 	{
 		if (!m_SelectionContext.HasComponent<T>()) {
 			if (ImGui::Button(name)) {
-				m_SelectionContext.AddComponent<T>();
+				auto& c = m_SelectionContext.AddComponent<T>();
+				if (f) {
+					f(m_SelectionContext, c);
+				}
 				ImGui::CloseCurrentPopup();
 			}
 		}
@@ -133,6 +138,7 @@ namespace pbe {
 					AddComponent<BoxColliderComponent>(m_SelectionContext ,"Box Collider");
 					AddComponent<SphereColliderComponent>(m_SelectionContext ,"Sphere Collider");
 					AddComponent<RigidbodyComponent>(m_SelectionContext ,"Rigidbody");
+					AddComponent<AIControllerComponent>(m_SelectionContext ,"AI Controller", [](Entity& e, AIControllerComponent& c) { c.AIController = Ref<AI::Controller>::Create(e); });
 
 					ImGui::EndPopup();
 				}
@@ -603,9 +609,9 @@ namespace pbe {
 		DrawComponent<MeshComponent>("Mesh", entity, [](MeshComponent& mc)
 		{
 			ImGui::Columns(3);
-			ImGui::SetColumnWidth(0, 100);
-			ImGui::SetColumnWidth(1, 300);
-			ImGui::SetColumnWidth(2, 40);
+			ImGui::SetColumnWidth(0, 75);
+			ImGui::SetColumnWidth(1, 200);
+			ImGui::SetColumnWidth(2, 30);
 			ImGui::Text("File Path");
 			ImGui::NextColumn();
 			ImGui::PushItemWidth(-1);
@@ -746,6 +752,34 @@ namespace pbe {
 			ImGui::Checkbox("Use Gravity", &rb.UseGravity);
 			ImGui::Checkbox("Is Kinematic", &rb.IsKinematic);
 			
+		});
+
+		DrawComponent<AIControllerComponent>("AI Controller", entity, [&](AIControllerComponent& aic)
+		{		
+			ImGui::Columns(3);
+			ImGui::SetColumnWidth(0, 75);
+			ImGui::SetColumnWidth(1, 200);
+			ImGui::SetColumnWidth(2, 30);
+			ImGui::Text("File Path");
+			ImGui::NextColumn();
+			ImGui::PushItemWidth(-1);
+			if (aic.AIController->GetBehaviorTree()) {
+				ImGui::InputText("##filepath", (char*)aic.AIController->GetBehaviorTree()->GetFilepath().c_str(), 256, ImGuiInputTextFlags_ReadOnly);
+			} else {
+				ImGui::InputText("##filepath", (char*)"Null", 256, ImGuiInputTextFlags_ReadOnly);
+			}
+				
+			ImGui::PopItemWidth();
+			ImGui::NextColumn();
+			if (ImGui::Button("...##open")) {
+				std::string filepath = Application::Get().OpenFile();
+				if (!filepath.empty()) {
+					auto bt = Ref<AI::BehaviorTree>::Create(filepath);
+					if (bt) {
+						aic.AIController->SetBehaviorTree(bt);
+					}
+				}
+			}
 		});
 
 		DrawComponent<ScriptComponent>("Script", entity, [=](ScriptComponent& sc) mutable

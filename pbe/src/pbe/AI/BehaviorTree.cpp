@@ -143,6 +143,14 @@ namespace pbe
 			}
 		}
 
+		void BehaviorTree::update(Controller* aiController)
+		{
+			// todo: tmp
+			blackboard->aiController = aiController;
+			root->tick();
+			blackboard->aiController = NULL;
+		}
+
 		void BehaviorTree::Serialize(const std::string& filepath)
 		{
 			YAML::Emitter out;
