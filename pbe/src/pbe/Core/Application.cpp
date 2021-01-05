@@ -184,9 +184,9 @@ namespace pbe {
 		ofn.nFilterIndex = 1;
 		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 
-		if (GetSaveFileNameA(&ofn) == TRUE)
-		{
-			return ofn.lpstrFile;
+		if (GetSaveFileNameA(&ofn) == TRUE) {
+			return std::filesystem::relative(ofn.lpstrFile).string();
+			// return ofn.lpstrFile;
 		}
 		return std::string();
 	}

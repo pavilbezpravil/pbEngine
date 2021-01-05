@@ -22,6 +22,7 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 IncludeDir = {}
 IncludeDir["GLFW"] = "pbe/vendor/GLFW/include"
 IncludeDir["ImGui"] = "pbe/vendor/ImGui"
+IncludeDir["imgui_node_editor"] = "pbe/vendor/imgui-node-editor"
 IncludeDir["glm"] = "pbe/vendor/glm"
 IncludeDir["entt"] = "pbe/vendor/entt/single_include"
 IncludeDir["FastNoise"] = "pbe/vendor/FastNoise/Cpp"
@@ -50,6 +51,7 @@ filter {}
 group "Dependencies"
 	include "pbe/vendor/GLFW"
 	include "pbe/vendor/ImGui"
+	include "pbe/vendor/imgui-node-editor"
 	include "pbe/vendor/lua-5.4.1"
 group ""
 
@@ -88,6 +90,7 @@ project "pbe"
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.imgui_node_editor}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.WinPixEventRuntime}",
@@ -110,6 +113,7 @@ project "pbe"
 	{ 
 		"GLFW",
 		"ImGui",
+		"imgui_node_editor",
 		"Lua",
 		"d3d12",
 		"dxgi",
@@ -187,6 +191,7 @@ project "pbeEditor"
 	{
 		"%{prj.name}/src",
 		"pbe/src",
+		"%{IncludeDir.ImGui}",
 		"pbe/vendor",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.spdlog}",

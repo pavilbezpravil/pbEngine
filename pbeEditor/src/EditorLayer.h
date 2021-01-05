@@ -82,6 +82,7 @@ namespace pbe {
 		void OnImGuiViewport();
 		void OnImGuiSceneHierarchy();
 		void OnImGuiGizmo();
+		void OnImGuiNodeEditor();
 		
 		Scope<SceneHierarchyPanel> m_SceneHierarchyPanel;
 
@@ -105,6 +106,7 @@ namespace pbe {
 		bool m_ViewportPanelFocused = false;
 
 		bool m_EditorCameraInPlay = true;
+		bool m_SimulatePhysics = true;
 
 		enum class SceneState
 		{

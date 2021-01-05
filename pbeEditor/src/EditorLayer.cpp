@@ -2,6 +2,7 @@
 
 #include "pbe/ImGui/ImGuizmo.h"
 #include "pbe/Script/ScriptEngine.h"
+#include "pbe/Editor/NodeEditor/NodeEditor.h"
 
 #include <filesystem>
 
@@ -13,11 +14,16 @@
 #include "pbe/Allocator/Allocator.h"
 #include "pbe/Renderer/ColorBuffer.h"
 #include "pbe/Renderer/CommandContext.h"
-#include "pbe/Renderer/GraphicsCore.h"
 
 
 namespace pbe {
 
+	// todo
+	static inline ImRect ImGui_GetItemRect()
+	{
+		return ImRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+	}
+	
 	static void ImGuiShowHelpMarker(const char* desc)
 	{
 		ImGui::TextDisabled("(?)");
@@ -244,8 +250,13 @@ namespace pbe {
 		ImGui::Combo("Translate mode", (int*)&m_GizmoTransSpace, "Local\0World\0");
 		m_SceneHierarchyPanel->SetTransformSpace(m_GizmoTransSpace);
 
-		ImGui::SameLine();
-		ImGui::Checkbox("Editor camera in play", &m_EditorCameraInPlay);
+		ImGui::SameLine(); ImGui::Checkbox("Editor camera in play", &m_EditorCameraInPlay);
+		ImGui::SameLine(); ImGui::Checkbox("Simulate physics", &m_SimulatePhysics);
+		m_EditorScene->GetPhysicsScene()->SetSimulatePhysics(m_SimulatePhysics);
+		if (m_RuntimeScene) {
+			m_RuntimeScene->GetPhysicsScene()->SetSimulatePhysics(m_SimulatePhysics);
+		}
+		
 
 		m_ViewportPanelMouseOver = ImGui::IsWindowHovered();
 		m_ViewportPanelFocused = ImGui::IsWindowFocused();
@@ -341,6 +352,20 @@ namespace pbe {
 
 				selection.Mesh->Transform = glm::inverse(entityTransform) * transformBase;
 			}
+		}
+	}
+
+	void EditorLayer::OnImGuiNodeEditor() {
+		static NodePanel* nodePanel = NULL;
+		if (!nodePanel) {
+			nodePanel = new NodePanel;
+		}
+		static bool open = true;
+		if (open) {
+			if (ImGui::Begin("Node editor", &open, ImGuiWindowFlags_MenuBar)) {
+				nodePanel->Application_Frame();
+			}
+			ImGui::End();
 		}
 	}
 
@@ -619,6 +644,7 @@ namespace pbe {
 		OnImGuiAllocatorInfo();
 		OnImGuiViewport();
 		s_ScriptEngine->OnImGuiRender();
+		OnImGuiNodeEditor();
 
 		ImGui::End();
 	}

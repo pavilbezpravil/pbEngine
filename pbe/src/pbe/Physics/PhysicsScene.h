@@ -49,6 +49,9 @@ namespace pbe
 			void SyncPhysicsWithScene();
 			
 			void RenderPhysicsInfo();
+
+			bool GetSimulatePhysics() const { return simulatePhysics; }
+			void SetSimulatePhysics(bool simulate);
 			
 			// PxScene* GetPxScene() { return pScene; }
 			
@@ -61,6 +64,7 @@ namespace pbe
 			std::unordered_map<pbe::UUID, uint> preActorShapesCount;
 
 			bool ignoreTransformChanged = false;
+			bool simulatePhysics = true;
 
 			void DestroyAllEntities();
 

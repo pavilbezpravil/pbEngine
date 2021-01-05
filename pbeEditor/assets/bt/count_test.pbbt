@@ -1,0 +1,19 @@
+RootID: 1
+Nodes:
+  - ID: 1
+    Type: Decorator
+    DecoratorType: Root
+    ChildID: 3
+  - ID: 3
+    Type: Composite
+    CompositeType: Sequence
+    ChildIDs: [10, 19, 7]
+  - ID: 7
+    Type: Leaf
+    TaskName: PrintEnd
+  - ID: 10
+    Type: Leaf
+    TaskName: SetValue
+  - ID: 19
+    Type: Leaf
+    TaskName: NDecrementValue

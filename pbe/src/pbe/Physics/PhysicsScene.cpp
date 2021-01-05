@@ -49,9 +49,10 @@ namespace pbe
 			// mAccumulator -= mStepSize;
 			//
 			// mScene->simulate(mStepSize);
-
-			pScene->simulate(dt);
-			pScene->fetchResults(true); // end simulation, execute all callbacks
+			if (simulatePhysics) {
+				pScene->simulate(dt);
+				pScene->fetchResults(true); // end simulation, execute all callbacks	
+			}
 		}
 
 		PxRigidActor* PhysicsScene::CreateActor(Entity entity)
@@ -275,6 +276,11 @@ namespace pbe
 				const PxDebugTriangle& triangle = rb.getTriangles()[i];
 				RendPrim::DrawLine(PxVec3ToPBE(triangle.pos0), PxVec3ToPBE(triangle.pos1), Color_Green);
 			}
+		}
+
+		void PhysicsScene::SetSimulatePhysics(bool simulate)
+		{
+			simulatePhysics = simulate;
 		}
 
 		void PhysicsScene::DestroyAllEntities()

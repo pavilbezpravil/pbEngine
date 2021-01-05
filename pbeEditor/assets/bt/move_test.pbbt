@@ -1,0 +1,20 @@
+RootID: 1
+Nodes:
+  - ID: 1
+    Type: Decorator
+    DecoratorType: Root
+    ChildID: 18
+  - ID: 7
+    Type: Leaf
+    TaskName: PrintEnd
+  - ID: 10
+    Type: Composite
+    CompositeType: Selector
+    ChildIDs: [14, 7]
+  - ID: 14
+    Type: Leaf
+    TaskName: SetValue
+  - ID: 18
+    Type: Composite
+    CompositeType: Sequence
+    ChildIDs: [7, 14]
