@@ -18,6 +18,23 @@
 
 namespace pbe {
 
+	struct EditorSettings
+	{
+		bool EditorCameraInPlay = true;
+		bool DoSimulatePhysics = true;
+		bool RenderEntityInfo = true;
+		bool RenderPhysicsShape = true;
+		Space GizmoTransSpace = Space::World;
+
+		float TranslationSnapValue = 0.5f;
+		float RotationSnapValue = 45.0f;
+		std::string SceneFilePath;
+
+		void Serialize(const std::string& filepath);
+		bool Deserialize(const std::string& filepath);
+	};
+	
+	
 	class EditorLayer : public Layer
 	{
 	public:
@@ -87,7 +104,6 @@ namespace pbe {
 		Scope<SceneHierarchyPanel> m_SceneHierarchyPanel;
 
 		Ref<Scene> m_RuntimeScene, m_EditorScene;
-		std::string m_SceneFilePath;
 		bool m_ReloadScriptOnPlay = true;
 
 		EditorCamera m_EditorCamera;
@@ -97,17 +113,13 @@ namespace pbe {
 
 		glm::vec2 m_ViewportBounds[2];
 		int m_GizmoType = 0; // -1 = no gizmo
-		Space m_GizmoTransSpace = Space::World;
-		float m_SnapValue = 0.5f;
-		float m_RotationSnapValue = 45.0f;
 		bool m_AllowViewportCameraEvents = false;
 
 		bool m_ViewportPanelMouseOver = false;
 		bool m_ViewportPanelFocused = false;
 
-		bool m_EditorCameraInPlay = true;
-		bool m_SimulatePhysics = true;
-
+		EditorSettings m_EditorSettings;
+		
 		enum class SceneState
 		{
 			Edit = 0, Play = 1, Pause = 2

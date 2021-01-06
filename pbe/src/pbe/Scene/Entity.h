@@ -1,9 +1,6 @@
 #pragma once
 
-#include <glm/glm.hpp>
-
 #include "Scene.h"
-#include "pbe/Renderer/Mesh.h"
 
 #include "Components.h"
 
@@ -76,6 +73,7 @@ namespace pbe {
 
 		UUID GetUUID() const { return GetComponent<IDComponent>().ID; }
 		UUID GetSceneUUID() const { return m_Scene->GetUUID(); }
+		Scene* GetScene() const { return m_Scene; }
 	private:
 		Entity(const std::string& name);
 	private:

@@ -1,0 +1,16 @@
+RootID: 1
+Nodes:
+  - ID: 1
+    Type: Decorator
+    DecoratorType: Root
+    ChildID: 6
+  - ID: 3
+    Type: Leaf
+    TaskName: RayCast
+  - ID: 6
+    Type: Composite
+    CompositeType: Sequence
+    ChildIDs: [3, 11]
+  - ID: 11
+    Type: Leaf
+    TaskName: PrintEnd

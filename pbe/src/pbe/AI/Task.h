@@ -60,6 +60,13 @@ namespace pbe
 		TASK_CLASS(PrintEnd)
 		Node::Status tick(Controller* aiController, Blackboard* blackboard) override;
 		};
-		
+
+		TASK_CLASS(RayCast)
+			Node::Status tick(Controller* aiController, Blackboard* blackboard) override;
+		};
+
+		TASK_CLASS(OverlapSphereAll)
+			Node::Status tick(Controller* aiController, Blackboard* blackboard) override;
+		};
 	}
 }

@@ -3,6 +3,7 @@
 #include "pbe/ImGui/ImGuizmo.h"
 #include "pbe/Script/ScriptEngine.h"
 #include "pbe/Editor/NodeEditor/NodeEditor.h"
+#include "yaml-cpp/yaml.h"
 
 #include <filesystem>
 
@@ -14,6 +15,8 @@
 #include "pbe/Allocator/Allocator.h"
 #include "pbe/Renderer/ColorBuffer.h"
 #include "pbe/Renderer/CommandContext.h"
+
+#define EDITOR_SETTING_FILEPATH "editor_settings.yaml"
 
 
 namespace pbe {
@@ -47,13 +50,72 @@ namespace pbe {
 		return { translation, orientation, scale };
 	}
 
+	void EditorSettings::Serialize(const std::string& filepath)
+	{
+#define YAML_KEY_VALUE(key, value) out << YAML::Key << STRINGIFY(key) << YAML::Value << value
+#define YAML_KEY(key) YAML_KEY_VALUE(key, key)
+		
+		YAML::Emitter out;
+		out << YAML::BeginMap;
+		YAML_KEY(EditorCameraInPlay);
+		YAML_KEY(DoSimulatePhysics);
+		YAML_KEY(RenderEntityInfo);
+		YAML_KEY(RenderPhysicsShape);
+		YAML_KEY_VALUE(GizmoTransSpace, (int)GizmoTransSpace);
+		YAML_KEY(TranslationSnapValue);
+		YAML_KEY(RotationSnapValue);
+		YAML_KEY(SceneFilePath);
+		out << YAML::EndMap;
+
+		std::ofstream fout(filepath);
+		fout << out.c_str();
+	}
+
+	bool EditorSettings::Deserialize(const std::string& filepath)
+	{
+		if (!std::filesystem::exists(filepath)) {
+			return false;
+		}
+		
+		std::ifstream stream(filepath);
+		std::stringstream strStream;
+		strStream << stream.rdbuf();
+
+		YAML::Node data = YAML::Load(strStream.str());
+
+#define YAML_READ_VALUE_TYPE(name, type) \
+		if (auto node = data[STRINGIFY(name)]) { \
+			name = node.as<type>(); \
+		}
+		
+#define YAML_READ_VALUE(name) \
+		if (auto node = data[STRINGIFY(name)]) { \
+			name = node.as<decltype(name)>(); \
+		}
+		
+		YAML_READ_VALUE_TYPE(EditorCameraInPlay, bool)
+		YAML_READ_VALUE_TYPE(DoSimulatePhysics, bool)
+		YAML_READ_VALUE_TYPE(RenderEntityInfo, bool)
+		YAML_READ_VALUE_TYPE(RenderPhysicsShape, bool)
+		if (auto node = data["GizmoTransSpace"]) {
+			GizmoTransSpace = (Space)node.as<int>();
+		}
+		YAML_READ_VALUE_TYPE(TranslationSnapValue, float)
+		YAML_READ_VALUE_TYPE(RotationSnapValue, float)
+		YAML_READ_VALUE_TYPE(SceneFilePath, std::string)
+
+		return true;
+	}
+
 	EditorLayer::EditorLayer()
 		: m_EditorCamera(glm::perspectiveFov(glm::radians(45.0f), 1280.0f, 720.0f, 0.1f, 10000.0f))
 	{
+		m_EditorSettings.Deserialize(EDITOR_SETTING_FILEPATH);
 	}
 
 	EditorLayer::~EditorLayer()
 	{
+		m_EditorSettings.Serialize(EDITOR_SETTING_FILEPATH);
 	}
 
 	void EditorLayer::OnAttach()
@@ -114,10 +176,10 @@ namespace pbe {
 		m_SceneHierarchyPanel->SetSelectionChangedCallback(std::bind(&EditorLayer::SelectEntity, this, std::placeholders::_1));
 		m_SceneHierarchyPanel->SetEntityDeletedCallback(std::bind(&EditorLayer::OnEntityDeleted, this, std::placeholders::_1));
 
-		// todo: add custom scene deserialize on start
-		m_SceneFilePath = "assets/scenes/TestScene.pbsc";
-		SceneSerializer serializer(m_EditorScene);
-		serializer.Deserialize(m_SceneFilePath);
+		if (!m_EditorSettings.SceneFilePath.empty()) {
+			SceneSerializer serializer(m_EditorScene);
+			serializer.Deserialize(m_EditorSettings.SceneFilePath);
+		}
 	}
 
 	void EditorLayer::OnDetach()
@@ -247,16 +309,19 @@ namespace pbe {
 		ImGui::SameLine();
 
 		ImGui::SetNextItemWidth(80);
-		ImGui::Combo("Translate mode", (int*)&m_GizmoTransSpace, "Local\0World\0");
-		m_SceneHierarchyPanel->SetTransformSpace(m_GizmoTransSpace);
+		ImGui::Combo("Translate mode", (int*)&m_EditorSettings.GizmoTransSpace, "Local\0World\0");
+		m_SceneHierarchyPanel->SetTransformSpace(m_EditorSettings.GizmoTransSpace);
 
-		ImGui::SameLine(); ImGui::Checkbox("Editor camera in play", &m_EditorCameraInPlay);
-		ImGui::SameLine(); ImGui::Checkbox("Simulate physics", &m_SimulatePhysics);
-		m_EditorScene->GetPhysicsScene()->SetSimulatePhysics(m_SimulatePhysics);
+		ImGui::SameLine(); ImGui::Checkbox("Editor camera in play", &m_EditorSettings.EditorCameraInPlay);
+		ImGui::SameLine(); ImGui::Checkbox("Simulate physics", &m_EditorSettings.DoSimulatePhysics);
+		m_EditorScene->GetPhysicsScene()->SetSimulatePhysics(m_EditorSettings.DoSimulatePhysics);
 		if (m_RuntimeScene) {
-			m_RuntimeScene->GetPhysicsScene()->SetSimulatePhysics(m_SimulatePhysics);
+			m_RuntimeScene->GetPhysicsScene()->SetSimulatePhysics(m_EditorSettings.DoSimulatePhysics);
 		}
-		
+
+		// todo:
+		ImGui::SameLine(); ImGui::Checkbox("RenderEntityInfo", &m_EditorSettings.RenderEntityInfo);
+		ImGui::SameLine(); ImGui::Checkbox("RenderPhysicsShape", &m_EditorSettings.RenderPhysicsShape);
 
 		m_ViewportPanelMouseOver = ImGui::IsWindowHovered();
 		m_ViewportPanelFocused = ImGui::IsWindowFocused();
@@ -331,7 +396,7 @@ namespace pbe {
 				ImGuizmo::Manipulate(glm::value_ptr(m_EditorCamera.GetViewMatrix()),
 					glm::value_ptr(m_EditorCamera.GetProjectionMatrix()),
 					(ImGuizmo::OPERATION)m_GizmoType,
-					(ImGuizmo::MODE)m_GizmoTransSpace,
+					(ImGuizmo::MODE)m_EditorSettings.GizmoTransSpace,
 					glm::value_ptr(entityTransform),
 					nullptr,
 					snap ? snapValues : nullptr);
@@ -345,7 +410,7 @@ namespace pbe {
 				ImGuizmo::Manipulate(glm::value_ptr(m_EditorCamera.GetViewMatrix()),
 					glm::value_ptr(m_EditorCamera.GetProjectionMatrix()),
 					(ImGuizmo::OPERATION)m_GizmoType,
-					(ImGuizmo::MODE)m_GizmoTransSpace,
+					(ImGuizmo::MODE)m_EditorSettings.GizmoTransSpace,
 					glm::value_ptr(transformBase),
 					nullptr,
 					snap ? snapValues : nullptr);
@@ -391,7 +456,7 @@ namespace pbe {
 				// 	m_EditorCamera.OnUpdate(ts);
 
 				m_RuntimeScene->OnUpdate(ts);
-				if (m_EditorCameraInPlay) {
+				if (m_EditorSettings.EditorCameraInPlay) {
 					m_EditorCamera.OnUpdate(ts);
 					m_RuntimeScene->OnRenderEditor(m_EditorCamera);
 				} else {
@@ -552,7 +617,7 @@ namespace pbe {
 			m_SceneHierarchyPanel->SetContext(m_EditorScene);
 			m_SelectionContext.clear();
 
-			m_SceneFilePath = filepath;
+			m_EditorSettings.SceneFilePath = filepath;
 		}
 	}
 	
@@ -571,14 +636,14 @@ namespace pbe {
 
 			m_SelectionContext.clear();
 
-			m_SceneFilePath = filepath;
+			m_EditorSettings.SceneFilePath = filepath;
 		}
 	}
 
 	void EditorLayer::SaveScene()
 	{
 		SceneSerializer serializer(m_EditorScene);
-		serializer.Serialize(m_SceneFilePath);
+		serializer.Serialize(m_EditorSettings.SceneFilePath);
 	}
 
 	void EditorLayer::SaveSceneAs()
@@ -592,7 +657,7 @@ namespace pbe {
 
 			std::filesystem::path path = filepath;
 			UpdateWindowTitle(path.filename().string());
-			m_SceneFilePath = filepath;
+			m_EditorSettings.SceneFilePath = filepath;
 		}
 	}
 
@@ -651,14 +716,14 @@ namespace pbe {
 
 	void EditorLayer::OnEvent(Event& e)
 	{
-		if (m_ViewportPanelMouseOver || m_EditorCameraInPlay) {
+		if (m_ViewportPanelMouseOver || m_EditorSettings.EditorCameraInPlay) {
 			m_EditorCamera.OnEvent(e);
 		}
 		
 		if (m_SceneState == SceneState::Edit) {
 			m_EditorScene->OnEvent(e);
 		} else if (m_SceneState == SceneState::Play) {
-			if (!m_EditorCameraInPlay) {
+			if (!m_EditorSettings.EditorCameraInPlay) {
 				m_RuntimeScene->OnEvent(e);
 			}
 		}

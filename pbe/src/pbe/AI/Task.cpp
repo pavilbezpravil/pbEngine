@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Task.h"
 #include "AIController.h"
+#include "pbe/Physics/Utils.h"
 #include "pbe/Scene/Entity.h"
 
 namespace pbe
@@ -79,6 +80,25 @@ namespace pbe
 		{
 			HZ_CORE_INFO("PrindEnd");
 			return Node::Status::Success;
+		}
+
+		Node::Status RayCast::tick(Controller* aiController, Blackboard* blackboard)
+		{
+			Entity e = aiController->GetOwner();
+			auto& trans = e.GetComponent<TransformComponent>();
+
+			physics::RaycastHit hit;
+			bool status = SceneRayCast(e.GetScene(), trans.WorldPosition() + trans.WorldForward() * 1.5f, trans.WorldForward(), 100.f, hit);
+			return status ? Node::Status::Success : Node::Status::Running;
+		}
+
+		Node::Status OverlapSphereAll::tick(Controller* aiController, Blackboard* blackboard)
+		{
+			Entity e = aiController->GetOwner();
+			auto& trans = e.GetComponent<TransformComponent>();
+
+			auto overlaped = physics::SceneOverlapSphereAll(e.GetScene(), trans.WorldPosition() + trans.WorldForward() * 2.f, 5.f);
+			return !overlaped.empty() ? Node::Status::Success : Node::Status::Running;
 		}
 	}
 }

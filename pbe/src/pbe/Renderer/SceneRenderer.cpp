@@ -229,6 +229,10 @@ namespace pbe {
 
 	void SceneRenderer::FlushDrawList()
 	{
+		if (_drawList.empty()) {
+			return;
+		}
+		
 		ShadowPass();
 		DepthPass();
 		ColorPass();

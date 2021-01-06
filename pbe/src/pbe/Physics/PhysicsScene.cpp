@@ -1,14 +1,12 @@
 #include "pch.h"
 #include "PhysicsScene.h"
+#include "PhysXTypeConvet.h"
 #include "pbe/Scene/Entity.h"
-
-#include <PxPhysicsAPI.h>
-
 #include "pbe/Renderer/RendPrim.h"
+#include <PxPhysicsAPI.h>
 
 namespace pbe
 {
-
 	namespace physics
 	{
 
@@ -266,7 +264,7 @@ namespace pbe
 			for (PxU32 i = 0; i < rb.getNbPoints(); i++) {
 				const PxDebugPoint& point = rb.getPoints()[i];
 				Vec3 start = PxVec3ToPBE(point.pos);
-				RendPrim::DrawLine(start, start + Vec3_Y, Color_Green);
+				RendPrim::DrawLine(start, start + Vec3_Y * 0.1f, Color_Green);
 			}
 			for (PxU32 i = 0; i < rb.getNbLines(); i++) {
 				const PxDebugLine& line = rb.getLines()[i];
@@ -281,6 +279,65 @@ namespace pbe
 		void PhysicsScene::SetSimulatePhysics(bool simulate)
 		{
 			simulatePhysics = simulate;
+		}
+
+		bool PhysicsScene::RayCast(Vec3 origin, Vec3 dir, float maxDistance, RaycastHit& hit, PxHitFlags hitFlags,
+			const PxQueryFilterData& filterData)
+		{
+			PxRaycastBuffer pxHit;
+			bool status = pScene->raycast(Vec3ToPx(origin), Vec3ToPx(dir), maxDistance, pxHit, PxHitFlag::eDEFAULT, filterData);
+
+			if (status) {
+				auto& block = pxHit.block;
+				hit.entity = (Entity*)block.actor->userData;
+				hit.position = PxVec3ToPBE(block.position);
+				hit.normal = PxVec3ToPBE(block.normal);
+				hit.u = block.u;
+				hit.v = block.v;
+				hit.distance = block.distance;
+				hit.flags = block.flags;
+				hit.faceIndex = block.faceIndex;
+			}
+			
+			return status;
+		}
+
+		bool PhysicsScene::OverlapSphere(Vec3 center, float radius, OverlapHit& hit,
+			const PxQueryFilterData& filterData)
+		{
+			PxOverlapBuffer pxHit;
+			bool status = pScene->overlap(PxSphereGeometry{ radius }, PxTransform{ Vec3ToPx(center) }, pxHit, filterData);
+			if (status) {
+				auto& block = pxHit.block;
+				hit.entity = (Entity*)block.actor->userData;
+				hit.faceIndex = block.faceIndex;
+			}
+
+			return status;
+		}
+
+		std::vector<OverlapHit> PhysicsScene::OverlapSphereAll(Vec3 center, float radius,
+			const PxQueryFilterData& filterData)
+		{
+			std::vector<OverlapHit> ret;
+			
+			const PxU32 bufferSize = 16;
+			PxOverlapHit hitBuffer[bufferSize];
+			PxOverlapBuffer buf(hitBuffer, bufferSize);
+			
+			bool status = pScene->overlap(PxSphereGeometry{ radius }, PxTransform{ Vec3ToPx(center) }, buf, filterData);
+			if (status) {
+				ret.resize(buf.nbTouches);
+
+				for (PxU32 i = 0; i < buf.nbTouches; i++) {
+					auto& hit = ret[i];
+					auto& block = buf.touches[i];
+					hit.entity = (Entity*)block.actor->userData;
+					hit.faceIndex = block.faceIndex;
+				}
+			}
+
+			return ret;
 		}
 
 		void PhysicsScene::DestroyAllEntities()
@@ -363,46 +420,6 @@ namespace pbe
 		{
 			return *material;
 		}
-	}
 
-	Vec2 PxVec2ToPBE(const PxVec2& v)
-	{
-		return Vec2{v.x, v.y};
 	}
-
-	Vec3 PxVec3ToPBE(const PxVec3& v)
-	{
-		return Vec3{ v.x, v.y, v.z };
-	}
-
-	Vec4 PxVec4ToPBE(const PxVec4& v)
-	{
-		return Vec4{ v.x, v.y, v.z, v.w };
-	}
-
-	Quat PxQuatToPBE(const PxQuat& q)
-	{
-		return Quat{ q.w, q.x, q.y, q.z };
-	}
-
-	PxVec2 Vec2ToPx(const Vec2& v)
-	{
-		return PxVec2{ v.x, v.y };
-	}
-
-	PxVec3 Vec3ToPx(const Vec3& v)
-	{
-		return PxVec3{ v.x, v.y, v.z };
-	}
-
-	PxVec4 Vec4ToPx(const Vec4& v)
-	{
-		return PxVec4{ v.x, v.y, v.z, v.w };
-	}
-
-	PxQuat QuatToPx(const Quat& q)
-	{
-		return PxQuat{ q.x, q.y, q.z, q.w };
-	}
-
 }

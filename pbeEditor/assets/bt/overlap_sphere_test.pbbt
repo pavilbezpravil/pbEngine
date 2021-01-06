@@ -1,0 +1,13 @@
+RootID: 1
+Nodes:
+  - ID: 1
+    Type: Decorator
+    DecoratorType: Root
+    ChildID: 3
+  - ID: 3
+    Type: Composite
+    CompositeType: Sequence
+    ChildIDs: [7]
+  - ID: 7
+    Type: Leaf
+    TaskName: OverlapSphereAll

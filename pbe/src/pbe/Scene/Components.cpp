@@ -7,6 +7,7 @@
 #include "Entity.h"
 #include "Scene.h"
 #include "pbe/Core/Utility.h"
+#include "pbe/Physics/PhysXTypeConvet.h"
 
 namespace pbe
 {

@@ -4,31 +4,21 @@
 #include "pbe/Core/UUID.h"
 #include "pbe/Core/Math/Common.h"
 
+#include "Queries.h"
+
 namespace pbe
 {
 	class Entity;
-
 	class Scene;
 	
 	using namespace physx;
-
-	Vec2 PxVec2ToPBE(const PxVec2& v);
-	Vec3 PxVec3ToPBE(const PxVec3& v);
-	Vec4 PxVec4ToPBE(const PxVec4& v);
-	Quat PxQuatToPBE(const PxQuat& q);
-
-	PxVec2 Vec2ToPx(const Vec2& v);
-	PxVec3 Vec3ToPx(const Vec3& v);
-	PxVec4 Vec4ToPx(const Vec4& v);
-	PxQuat QuatToPx(const Quat& q);
-
 	
 	namespace physics
 	{
 
 		void Init();
 		void Term();
-		
+
 		
 		class PhysicsScene : public RefCounted
 		{
@@ -52,7 +42,17 @@ namespace pbe
 
 			bool GetSimulatePhysics() const { return simulatePhysics; }
 			void SetSimulatePhysics(bool simulate);
-			
+
+			// Queries
+			bool RayCast(Vec3 origin, Vec3 dir, float maxDistance,
+				RaycastHit& hit, PxHitFlags hitFlags = PxHitFlags(PxHitFlag::eDEFAULT),
+				const PxQueryFilterData& filterData = PxQueryFilterData());
+
+			bool OverlapSphere(Vec3 center, float radius,
+			                   OverlapHit& hit, const PxQueryFilterData& filterData = PxQueryFilterData());
+			std::vector<OverlapHit> OverlapSphereAll(Vec3 center, float radius, 
+				const PxQueryFilterData& filterData = PxQueryFilterData());
+
 			// PxScene* GetPxScene() { return pScene; }
 			
 		private:

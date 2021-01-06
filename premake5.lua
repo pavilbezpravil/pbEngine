@@ -32,6 +32,7 @@ IncludeDir["Lua"] = "pbe/vendor/lua-5.4.1/src"
 IncludeDir["Sol2"] = "pbe/vendor/sol2/single/include"
 IncludeDir["PhysX"] = "pbe/vendor/PhysX/include"
 IncludeDir["pxshared"] = "pbe/vendor/PhysX/pxshared/include"
+IncludeDir["yaml"] = "pbe/vendor/yaml-cpp/include"
 
 LibraryDir = {}
 LibraryDir["WinPixEventRuntime"] = "pbe/vendor/WinPixEventRuntime/bin"
@@ -99,9 +100,9 @@ project "pbe"
 		"%{IncludeDir.PhysX}",
 		"%{IncludeDir.pxshared}",
 		"%{IncludeDir.FastNoise}",
+		"%{IncludeDir.yaml}",
 		"%{prj.name}/vendor/assimp/include",
 		"%{prj.name}/vendor/stb/include",
-		"%{prj.name}/vendor/yaml-cpp/include",
 	}
 
 	libdirs {
@@ -198,6 +199,7 @@ project "pbeEditor"
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.PhysX}",
 		"%{IncludeDir.pxshared}",
+		"%{IncludeDir.yaml}",
 	}
 
 	print(LibraryDir["WinPixEventRuntime"] )

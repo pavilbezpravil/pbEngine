@@ -772,10 +772,11 @@ namespace pbe {
 			ImGui::PopItemWidth();
 			ImGui::NextColumn();
 			if (ImGui::Button("...##open")) {
-				std::string filepath = Application::Get().OpenFile();
+				std::string filepath = Application::Get().OpenFile("Behavior Tree (*.pbbt)\0*.pbbt\0");
 				if (!filepath.empty()) {
 					auto bt = Ref<AI::BehaviorTree>::Create(filepath);
 					if (bt) {
+						bt->Deserialize(bt->GetFilepath());
 						aic.AIController->SetBehaviorTree(bt);
 					}
 				}
