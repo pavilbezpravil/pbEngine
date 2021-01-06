@@ -69,18 +69,62 @@ namespace pbe {
 
 	void EditorCamera::OnUpdate(Timestep ts)
 	{
-		if (Input::IsKeyPressed(KeyCode::LeftAlt))
-		{
+		float mouseSensitivity = 0.003f;
+		
+		if (Input::IsKeyPressed(KeyCode::LeftAlt)) {
 			const glm::vec2& mouse{ Input::GetMouseX(), Input::GetMouseY() };
-			glm::vec2 delta = (mouse - m_InitialMousePosition) * 0.003f;
+			glm::vec2 delta = (mouse - m_InitialMousePosition) * mouseSensitivity;
 			m_InitialMousePosition = mouse;
 
-			if (Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
+			if (Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)) {
 				MousePan(delta);
-			else if (Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
+			} else if (Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT)) {
 				MouseRotate(delta);
-			else if (Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
+			} else if (Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT)) {
 				MouseZoom(delta.y);
+			}
+		} else {
+			if (Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT)) {
+				float cameraMoveSpeed = 15.f;
+
+				Vec3 dir = Vec3_Zero;
+				if (Input::IsKeyPressed(KeyCode::W)) {
+					dir += GetForwardDirection();
+				}
+				if (Input::IsKeyPressed(KeyCode::S)) {
+					dir -= GetForwardDirection();
+				}
+				if (Input::IsKeyPressed(KeyCode::A)) {
+					dir -= GetRightDirection();
+				}
+				if (Input::IsKeyPressed(KeyCode::D)) {
+					dir += GetRightDirection();
+				}
+				if (Input::IsKeyPressed(KeyCode::Q)) {
+					dir -= GetUpDirection();
+				}
+				if (Input::IsKeyPressed(KeyCode::E)) {
+					dir += GetUpDirection();
+				}
+
+				if (glm::length2(dir) > 0.1f) {
+					m_FocalPoint += glm::normalize(dir) * ts.GetSeconds() * cameraMoveSpeed;
+				}
+
+				Vec2 delta = Input::GetMouseDelta();
+				if (delta != Vec2_Zero) {
+					delta *= mouseSensitivity;
+					
+					// Vec3 pos = GetPosition();
+					// Quat newOrient = Quat(Vec3(-delta.y, -delta.x, 0.f)) * GetOrientation();
+					// Vec3 euler = glm::eulerAngles(newOrient);
+					// m_Yaw = euler.x;
+					// m_Pitch = -euler.y;
+					//
+					// m_FocalPoint = pos + GetForwardDirection() * m_Distance;
+					MouseRotate(delta);
+				}
+			}
 		}
 
 		UpdateCameraView();
@@ -117,8 +161,7 @@ namespace pbe {
 	void EditorCamera::MouseZoom(float delta)
 	{
 		m_Distance -= delta * ZoomSpeed();
-		if (m_Distance < 1.0f)
-		{
+		if (m_Distance < 1.0f) {
 			m_FocalPoint += GetForwardDirection();
 			m_Distance = 1.0f;
 		}

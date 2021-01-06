@@ -19,7 +19,7 @@ namespace pbe {
 		static float GetMouseX();
 		static float GetMouseY();
 		static std::pair<float, float> GetMousePosition();
-		static std::pair<float, float> GetMouseDelta();
+		static Vec2 GetMouseDelta();
 
 	private:
 		Vec2 mousePrevPos = { NAN, NAN };

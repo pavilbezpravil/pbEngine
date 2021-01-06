@@ -70,7 +70,7 @@ namespace pbe {
 
 	}
 
-	std::pair<float, float> Input::GetMouseDelta()
+	Vec2 Input::GetMouseDelta()
 	{
 		Vec2 delta = s_Input->mouseCurPos - s_Input->mousePrevPos;
 		return {delta.x, delta.y};
