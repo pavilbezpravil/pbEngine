@@ -310,10 +310,15 @@ namespace pbe {
 		OnRenderScene(camera.Camera.GetProjectionMatrix() * view, trans.WorldPosition());
 	}
 
-	void Scene::OnRenderEditor(const EditorCamera& editorCamera)
+	void Scene::OnRenderEditor(const EditorCamera& editorCamera,
+		bool renderEntityInfo, bool renderPhysicsShape)
 	{
-		OnRenderEntitySceneInfo();
-		pPhysicsScene->RenderPhysicsInfo();
+		if (renderEntityInfo) {
+			OnRenderEntitySceneInfo();
+		}
+		if (renderPhysicsShape) {
+			pPhysicsScene->RenderPhysicsInfo();
+		}
 
 		OnRenderScene(editorCamera.GetViewProjection(), editorCamera.GetPosition());
 	}

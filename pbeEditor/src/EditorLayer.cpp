@@ -446,7 +446,7 @@ namespace pbe {
 				// todo: tmp for test script
 				// m_EditorScene->OnUpdate(ts);
 
-				m_EditorScene->OnRenderEditor(m_EditorCamera);
+				m_EditorScene->OnRenderEditor(m_EditorCamera, m_EditorSettings.RenderEntityInfo, m_EditorSettings.RenderPhysicsShape);
 
 				break;
 			}
@@ -458,7 +458,7 @@ namespace pbe {
 				m_RuntimeScene->OnUpdate(ts);
 				if (m_EditorSettings.EditorCameraInPlay) {
 					m_EditorCamera.OnUpdate(ts);
-					m_RuntimeScene->OnRenderEditor(m_EditorCamera);
+					m_RuntimeScene->OnRenderEditor(m_EditorCamera, m_EditorSettings.RenderEntityInfo, m_EditorSettings.RenderPhysicsShape);
 				} else {
 					m_RuntimeScene->OnRenderRuntime();
 				}

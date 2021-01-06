@@ -34,7 +34,8 @@ namespace pbe {
 		void OnRenderEntitySceneInfo();
 		void OnRenderScene(const Mat4& viewProj, const Vec3& camPos);
 		void OnRenderRuntime();
-		void OnRenderEditor(const EditorCamera& editorCamera);
+		void OnRenderEditor(const EditorCamera& editorCamera,
+			bool renderEntityInfo = false, bool renderPhysicsShape = false);
 		
 		void OnEvent(Event& e);
 		void OnLoseFocus();
