@@ -3,7 +3,7 @@ Nodes:
   - ID: 1
     Type: Decorator
     DecoratorType: Root
-    ChildID: 42
+    ChildID: 67
   - ID: 32
     Type: Leaf
     TaskName: MoveTo
@@ -13,4 +13,24 @@ Nodes:
   - ID: 42
     Type: Composite
     CompositeType: Sequence
-    ChildIDs: [32, 39]
+    ChildIDs: [51, 54, 32]
+  - ID: 51
+    Type: Leaf
+    TaskName: SetMoveSpeed
+  - ID: 54
+    Type: Leaf
+    TaskName: SetRandomMoveTarget
+  - ID: 67
+    Type: Composite
+    CompositeType: Sequence
+    ChildIDs: [42, 72]
+  - ID: 72
+    Type: Composite
+    CompositeType: Sequence
+    ChildIDs: [76, 79, 39]
+  - ID: 76
+    Type: Leaf
+    TaskName: SetRandomWaitTime
+  - ID: 79
+    Type: Leaf
+    TaskName: Wait

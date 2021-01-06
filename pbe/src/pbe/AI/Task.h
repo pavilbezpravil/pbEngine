@@ -44,8 +44,23 @@ namespace pbe
 			static std::shared_ptr<Task> CreateMethod() { return std::make_shared<TaskName>(); } \
 			static std::string GetTaskName() { return STRINGIFY(TaskName); }
 
+		TASK_CLASS(SetMoveSpeed)
+			Node::Status tick(Controller* aiController, Blackboard* blackboard) override;
+		};
+		
+		TASK_CLASS(SetRandomMoveTarget)
+			Node::Status tick(Controller* aiController, Blackboard* blackboard) override;
+		};
 
 		TASK_CLASS(MoveTo)
+		Node::Status tick(Controller* aiController, Blackboard* blackboard) override;
+		};
+
+		TASK_CLASS(SetRandomWaitTime)
+		Node::Status tick(Controller* aiController, Blackboard* blackboard) override;
+		};
+
+		TASK_CLASS(Wait)
 		Node::Status tick(Controller* aiController, Blackboard* blackboard) override;
 		};
 

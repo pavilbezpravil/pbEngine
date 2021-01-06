@@ -229,7 +229,22 @@ namespace pbe {
 		bool UseGravity = true;
 		bool IsKinematic = false;
 
-		physx::PxRigidActor* _actor = NULL; // internal
+		void UpdateMass();
+		void UpdateDrag();
+		void UpdateAngularDrag();
+
+		void UpdateUseGravity();
+		void UpdateIsKinematic();
+
+		void UpdateAll();
+
+		Vec3 GetVelocity() const;
+		void SetVelocity(Vec3 v);
+
+		Vec3 GetAngularVelocity() const;
+		void SetAngularVelocity(Vec3 v);
+		
+		physx::PxRigidDynamic* _actor = NULL; // internal
 		bool _pandingForDestroy = false; // internal
 
 		COMPONENT_CLASS_TYPE(RigidbodyComponent)

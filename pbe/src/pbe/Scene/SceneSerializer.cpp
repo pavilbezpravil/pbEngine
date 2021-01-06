@@ -544,6 +544,8 @@ namespace pbe {
 					
 					component.UseGravity = rigidbodyComponent["UseGravity"].as<bool>();
 					component.IsKinematic = rigidbodyComponent["IsKinematic"].as<bool>();
+
+					component.UpdateAll();
 				}
 
 				if (auto aiControllerComponent = entity["AIControllerComponent"])

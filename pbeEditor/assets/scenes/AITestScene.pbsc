@@ -50,7 +50,7 @@ Entities:
     TagComponent:
       Tag: Cone
     TransformComponent:
-      Position: [0.142352223, -4.76837158e-07, -0.385745049]
+      Position: [0.142352104, -4.76837158e-07, -0.385745049]
       Rotation: [1, 0, 0, 0]
       Scale: [1, 1, 1]
       ChildUUIDs:
@@ -61,8 +61,14 @@ Entities:
       IsTrigger: false
       Center: [0, 0, 0]
       Size: [2, 2, 2]
+    RigidbodyComponent:
+      Mass: 1
+      Drag: 0.0199999996
+      AngularDrag: 0.0500000007
+      UseGravity: true
+      IsKinematic: true
     AIControllerComponent:
-      BehaviorTreeFilepath: assets\bt\raycast_test.pbbt
+      BehaviorTreeFilepath: assets\bt\move_test.pbbt
   - Entity: 9485364303251281187
     TagComponent:
       Tag: Plane
@@ -137,9 +143,9 @@ Entities:
     TagComponent:
       Tag: Cube
     TransformComponent:
-      Position: [9.36658573, 0.253296673, -7.8060708]
-      Rotation: [1, 0, 0, 0]
-      Scale: [1, 1, 1]
+      Position: [0.555305719, 0.253296673, -7.8060708]
+      Rotation: [0.973665655, 0, -0.227980867, 0]
+      Scale: [0.999999762, 1, 0.999999762]
     MeshComponent:
       AssetPath: assets\meshes\Cube.fbx
     BoxColliderComponent:

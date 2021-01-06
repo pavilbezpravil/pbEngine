@@ -745,13 +745,22 @@ namespace pbe {
 
 		DrawComponent<RigidbodyComponent>("Rigidbody", entity, [&](RigidbodyComponent& rb)
 		{
-			ImGui::DragFloat("Mass", &rb.Mass, 0.5, 0, 10000);
-			ImGui::DragFloat("Drag", &rb.Drag, 0.01, 0, 1);
-			ImGui::DragFloat("Angular Drag", &rb.AngularDrag, 0.01, 0, 1);
+			if (ImGui::DragFloat("Mass", &rb.Mass, 0.5, 0, 10000)) {
+				rb.UpdateMass();
+			}
+			if (ImGui::DragFloat("Drag", &rb.Drag, 0.01, 0, 1)) {
+				rb.UpdateDrag();
+			}
+			if (ImGui::DragFloat("Angular Drag", &rb.AngularDrag, 0.01, 0, 1)) {
+				rb.UpdateAngularDrag();
+			}
 			
-			ImGui::Checkbox("Use Gravity", &rb.UseGravity);
-			ImGui::Checkbox("Is Kinematic", &rb.IsKinematic);
-			
+			if (ImGui::Checkbox("Use Gravity", &rb.UseGravity)) {
+				rb.UpdateUseGravity();
+			}
+			if (ImGui::Checkbox("Is Kinematic", &rb.IsKinematic)) {
+				rb.UpdateIsKinematic();
+			}
 		});
 
 		DrawComponent<AIControllerComponent>("AI Controller", entity, [&](AIControllerComponent& aic)

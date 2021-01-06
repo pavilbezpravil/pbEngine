@@ -1,7 +1,7 @@
 EditorCameraInPlay: true
 DoSimulatePhysics: true
-RenderEntityInfo: true
-RenderPhysicsShape: true
+RenderEntityInfo: false
+RenderPhysicsShape: false
 GizmoTransSpace: 1
 TranslationSnapValue: 0.5
 RotationSnapValue: 45

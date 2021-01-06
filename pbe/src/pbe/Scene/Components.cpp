@@ -235,4 +235,59 @@ namespace pbe
 		boxGeom.halfExtents = Vec3ToPx(Size) * 0.5;
 		_shape->setGeometry(boxGeom);
 	}
+
+	void RigidbodyComponent::UpdateMass()
+	{
+		_actor->setMass(Mass);
+	}
+
+	void RigidbodyComponent::UpdateDrag()
+	{
+		_actor->setLinearDamping(Drag);
+	}
+
+	void RigidbodyComponent::UpdateAngularDrag()
+	{
+		_actor->setLinearDamping(AngularDrag);
+	}
+
+	void RigidbodyComponent::UpdateUseGravity()
+	{
+		_actor->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, !UseGravity);
+	}
+
+	void RigidbodyComponent::UpdateIsKinematic()
+	{
+		_actor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, IsKinematic);
+	}
+
+	void RigidbodyComponent::UpdateAll()
+	{
+		UpdateMass();
+		UpdateDrag();
+		UpdateAngularDrag();
+		
+		UpdateUseGravity();
+		UpdateIsKinematic();
+	}
+
+	Vec3 RigidbodyComponent::GetVelocity() const
+	{
+		return PxVec3ToPBE(_actor->getLinearVelocity());
+	}
+
+	void RigidbodyComponent::SetVelocity(Vec3 v)
+	{
+		_actor->setLinearVelocity(Vec3ToPx(v));
+	}
+
+	Vec3 RigidbodyComponent::GetAngularVelocity() const
+	{
+		return PxVec3ToPBE(_actor->getAngularVelocity());
+	}
+
+	void RigidbodyComponent::SetAngularVelocity(Vec3 v)
+	{
+		_actor->setAngularVelocity(Vec3ToPx(v));
+	}
 }

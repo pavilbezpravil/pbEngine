@@ -64,8 +64,10 @@ namespace pbe
 			
 			PxRigidActor* actor;
 			if (hasRigidbody) {
-				actor = s_Physics->mPhysics->createRigidDynamic(pxTrans);
-				entity.GetComponent<RigidbodyComponent>()._actor = actor;
+				PxRigidDynamic* rbActor = s_Physics->mPhysics->createRigidDynamic(pxTrans);
+				actor = rbActor;
+				entity.GetComponent<RigidbodyComponent>()._actor = rbActor;
+				entity.GetComponent<RigidbodyComponent>().UpdateAll();
 			} else {
 				actor = s_Physics->mPhysics->createRigidStatic(pxTrans);
 			}

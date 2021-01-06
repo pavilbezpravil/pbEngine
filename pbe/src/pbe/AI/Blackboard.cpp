@@ -37,9 +37,12 @@ namespace pbe
 		{
 			switch (type)
 			{
-			case Int: return "Int";
-			case Float: return "Float";
-			case String: return "String";
+			case Type::Int: return "Int";
+			case Type::Float: return "Float";
+			case Type::Vec2: return "Vec2";
+			case Type::Vec3: return "Vec3";
+			case Type::Vec4: return "Vec4";
+			case Type::String: return "String";
 			default: *((int*)0);
 			}
 		}
@@ -47,15 +50,27 @@ namespace pbe
 		BlackboardValue::Type BlackboardValue::GetType() const
 		{
 			auto visitor = make_visitor(
-				[&](const int i)
+				[&](const int)
 				{
 					return Type::Int;
 				},
-				[&](const float f)
+				[&](const float)
 				{
 					return Type::Float;
 				},
-					[&](const std::string& s)
+				[&](const Vec2&)
+				{
+					return Type::Vec2;
+				},
+				[&](const Vec3&)
+				{
+					return Type::Vec3;
+				},
+				[&](const Vec4&)
+				{
+					return Type::Vec4;
+				},
+				[&](const std::string&)
 				{
 					return Type::String;
 				}

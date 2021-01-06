@@ -1,7 +1,9 @@
 #include "pch.h"
 #include "Task.h"
 #include "AIController.h"
+#include "pbe/Core/Math/Random.h"
 #include "pbe/Physics/Utils.h"
+#include "pbe/Renderer/RendPrim.h"
 #include "pbe/Scene/Entity.h"
 
 namespace pbe
@@ -37,35 +39,66 @@ namespace pbe
 			return s_methods;
 		}
 
+		Node::Status SetMoveSpeed::tick(Controller* aiController, Blackboard* blackboard)
+		{
+			blackboard->GetValue("MoveSpeed") = s_Random.Float(1.f, 5.f);
+			return Node::Status::Success;
+		}
+
+		Node::Status SetRandomMoveTarget::tick(Controller* aiController, Blackboard* blackboard)
+		{
+			Vec2 xz = s_Random.InSquare() * Vec2{20.f};
+			blackboard->GetValue("MoveTarget") = Vec3{xz.x, 1.5f, xz.y};
+			return Node::Status::Success;
+		}
+
 		Node::Status MoveTo::tick(Controller* aiController, Blackboard* blackboard)
 		{
-			float dt = 1.f / 60.f; // todo:
+			Vec3 target = blackboard->GetValue("MoveTarget").As<Vec3>();
+			float speed = blackboard->GetValue("MoveSpeed").As<float>();
 
-			Vec3 target = Vec3_X * 10.f;
-			float speed = 1.f;
+			RendPrim::DrawSphere(target, 0.5f, 16, Color_Green);
 			
 			Entity e = aiController->GetOwner();
 			auto& trans = e.GetComponent<TransformComponent>();
-			// Vec3 direction = glm::normalize((target - trans.WorldPosition()));
-			Vec3 direction = trans.WorldForward();
 
-			trans.Move(direction * speed * dt, Space::World);
+			if (glm::length(target - trans.WorldPosition()) < 0.2f) {
+				return Node::Status::Success;
+			}
+			
+			Vec3 direction = glm::normalize((target - trans.WorldPosition()));
+			if (e.HasComponent<RigidbodyComponent>()) {
+				auto& rb = e.GetComponent<RigidbodyComponent>();
+				rb.SetVelocity(direction * speed);
+			} else {
+				return Node::Status::Failure;
+			}
 
-			bool closeEnought = (target - trans.WorldPosition()).length() < 0.2f;
-			return closeEnought ? Node::Status::Success : Node::Status::Running;
+			return Node::Status::Running;
+		}
+
+		Node::Status SetRandomWaitTime::tick(Controller* aiController, Blackboard* blackboard)
+		{
+			blackboard->GetValue("WaitTime") = s_Random.Float(1.f, 5.f);
+			HZ_CORE_INFO("SetWaitTime {}", blackboard->GetValue("WaitTime").As<float>());
+			return Node::Status::Success;
+		}
+
+		Node::Status Wait::tick(Controller* aiController, Blackboard* blackboard)
+		{
+			// todo:
+			float dt = 1.f / 60.f;
+			
+			float& waitTime = blackboard->GetValue("WaitTime").As<float>();
+			waitTime -= dt;
+			HZ_CORE_INFO("WaitTime {}", waitTime);
+			return waitTime < 0.f ? Node::Status::Success : Node::Status::Running;
 		}
 
 		Node::Status SetValue::tick(Controller* aiController, Blackboard* blackboard)
 		{
 			blackboard->GetValue("Value") = 180;
-			
-			// BlackboardValue v;
-			// v = 180;
-			// blackboard->SetValue("Value", std::move(v));
-			// blackboard->SetValue("Value", v);
-
 			HZ_CORE_INFO("SetValue {}", blackboard->GetValue("Value").As<int>());
-
 			return Node::Status::Success;
 		}
 

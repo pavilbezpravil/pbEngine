@@ -3,20 +3,25 @@
 #include <string>
 #include <unordered_map>
 
+#include "pbe/Core/Math/Common.h"
+
 namespace pbe
 {
 	namespace AI
 	{
 		class Controller;
 
-		struct BlackboardValue : std::variant<int, float, std::string>
+		struct BlackboardValue : std::variant<int, float, Vec2, Vec3, Vec4,std::string>
 		{
-			typedef std::variant<int, float, std::string> Base;
+			typedef std::variant<int, float, Vec2, Vec3, Vec4, std::string> Base;
 
-			enum Type
+			enum class Type
 			{
 				Int,
 				Float,
+				Vec2,
+				Vec3,
+				Vec4,
 				String,
 			};
 
