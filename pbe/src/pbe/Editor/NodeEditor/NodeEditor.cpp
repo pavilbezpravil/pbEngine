@@ -1145,8 +1145,9 @@ namespace pbe
 			}
 			{
 				ImGui::Separator();
-				for (auto& entry : AI::TaskRegistry::Instance().TaskMap()) {
-					if (ImGui::MenuItem(entry.first.c_str())) {
+				auto& TaskRegistry = AI::TaskRegistry::Instance();
+				for (auto& entry : TaskRegistry.GetRegistryMap()) {
+					if (ImGui::MenuItem(TaskRegistry.GetRegistryIDByName(entry.first))) {
 						auto aiNode = pContext->AddNode<AI::Leaf>(GetNextId());
 						aiNode->SetTask(entry.second());
 						aiNode->SetBlackboard(pContext->getBlackboard());

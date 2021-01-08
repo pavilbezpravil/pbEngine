@@ -109,7 +109,7 @@ namespace pbe
 				{
 					auto leaf = std::static_pointer_cast<Leaf>(aiNode);
 					leaf->SetBlackboard(bt.getBlackboard());
-					leaf->SetTask(TaskRegistry::Instance().Create(node["TaskName"].as<std::string>()));
+					leaf->SetTask(core::Registry<Task>::Instance().CreateByName(node["TaskName"].as<std::string>().c_str()));
 				}
 				break;
 				case Node::Type::Composite:

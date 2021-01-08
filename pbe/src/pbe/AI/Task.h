@@ -1,4 +1,6 @@
 #pragma once
+
+#include "pbe/Core/Registry.h"
 #include "Blackboard.h"
 #include "Node.h"
 
@@ -7,42 +9,16 @@ namespace pbe
 {
 	namespace AI
 	{
-		class TaskRegistry
-		{
-		public:
-			using TCreateMethod = std::shared_ptr<Task>(*)();
-
-			static TaskRegistry& Instance();
-
-			bool Register(const std::string name, TCreateMethod funcCreate);
-			std::shared_ptr<Task> Create(const std::string& name);
-
-			std::unordered_map<std::string, TCreateMethod> TaskMap();
-
-		private:
-			std::unordered_map<std::string, TCreateMethod> s_methods;
-
-			TaskRegistry() = default;
-		};
-
-		template <typename T>
-		class AutoRegisterInRegistry
-		{
-		protected:
-			static bool s_bRegistered;
-		};
-
-		template <typename T>
-		bool AutoRegisterInRegistry<T>::s_bRegistered = TaskRegistry::Instance().Register(T::GetTaskName(), T::CreateMethod);
 
 #define TASK_CLASS(TaskName) \
-		class TaskName : public Task, public AutoRegisterInRegistry<TaskName> \
+		class TaskName : public Task, public core::AutomaticRegistryRegistration<Task, TaskName> \
 		{ \
 		public: \
 			TaskName() : Task(STRINGIFY(TaskName)) {} \
-			void __StupidCPP() { s_bRegistered; } \
-			static std::shared_ptr<Task> CreateMethod() { return std::make_shared<TaskName>(); } \
-			static std::string GetTaskName() { return STRINGIFY(TaskName); }
+			static std::string GetTaskName() { return STRINGIFY(TaskName); } \
+			REGISTRY_TYPE(TaskName)
+
+		using TaskRegistry = core::Registry<Task>;
 
 		TASK_CLASS(SetMoveSpeed)
 			Node::Status tick(Controller* aiController, Blackboard* blackboard) override;
