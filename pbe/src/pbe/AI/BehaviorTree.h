@@ -33,13 +33,20 @@ namespace pbe
 			// int GetUniqueNodeId();
 
 			template<typename T, typename ...Args>
-			std::shared_ptr<T> AddNode(int id, Args&&... args)
+			std::shared_ptr<T> ConstructNode(int id, Args&&... args)
 			{
 				auto ret = std::make_shared<T>(std::forward<Args>(args)...);
 				ret->ID = id;
 				nodes.push_back(ret);
 				nodesMap[id] = ret;
 				return ret;
+			}
+
+			void AddNode(const std::shared_ptr<Node>& node)
+			{
+				HZ_CORE_ASSERT(node->ID != -1);
+				nodes.push_back(node);
+				nodesMap[node->ID] = node;
 			}
 
 			void RemoveNode(const std::shared_ptr<Node>& node)

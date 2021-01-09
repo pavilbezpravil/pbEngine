@@ -163,9 +163,9 @@ namespace pbe {
 		Node* CreateNode(const AI::Node::Ptr& aiNode);
 		void RemoveNode(ed::NodeId nodeId);
 		
-		Node* SpawnDecoratorNode(const AI::Node::Ptr& aiNode);
-		Node* SpawnCompositeNode(const AI::Node::Ptr& aiNode);
-		Node* SpawnLeafNode(const AI::Node::Ptr& aiNode);
+		Node* SpawnDecoratorNode(const AI::Decorator::Ptr& aiNode, bool addInput = false);
+		Node* SpawnCompositeNode(const AI::Composite::Ptr& aiNode);
+		Node* SpawnLeafNode(const AI::Leaf::Ptr& aiNode);
 
 		void AddRoot();
 

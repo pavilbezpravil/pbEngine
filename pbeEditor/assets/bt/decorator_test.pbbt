@@ -1,0 +1,34 @@
+RootID: 1
+Nodes:
+  - ID: 1
+    UserName: Root
+    Type: Decorator
+    DecoratorType: Root
+    ChildID: 3
+  - ID: 3
+    UserName: Sequence
+    Type: Composite
+    CompositeType: Sequence
+    ChildIDs: [7, 15, 19]
+  - ID: 7
+    UserName: Succeeder
+    Type: Decorator
+    DecoratorType: Succeeder
+    ChildID: 32
+  - ID: 15
+    UserName: UntilSuccess
+    Type: Decorator
+    DecoratorType: UntilSuccess
+    ChildID: 35
+  - ID: 19
+    UserName: SetMoveSpeed
+    Type: Leaf
+    TaskName: SetMoveSpeed
+  - ID: 32
+    UserName: Wait
+    Type: Leaf
+    TaskName: Wait
+  - ID: 35
+    UserName: MoveTo
+    Type: Leaf
+    TaskName: MoveTo

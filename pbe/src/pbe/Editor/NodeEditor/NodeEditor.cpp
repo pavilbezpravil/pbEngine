@@ -20,6 +20,7 @@
 
 #include "pbe/AI/Composite.h"
 #include "pbe/AI/Task.h"
+#include "pbe/AI/Decorator.h"
 #include "pbe/Core/Application.h"
 
 namespace pbe
@@ -250,9 +251,12 @@ namespace pbe
 		}
 	}
 
-	Node* NodePanel::SpawnDecoratorNode(const AI::Node::Ptr& aiNode)
+	Node* NodePanel::SpawnDecoratorNode(const AI::Decorator::Ptr& aiNode, bool addInput)
 	{
 		Node* uiNode = CreateNode(aiNode);
+		if (addInput) {
+			uiNode->Inputs.emplace_back(GetNextId(), "", PinType::Flow);
+		}
 		uiNode->Outputs.emplace_back(GetNextId(), "", PinType::Flow);
 
 		BuildNode(uiNode);
@@ -260,7 +264,7 @@ namespace pbe
 		return uiNode;
 	}
 
-	Node* NodePanel::SpawnCompositeNode(const AI::Node::Ptr& aiNode)
+	Node* NodePanel::SpawnCompositeNode(const AI::Composite::Ptr& aiNode)
 	{
 		Node* uiNode = CreateNode(aiNode);
 		uiNode->Inputs.emplace_back(GetNextId(), "", PinType::Flow);
@@ -271,7 +275,7 @@ namespace pbe
 		return uiNode;
 	}
 
-	Node* NodePanel::SpawnLeafNode(const AI::Node::Ptr& aiNode)
+	Node* NodePanel::SpawnLeafNode(const AI::Leaf::Ptr& aiNode)
 	{
 		Node* uiNode = CreateNode(aiNode);
 		uiNode->Inputs.emplace_back(GetNextId(), "", PinType::Flow);
@@ -285,10 +289,13 @@ namespace pbe
 	{
 		HZ_CORE_ASSERT(rootId == -1);
 		rootId = GetNextId();
-		auto aiNode = pContext->AddNode<AI::Root>(rootId);
-		pContext->setRoot(aiNode);
+		auto rootNode = std::make_shared<AI::Root>();
+		rootNode->ID = rootId;
+		rootNode->name = rootNode->GetDecoratorkType();
+		pContext->AddNode(rootNode);
+		pContext->setRoot(rootNode);
 
-		SpawnDecoratorNode(aiNode);
+		SpawnDecoratorNode(rootNode);
 	}
 
 	Node* NodePanel::SpawnComment()
@@ -1133,26 +1140,54 @@ namespace pbe
 					node = SpawnComment();
 			}
 			{
+				ImGui::Indent();
+				ImGui::Text("Composite");
+				ImGui::Unindent();
 				ImGui::Separator();
 				if (ImGui::MenuItem("Sequence")) {
-					auto aiNode = pContext->AddNode<AI::Sequence>(GetNextId());
+					auto aiNode = pContext->ConstructNode<AI::Sequence>(GetNextId());
 					node = SpawnCompositeNode(aiNode);
 				}
 				if (ImGui::MenuItem("Selector")) {
-					auto aiNode = pContext->AddNode<AI::Selector>(GetNextId());
+					auto aiNode = pContext->ConstructNode<AI::Selector>(GetNextId());
 					node = SpawnCompositeNode(aiNode);
 				}
 			}
 			{
+				ImGui::Indent();
+				ImGui::Text("Task");
+				ImGui::Unindent();
 				ImGui::Separator();
 				auto& TaskRegistry = AI::TaskRegistry::Instance();
 				for (auto& entry : TaskRegistry.GetRegistryMap()) {
-					if (ImGui::MenuItem(TaskRegistry.GetRegistryIDByName(entry.first))) {
-						auto aiNode = pContext->AddNode<AI::Leaf>(GetNextId());
+					if (ImGui::MenuItem(TaskRegistry.GetRegistryNameByID(entry.first))) {
+						auto aiNode = pContext->ConstructNode<AI::Leaf>(GetNextId());
 						aiNode->SetTask(entry.second());
 						aiNode->SetBlackboard(pContext->getBlackboard());
 
 						node = SpawnLeafNode(aiNode);
+					}
+				}
+			}
+
+			{
+				ImGui::Indent();
+				ImGui::Text("Decorator");
+				ImGui::Unindent();
+				ImGui::Separator();
+				auto& DecoratorRegistry = AI::DecoratorRegistry::Instance();
+				for (auto& entry : DecoratorRegistry.GetRegistryMap()) {
+					auto nodeName = DecoratorRegistry.GetRegistryNameByID(entry.first);
+					if (strcmp(nodeName, "Root") == 0) {
+						continue;
+					}
+
+					if (ImGui::MenuItem(nodeName)) {
+						auto aiNode = DecoratorRegistry.CreateByName(nodeName);
+						aiNode->ID = GetNextId();
+						aiNode->name = aiNode->GetDecoratorkType();
+						pContext->AddNode(aiNode);
+						node = SpawnDecoratorNode(aiNode, true);
 					}
 				}
 			}
@@ -1222,9 +1257,14 @@ namespace pbe
 
 		for (auto& node : pContext->GetNodes()) {
 			switch (node->GetType()) {
-			case AI::Node::Type::Leaf: SpawnLeafNode(node); break;
-			case AI::Node::Type::Composite: SpawnCompositeNode(node); break;
-			case AI::Node::Type::Decorator: SpawnDecoratorNode(node); break;
+			case AI::Node::Type::Leaf: SpawnLeafNode(std::static_pointer_cast<AI::Leaf>(node)); break;
+			case AI::Node::Type::Composite: SpawnCompositeNode(std::static_pointer_cast<AI::Composite>(node)); break;
+			case AI::Node::Type::Decorator: 
+			{
+				auto dec = std::static_pointer_cast<AI::Decorator>(node);
+				bool isRoot = dec->GetDecoratorkType() == "Root";
+				SpawnDecoratorNode(dec, !isRoot);
+			} break;
 			default:;
 			}
 		}

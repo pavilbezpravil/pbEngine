@@ -92,7 +92,7 @@ namespace pbe
 				return entry->second;
 			}
 
-			const char* GetRegistryIDByName(std::size_t id) const
+			const char* GetRegistryNameByID(std::size_t id) const
 			{
 				const auto entry = _idToName.find(id);
 				assert(entry != std::end(_idToName));

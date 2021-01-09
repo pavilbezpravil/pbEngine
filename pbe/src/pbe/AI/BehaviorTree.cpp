@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "BehaviorTree.h"
 #include "Composite.h"
+#include "Decorator.h"
 
 #include "Task.h"
 #include "yaml-cpp/yaml.h"
@@ -13,6 +14,7 @@ namespace pbe
 		{
 			out << YAML::BeginMap;
 			out << YAML::Key << "ID" << YAML::Value << node->ID;
+			out << YAML::Key << "UserName" << YAML::Value << node->name;
 			out << YAML::Key << "Type" << YAML::Value << Node::TypeToString(node->GetType());
 			switch (node->GetType()) {
 				case Node::Type::Leaf:
@@ -40,7 +42,8 @@ namespace pbe
 				case Node::Type::Decorator:
 				{
 					auto decorator = std::static_pointer_cast<Decorator>(node);
-					out << YAML::Key << "DecoratorType" << YAML::Value << decorator->name;
+					HZ_CORE_ASSERT(!decorator->GetDecoratorkType().empty());
+					out << YAML::Key << "DecoratorType" << YAML::Value << decorator->GetDecoratorkType();
 					if (decorator->hasChild()) {
 						out << YAML::Key << "ChildID" << YAML::Value << decorator->getChild()->ID;
 					}
@@ -61,20 +64,20 @@ namespace pbe
 			
 			switch (type) {
 				case Node::Type::Leaf:
-					aiNode = bt.AddNode<AI::Leaf>(id);
+					aiNode = bt.ConstructNode<AI::Leaf>(id);
 					break;
 				case Node::Type::Composite:
 					{
 						std::string compositeType = node["CompositeType"].as<std::string>();
 						if (compositeType == "Sequence") {
-							aiNode = bt.AddNode<AI::Sequence>(id);
+							aiNode = bt.ConstructNode<AI::Sequence>(id);
 						} else if (compositeType == "Selector") {
-							aiNode = bt.AddNode<AI::Selector>(id);
+							aiNode = bt.ConstructNode<AI::Selector>(id);
 						}
 						// else if (compositeType == "ParallelSequence") {
-						// 	aiNode = bt.AddNode<AI::ParallelSequence>(id);
+						// 	aiNode = bt.ConstructNode<AI::ParallelSequence>(id);
 						// } else if (compositeType == "ParallelSelect") {
-						// 	aiNode = bt.AddNode<AI::ParallelSequence>(id);
+						// 	aiNode = bt.ConstructNode<AI::ParallelSequence>(id);
 						// }
 						else {
 							HZ_UNIMPLEMENTED();
@@ -85,16 +88,17 @@ namespace pbe
 				case Node::Type::Decorator:
 					{
 						std::string decoratorType = node["DecoratorType"].as<std::string>();
-							
-						// todo:
-						if (decoratorType == "Root") {
-							aiNode = bt.AddNode<AI::Root>(id);
-						} else {
-							HZ_UNIMPLEMENTED()
-						}
+						auto node = AI::DecoratorRegistry::Instance().CreateByName(decoratorType.c_str());
+						node->ID = id;
+						bt.AddNode(node);
+						aiNode = node;
 					}
 					break;
 				default: HZ_UNIMPLEMENTED();
+			}
+
+			if (auto userNameNode = node["UserName"]) {
+				aiNode->name = userNameNode.as<std::string>();
 			}
 		}
 

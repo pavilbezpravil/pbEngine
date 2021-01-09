@@ -89,7 +89,7 @@ namespace pbe
 
 			int ID = -1;
 			std::string name;
-			
+
 		protected:
 			Status status = Status::Invalid;
 			Type type;
@@ -130,25 +130,20 @@ namespace pbe
 		class Decorator : public Node
 		{
 		public:
-			Decorator() : Node(Type::Decorator) {}
+			Decorator(const std::string& decoratorType) : Node(Type::Decorator), decoratorType(decoratorType) {}
 			virtual ~Decorator() {}
 
 			void setChild(Node::Ptr node) { child = node; }
 			Node::Ptr  getChild() { return child; }
 			bool hasChild() const { return child != nullptr; }
 
+			const std::string& GetDecoratorkType() const { return decoratorType; }
+
 			using Ptr = std::shared_ptr<Decorator>;
-			
+
 		protected:
 			Node::Ptr child = nullptr;
-		};
-
-		class Root : public Decorator
-		{
-		public:
-			Root() { name = "Root"; }
-			
-			Status update() { return hasChild() ? child->tick() : Status::Success; }
+			std::string decoratorType;
 		};
 
 		class Task
