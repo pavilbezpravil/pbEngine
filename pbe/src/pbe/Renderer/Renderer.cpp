@@ -52,8 +52,6 @@ namespace pbe {
 
 	void Renderer::OnImGui()
 	{
-		ImGui::Begin("Renderer stats");
-
 		ImGui::Text("Frame Time: %.2fms\n", Application::Get().GetTimeStep().GetMilliseconds());
 
 		if (ImGui::TreeNodeEx("ContextManager")){
@@ -84,7 +82,5 @@ namespace pbe {
 		// ImGui::Begin("Shadow Buffer");
 		// ImGui::Image(pbeImGui::ImageDesc(SceneRenderer::Get()._shadowBuffer->GetDepthSRV()), ImGui::GetContentRegionAvail());
 		// ImGui::End();
-
-		ImGui::End();
 	}
 }

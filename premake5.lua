@@ -91,7 +91,6 @@ project "pbe"
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.ImGui}",
-		"%{IncludeDir.imgui_node_editor}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.WinPixEventRuntime}",
@@ -114,7 +113,6 @@ project "pbe"
 	{ 
 		"GLFW",
 		"ImGui",
-		"imgui_node_editor",
 		"Lua",
 		"d3d12",
 		"dxgi",
@@ -177,7 +175,8 @@ project "pbeEditor"
 
 	links 
 	{ 
-		"pbe"
+		"pbe",
+		"imgui_node_editor",
 	}
 	
 	files 
@@ -200,6 +199,7 @@ project "pbeEditor"
 		"%{IncludeDir.PhysX}",
 		"%{IncludeDir.pxshared}",
 		"%{IncludeDir.yaml}",
+		"%{IncludeDir.imgui_node_editor}",
 	}
 
 	print(LibraryDir["WinPixEventRuntime"] )

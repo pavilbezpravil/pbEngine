@@ -2,7 +2,7 @@
 
 #include "pbe/ImGui/ImGuizmo.h"
 #include "pbe/Script/ScriptEngine.h"
-#include "pbe/Editor/NodeEditor/NodeEditor.h"
+#include "Editor/NodeEditor/NodeEditor.h"
 #include "yaml-cpp/yaml.h"
 
 #include <filesystem>
@@ -21,12 +21,100 @@
 
 namespace pbe {
 
-	// todo
-	static inline ImRect ImGui_GetItemRect()
+	// todo:
+	class BehaviorTreeView : UIView
 	{
-		return ImRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
-	}
-	
+	public:
+		BehaviorTreeView() : UIView("Behavior Tree") { }
+
+		void Show() override
+		{
+			if (open) {
+				if (ImGui::Begin(name.c_str(), &open, ImGuiWindowFlags_MenuBar)) {
+					nodePanel.Application_Frame();
+				}
+				ImGui::End();
+			}
+		}
+
+		NodePanel nodePanel;
+	};
+
+	class AllocationInfoView : UIView
+	{
+	public:
+		AllocationInfoView() : UIView("Allocator") { }
+
+		void Show() override
+		{
+			if (open) {
+				if (ImGui::Begin(name.c_str(), &open)) {
+					if (ImGui::TreeNodeEx("Total alloc")) {
+						ImGui::Text("count: %ld", pbeAllocator.TotalAllocCount());
+						ImGui::Text("bytes: %ld Kb", pbeAllocator.TotalAllocBytes() >> 10);
+						ImGui::TreePop();
+					}
+					if (ImGui::TreeNodeEx("Cur alloc", ImGuiTreeNodeFlags_DefaultOpen)) {
+						ImGui::Text("count: %ld", pbeAllocator.CurAllocCount());
+						ImGui::Text("bytes: %ld Kb", pbeAllocator.CurAllocBytes() >> 10);
+						ImGui::TreePop();
+					}
+				}
+
+				ImGui::End();
+			}
+		}
+
+	};
+
+	class RenderInfoView : UIView
+	{
+	public:
+		RenderInfoView() : UIView("Renderer Stats") { }
+
+		void Show() override
+		{
+			if (open) {
+				if (ImGui::Begin(name.c_str(), &open)) {
+					Renderer::Get().OnImGui();
+				}
+				ImGui::End();
+			}
+		}
+	};
+
+	class ScriptEngineView : UIView
+	{
+	public:
+		ScriptEngineView() : UIView("Script Engine Debug") { }
+
+		void Show() override
+		{
+			if (open) {
+				if (ImGui::Begin(name.c_str(), &open)) {
+					s_ScriptEngine->OnImGuiRender();
+				}
+				ImGui::End();
+			}
+		}
+	};
+
+	class ImGuiDemoWindowView : UIView
+	{
+	public:
+		ImGuiDemoWindowView() : UIView("ImGui Demo Window") { }
+
+		void Show() override
+		{
+			if (open) {
+				if (ImGui::Begin(name.c_str(), &open)) {
+					ImGui::ShowDemoWindow(&open);
+				}
+				ImGui::End();
+			}
+		}
+	};
+
 	static void ImGuiShowHelpMarker(const char* desc)
 	{
 		ImGui::TextDisabled("(?)");
@@ -38,16 +126,6 @@ namespace pbe {
 			ImGui::PopTextWrapPos();
 			ImGui::EndTooltip();
 		}
-	}
-
-	static std::tuple<glm::vec3, glm::quat, glm::vec3> GetTransformDecomposition(const glm::mat4& transform)
-	{
-		glm::vec3 scale, translation, skew;
-		glm::vec4 perspective;
-		glm::quat orientation;
-		glm::decompose(transform, scale, orientation, translation, skew, perspective);
-
-		return { translation, orientation, scale };
 	}
 
 	void EditorSettings::Serialize(const std::string& filepath)
@@ -111,6 +189,12 @@ namespace pbe {
 		: m_EditorCamera(glm::perspectiveFov(glm::radians(45.0f), 1280.0f, 720.0f, 0.1f, 10000.0f))
 	{
 		m_EditorSettings.Deserialize(EDITOR_SETTING_FILEPATH);
+
+		uiViews.emplace_back( (UIView*)(new AllocationInfoView));
+		uiViews.emplace_back( (UIView*)(new RenderInfoView));
+		uiViews.emplace_back( (UIView*)(new BehaviorTreeView));
+		uiViews.emplace_back( (UIView*)(new ScriptEngineView));
+		uiViews.emplace_back( (UIView*)(new ImGuiDemoWindowView));
 	}
 
 	EditorLayer::~EditorLayer()
@@ -251,29 +335,17 @@ namespace pbe {
 					p_open = false;
 				ImGui::EndMenu();
 			}
+			if (ImGui::BeginMenu("View")) {
+				for (auto& uiView : uiViews) {
+					if (ImGui::MenuItem(uiView->name.c_str(), NULL, false, !uiView->open)) {
+						uiView->open = true;
+					}
+				}
+				ImGui::EndMenu();
+			}
 
 			ImGui::EndMenuBar();
 		}
-	}
-
-	void EditorLayer::OnImGuiRendererInfo() {
-		Renderer::Get().OnImGui();
-	}
-
-	void EditorLayer::OnImGuiAllocatorInfo()
-	{
-		ImGui::Begin("Allocator");
-		if (ImGui::TreeNodeEx("Total alloc")){
-			ImGui::Text("count: %ld", pbeAllocator.TotalAllocCount());
-			ImGui::Text("bytes: %ld Kb", pbeAllocator.TotalAllocBytes() >> 10);
-			ImGui::TreePop();
-		}
-		if (ImGui::TreeNodeEx("Cur alloc", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Text("count: %ld", pbeAllocator.CurAllocCount());
-			ImGui::Text("bytes: %ld Kb", pbeAllocator.CurAllocBytes() >> 10);
-			ImGui::TreePop();
-		}
-		ImGui::End();
 	}
 
 	void EditorLayer::OnImGuiViewport() {
@@ -417,20 +489,6 @@ namespace pbe {
 
 				selection.Mesh->Transform = glm::inverse(entityTransform) * transformBase;
 			}
-		}
-	}
-
-	void EditorLayer::OnImGuiNodeEditor() {
-		static NodePanel* nodePanel = NULL;
-		if (!nodePanel) {
-			nodePanel = new NodePanel;
-		}
-		static bool open = true;
-		if (open) {
-			if (ImGui::Begin("Node editor", &open, ImGuiWindowFlags_MenuBar)) {
-				nodePanel->Application_Frame();
-			}
-			ImGui::End();
 		}
 	}
 
@@ -705,11 +763,10 @@ namespace pbe {
 
 		OnImGuiMenuBar(p_open);
 		OnImGuiSceneHierarchy();
-		OnImGuiRendererInfo();
-		OnImGuiAllocatorInfo();
 		OnImGuiViewport();
-		s_ScriptEngine->OnImGuiRender();
-		OnImGuiNodeEditor();
+		for (auto& uiView : uiViews) {
+			uiView->Show();
+		}
 
 		ImGui::End();
 	}

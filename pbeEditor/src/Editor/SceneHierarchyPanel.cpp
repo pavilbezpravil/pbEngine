@@ -6,7 +6,7 @@
 #include "pbe/Core/Application.h"
 #include "pbe/Renderer/Mesh.h"
 #include "pbe/Script/ScriptEngine.h"
-#include <assimp/scene.h>
+// #include <assimp/scene.h>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <stdio.h>
@@ -18,7 +18,7 @@
 
 namespace pbe {
 
-	glm::mat4 Mat4FromAssimpMat4(const aiMatrix4x4& matrix);
+	// glm::mat4 Mat4FromAssimpMat4(const aiMatrix4x4& matrix);
 
 	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& context)
 		: m_Context(context)
@@ -233,20 +233,20 @@ namespace pbe {
 		}
 	}
 
-	void SceneHierarchyPanel::DrawMeshNode(const Ref<Mesh>& mesh, uint32_t& imguiMeshID)
-	{
-		static char imguiName[128];
-		memset(imguiName, 0, 128);
-		sprintf(imguiName, "Mesh##%d", imguiMeshID++);
-
-		// Mesh Hierarchy
-		if (ImGui::TreeNode(imguiName))
-		{
-			auto rootNode = mesh->m_Scene->mRootNode;
-			MeshNodeHierarchy(mesh, rootNode);
-			ImGui::TreePop();
-		}
-	}
+	// void SceneHierarchyPanel::DrawMeshNode(const Ref<Mesh>& mesh, uint32_t& imguiMeshID)
+	// {
+	// 	static char imguiName[128];
+	// 	memset(imguiName, 0, 128);
+	// 	sprintf(imguiName, "Mesh##%d", imguiMeshID++);
+	//
+	// 	// Mesh Hierarchy
+	// 	if (ImGui::TreeNode(imguiName))
+	// 	{
+	// 		auto rootNode = mesh->m_Scene->mRootNode;
+	// 		MeshNodeHierarchy(mesh, rootNode);
+	// 		ImGui::TreePop();
+	// 	}
+	// }
 
 	static std::tuple<glm::vec3, glm::quat, glm::vec3> GetTransformDecomposition(const glm::mat4& transform)
 	{
@@ -258,32 +258,32 @@ namespace pbe {
 		return { translation, orientation, scale };
 	}
 
-	void SceneHierarchyPanel::MeshNodeHierarchy(const Ref<Mesh>& mesh, aiNode* node, const glm::mat4& parentTransform, uint32_t level)
-	{
-		glm::mat4 localTransform = Mat4FromAssimpMat4(node->mTransformation);
-		glm::mat4 transform = parentTransform * localTransform;
-
-		if (ImGui::TreeNode(node->mName.C_Str())) {
-			{
-				auto [translation, rotation, scale] = GetTransformDecomposition(transform);
-				ImGui::Text("World Transform");
-				ImGui::Text("  Translation: %.2f, %.2f, %.2f", translation.x, translation.y, translation.z);
-				ImGui::Text("  Scale: %.2f, %.2f, %.2f", scale.x, scale.y, scale.z);
-			}
-			{
-				auto [translation, rotation, scale] = GetTransformDecomposition(localTransform);
-				ImGui::Text("Local Transform");
-				ImGui::Text("  Translation: %.2f, %.2f, %.2f", translation.x, translation.y, translation.z);
-				ImGui::Text("  Scale: %.2f, %.2f, %.2f", scale.x, scale.y, scale.z);
-			}
-
-			for (uint32_t i = 0; i < node->mNumChildren; i++)
-				MeshNodeHierarchy(mesh, node->mChildren[i], transform, level + 1);
-
-			ImGui::TreePop();
-		}
-
-	}
+	// void SceneHierarchyPanel::MeshNodeHierarchy(const Ref<Mesh>& mesh, aiNode* node, const glm::mat4& parentTransform, uint32_t level)
+	// {
+	// 	glm::mat4 localTransform = Mat4FromAssimpMat4(node->mTransformation);
+	// 	glm::mat4 transform = parentTransform * localTransform;
+	//
+	// 	if (ImGui::TreeNode(node->mName.C_Str())) {
+	// 		{
+	// 			auto [translation, rotation, scale] = GetTransformDecomposition(transform);
+	// 			ImGui::Text("World Transform");
+	// 			ImGui::Text("  Translation: %.2f, %.2f, %.2f", translation.x, translation.y, translation.z);
+	// 			ImGui::Text("  Scale: %.2f, %.2f, %.2f", scale.x, scale.y, scale.z);
+	// 		}
+	// 		{
+	// 			auto [translation, rotation, scale] = GetTransformDecomposition(localTransform);
+	// 			ImGui::Text("Local Transform");
+	// 			ImGui::Text("  Translation: %.2f, %.2f, %.2f", translation.x, translation.y, translation.z);
+	// 			ImGui::Text("  Scale: %.2f, %.2f, %.2f", scale.x, scale.y, scale.z);
+	// 		}
+	//
+	// 		for (uint32_t i = 0; i < node->mNumChildren; i++)
+	// 			MeshNodeHierarchy(mesh, node->mChildren[i], transform, level + 1);
+	//
+	// 		ImGui::TreePop();
+	// 	}
+	//
+	// }
 
 	static int s_UIContextID = 0;
 	static uint32_t s_Counter = 0;

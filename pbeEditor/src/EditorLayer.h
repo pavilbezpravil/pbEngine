@@ -14,9 +14,22 @@
 
 #include <string>
 
-#include "pbe/Editor/SceneHierarchyPanel.h"
+#include "Editor/SceneHierarchyPanel.h"
 
 namespace pbe {
+
+	// todo: move to according file
+	class UIView
+	{
+	public:
+		UIView(const char* name) : name(name) {}
+		virtual ~UIView() {}
+
+		virtual void Show() = 0;
+
+		std::string name = "NONE";
+		bool open = false;
+	};
 
 	struct EditorSettings
 	{
@@ -94,13 +107,10 @@ namespace pbe {
 		float GetSnapValue();
 	private:
 		void OnImGuiMenuBar(bool &p_open);
-		void OnImGuiRendererInfo();
-		void OnImGuiAllocatorInfo();
 		void OnImGuiViewport();
 		void OnImGuiSceneHierarchy();
 		void OnImGuiGizmo();
-		void OnImGuiNodeEditor();
-		
+
 		Scope<SceneHierarchyPanel> m_SceneHierarchyPanel;
 
 		Ref<Scene> m_RuntimeScene, m_EditorScene;
@@ -135,6 +145,8 @@ namespace pbe {
 		std::vector<SelectedSubmesh> m_SelectionContext;
 		glm::mat4* m_RelativeTransform = nullptr;
 		glm::mat4* m_CurrentlySelectedTransform = nullptr;
+
+		std::vector<std::unique_ptr<UIView>> uiViews;
 	};
 
 }
