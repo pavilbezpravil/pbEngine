@@ -1,0 +1,55 @@
+RootID: 1
+Nodes:
+  - ID: 1
+    UserName: ""
+    Type: Decorator
+    DecoratorType: Root
+    ChildID: 67
+  - ID: 32
+    UserName: MoveTo
+    Type: Leaf
+    TaskName: MoveTo
+  - ID: 39
+    UserName: PrintEnd
+    Type: Leaf
+    TaskName: PrintEnd
+  - ID: 42
+    UserName: Sequence
+    Type: Composite
+    CompositeType: Sequence
+    ChildIDs: [51, 102, 32]
+  - ID: 51
+    UserName: SetMoveSpeed
+    Type: Leaf
+    TaskName: SetMoveSpeed
+  - ID: 54
+    UserName: SetRandomMoveTarget
+    Type: Leaf
+    TaskName: SetRandomMoveTarget
+  - ID: 67
+    UserName: Sequence
+    Type: Composite
+    CompositeType: Sequence
+    ChildIDs: [42, 72]
+  - ID: 72
+    UserName: Sequence
+    Type: Composite
+    CompositeType: Sequence
+    ChildIDs: [76, 79, 39]
+  - ID: 76
+    UserName: SetRandomWaitTime
+    Type: Leaf
+    TaskName: SetRandomWaitTime
+  - ID: 79
+    UserName: Wait
+    Type: Leaf
+    TaskName: Wait
+  - ID: 102
+    UserName: Selector
+    Type: Composite
+    CompositeType: Selector
+    ChildIDs: [106, 54]
+  - ID: 106
+    UserName: FindPlayer
+    Type: Leaf
+    TaskName: FindPlayer

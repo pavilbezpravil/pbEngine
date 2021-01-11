@@ -28,12 +28,14 @@ namespace pbe
 			Vec3 target = blackboard->GetValue("MoveTarget").As<Vec3>();
 			float speed = blackboard->GetValue("MoveSpeed").As<float>();
 
-			RendPrim::DrawSphere(target, 0.5f, 16, Color_Green);
-			
+			RendPrim::DrawSphere(target, 0.5f, 16, Color_Blue);
+
 			Entity e = aiController->GetOwner();
 			auto& trans = e.GetComponent<TransformComponent>();
 
 			if (glm::length(target - trans.WorldPosition()) < 0.2f) {
+				auto& rb = e.GetComponent<RigidbodyComponent>();
+				rb.SetVelocity(Vec3_Zero);
 				return Node::Status::Success;
 			}
 			
@@ -101,8 +103,32 @@ namespace pbe
 			Entity e = aiController->GetOwner();
 			auto& trans = e.GetComponent<TransformComponent>();
 
+			physics::RaycastHit hit;
 			auto overlaped = physics::SceneOverlapSphereAll(e.GetScene(), trans.WorldPosition() + trans.WorldForward() * 2.f, 5.f);
 			return !overlaped.empty() ? Node::Status::Success : Node::Status::Running;
+		}
+
+		Node::Status FindPlayer::tick(Controller* aiController, Blackboard* blackboard)
+		{
+			Entity self = aiController->GetOwner();
+			Entity player = self.GetScene()->FindEntityByTag("Player");
+			if (player) {
+				auto& selfTrans = self.GetComponent<TransformComponent>();
+				auto& trans = player.GetComponent<TransformComponent>();
+
+				Vec3 dir = glm::normalize(trans.WorldPosition() - selfTrans.WorldPosition());
+
+				physics::RaycastHit hit;
+				if (physics::SceneRayCast(self.GetScene(), selfTrans.WorldPosition() + dir * 1.5f, dir, 10.f, hit)) {
+					Entity hitEntity = *hit.entity;
+					if (hitEntity.GetComponent<TagComponent>().Tag == "Player") {
+						blackboard->GetValue("MoveTarget") = trans.WorldPosition();
+						return Node::Status::Success;
+					}
+				}
+			}
+
+			return Node::Status::Failure;
 		}
 	}
 }

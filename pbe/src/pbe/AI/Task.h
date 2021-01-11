@@ -59,5 +59,9 @@ namespace pbe
 		TASK_CLASS(OverlapSphereAll)
 			Node::Status tick(Controller* aiController, Blackboard* blackboard) override;
 		};
+
+		TASK_CLASS(FindPlayer)
+			Node::Status tick(Controller* aiController, Blackboard* blackboard) override;
+		};
 	}
 }
