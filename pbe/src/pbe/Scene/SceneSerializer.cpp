@@ -15,6 +15,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "StandartComponents.h"
+
 namespace YAML {
 
 	template<>

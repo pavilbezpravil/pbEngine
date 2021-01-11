@@ -14,6 +14,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
+
+#include "StandartComponents.h"
 #include "pbe/Renderer/GraphicsCore.h"
 #include "pbe/Renderer/RendPrim.h"
 

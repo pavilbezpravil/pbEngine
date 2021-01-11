@@ -11,6 +11,7 @@
 #include "pbe/Scene/Scene.h"
 
 #include "ScriptWrappers.h"
+#include "pbe/Scene/StandartComponents.h"
 
 
 namespace pbe {

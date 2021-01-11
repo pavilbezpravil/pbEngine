@@ -4,6 +4,7 @@
 #include "pbe/Scene/Scene.h"
 #include "pbe/Scene/Entity.h"
 #include "pbe/Renderer/RendPrim.h"
+#include "pbe/Scene/StandartComponents.h"
 
 namespace pbe
 {

@@ -3,6 +3,7 @@
 #include "pbe/Scene/Scene.h"
 #include "pbe/Scene/Entity.h"
 #include "pbe/Renderer/Mesh.h"
+#include "pbe/Scene/StandartComponents.h"
 
 namespace pbe {
 

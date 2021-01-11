@@ -17,6 +17,7 @@
 
 #include "pbe/Core/Application.h"
 #include "pbe/Renderer/RendPrim.h"
+#include "pbe/Scene/StandartComponents.h"
 
 namespace pbe {
 

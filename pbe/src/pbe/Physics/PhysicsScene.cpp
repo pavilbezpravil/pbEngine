@@ -5,6 +5,8 @@
 #include "pbe/Renderer/RendPrim.h"
 #include <PxPhysicsAPI.h>
 
+#include "pbe/Scene/StandartComponents.h"
+
 namespace pbe
 {
 	namespace physics

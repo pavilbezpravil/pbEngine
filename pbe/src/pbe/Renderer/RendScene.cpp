@@ -2,6 +2,7 @@
 #include "RendScene.h"
 #include "pbe/Scene/Entity.h"
 #include "pbe/Renderer/GpuBuffer.h"
+#include "pbe/Scene/StandartComponents.h"
 
 namespace pbe {
 
