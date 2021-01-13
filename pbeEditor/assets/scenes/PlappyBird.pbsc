@@ -31,7 +31,7 @@ Entities:
     TransformComponent:
       Position: [0, 0, 0]
       Rotation: [1, 0, 0, 0]
-      Scale: [0.999996126, 1, 0.999997854]
+      Scale: [0.999991179, 1, 0.999992907]
       ParentUUID: 10780848008876193394
     MeshComponent:
       AssetPath: assets\meshes\Cube.fbx
@@ -57,7 +57,7 @@ Entities:
     TagComponent:
       Tag: Player
     TransformComponent:
-      Position: [-9.8102951, 4.89065981, 0]
+      Position: [-9.8102951, 12.4954252, 0]
       Rotation: [1, 0, 0, 0]
       Scale: [0.5, 0.5, 0.5]
     ScriptComponent:
@@ -92,9 +92,9 @@ Entities:
     TagComponent:
       Tag: Wall
     TransformComponent:
-      Position: [12.2915869, 0, 0]
+      Position: [23.8688011, 0, 4.14034412e-06]
       Rotation: [0.707106888, 0, 0.70710665, 0]
-      Scale: [0.999818325, 1, 0.999818325]
+      Scale: [0.999754667, 1, 0.999754667]
       ChildUUIDs:
         - 15987760965303442119
         - 10606014749905154375
@@ -114,9 +114,9 @@ Entities:
     TagComponent:
       Tag: Wall
     TransformComponent:
-      Position: [-3.92786837, 0, 0]
+      Position: [5.43478584, 0, 3.34835772e-06]
       Rotation: [0.707106888, 0, 0.70710665, 0]
-      Scale: [0.999876618, 1, 0.999876618]
+      Scale: [0.999813259, 1, 0.999813259]
       ChildUUIDs:
         - 13712776944950742873
         - 2979539321512415074
@@ -154,9 +154,9 @@ Entities:
     TagComponent:
       Tag: Wall
     TransformComponent:
-      Position: [4.57357407, 0, 0]
+      Position: [14.2809143, 0, 3.47162427e-06]
       Rotation: [0.707106888, 0, 0.70710665, 0]
-      Scale: [0.999842703, 1, 0.999842703]
+      Scale: [0.9997527, 1, 0.9997527]
       ChildUUIDs:
         - 3364926750768262681
         - 14145412765338110693

@@ -5,4 +5,4 @@ RenderPhysicsShape: true
 GizmoTransSpace: 0
 TranslationSnapValue: 0.5
 RotationSnapValue: 45
-SceneFilePath: assets\scenes\RotationSphere.pbsc
+SceneFilePath: assets\scenes\PlappyBird.pbsc

@@ -15,6 +15,6 @@ function onUpdate(self, dt)
 end
 
 function onTriggerEnter(self, other)
-    print("onTriggerEnter")
-    other:destroy()
+    -- other:destroy()
+    self:destroy()
 end
