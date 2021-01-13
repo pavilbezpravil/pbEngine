@@ -36,18 +36,7 @@ IncludeDir["yaml"] = "pbe/vendor/yaml-cpp/include"
 
 LibraryDir = {}
 LibraryDir["WinPixEventRuntime"] = "pbe/vendor/WinPixEventRuntime/bin"
-
-filter "configurations:Debug"
-	LibraryDir["PhysX"] = "pbe/vendor/PhysX/bin/debug"
-filter {}
-
--- filter "configurations:Release"
--- 	LibraryDir["PhysX"] = "pbe/vendor/PhysX/bin/release"
--- filter {}
-
--- filter "configurations:Dist"
--- 	LibraryDir["PhysX"] = "pbe/vendor/PhysX/bin/release"
--- filter {}
+LibraryDir["PhysX"] = "pbe/vendor/PhysX/bin/%{cfg.buildcfg}"
 
 group "Dependencies"
 	include "pbe/vendor/GLFW"
