@@ -1,0 +1,192 @@
+Scene: Scene Name
+Entities:
+  - Entity: 12553034354518934200
+    TagComponent:
+      Tag: Point Light
+    TransformComponent:
+      Position: [7.57439518, -0.340636969, -1.96214437]
+      Rotation: [-0.100575693, -0.68009007, 0.723753333, 0.0595243052]
+      Scale: [1.77543032, 1.23143375, 1.60335898]
+    PointLightComponent:
+      Enable: true
+      CastShadow: true
+      Color: [1, 1, 1]
+      Multiplier: 1.70000005
+      Radius: 3.70000005
+  - Entity: 18192538842181847723
+    TagComponent:
+      Tag: Direction Light
+    TransformComponent:
+      Position: [-1.79334235, 3.99617624, 0]
+      Rotation: [0.394876629, -0.50263983, 0.0436306633, 0.767803371]
+      Scale: [1.0000025, 1.00000668, 0.999995768]
+    DirectionLightComponent:
+      Enable: true
+      CastShadow: true
+      Color: [1, 0.300000012, 0.400000006]
+      Multiplier: 1
+  - Entity: 10606014749905154375
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [0, 0, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [0.999996126, 1, 0.999997854]
+      ParentUUID: 10780848008876193394
+    MeshComponent:
+      AssetPath: assets\meshes\Cube.fbx
+    BoxColliderComponent:
+      IsTrigger: true
+      Center: [0, 0, 0]
+      Size: [2, 2, 2]
+  - Entity: 14339502257984627181
+    TagComponent:
+      Tag: Spot Light
+    TransformComponent:
+      Position: [6.39824486, 0.590016544, -18.4996815]
+      Rotation: [0.85569495, -0.353197664, 0.349593371, 0.144298419]
+      Scale: [0.999994516, 0.999995768, 0.999984145]
+    SpotLightComponent:
+      Enable: true
+      CastShadow: true
+      Color: [0, 0.316602468, 1]
+      Multiplier: 15
+      Radius: 10.1000004
+      CutOff: 1.95241249
+  - Entity: 3475196139392903098
+    TagComponent:
+      Tag: Player
+    TransformComponent:
+      Position: [-9.8102951, 4.89065981, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [0.5, 0.5, 0.5]
+    ScriptComponent:
+      ScriptPath: assets\scripts\fb_player.lua
+    MeshComponent:
+      AssetPath: assets\meshes\Sphere.fbx
+    SphereColliderComponent:
+      IsTrigger: false
+      Center: [0, 0, 0]
+      Radius: 0.5
+    RigidbodyComponent:
+      Mass: 1
+      Drag: 0.0199999996
+      AngularDrag: 0.0500000007
+      UseGravity: true
+      IsKinematic: false
+  - Entity: 15987760965303442119
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [0, 9.65337467, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [0.999982238, 1, 0.999982238]
+      ParentUUID: 10780848008876193394
+    MeshComponent:
+      AssetPath: assets\meshes\Cube.fbx
+    BoxColliderComponent:
+      IsTrigger: true
+      Center: [0, 0, 0]
+      Size: [2, 2, 2]
+  - Entity: 10780848008876193394
+    TagComponent:
+      Tag: Wall
+    TransformComponent:
+      Position: [12.2915869, 0, 0]
+      Rotation: [0.707106888, 0, 0.70710665, 0]
+      Scale: [0.999818325, 1, 0.999818325]
+      ChildUUIDs:
+        - 15987760965303442119
+        - 10606014749905154375
+    ScriptComponent:
+      ScriptPath: assets\scripts\fb_wall.lua
+  - Entity: 15093620907858569482
+    TagComponent:
+      Tag: Camera
+    TransformComponent:
+      Position: [0, 5.30926132, 17.1574306]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Camera: some camera data...
+      Primary: true
+  - Entity: 4367854054278011316
+    TagComponent:
+      Tag: Wall
+    TransformComponent:
+      Position: [-3.92786837, 0, 0]
+      Rotation: [0.707106888, 0, 0.70710665, 0]
+      Scale: [0.999876618, 1, 0.999876618]
+      ChildUUIDs:
+        - 13712776944950742873
+        - 2979539321512415074
+    ScriptComponent:
+      ScriptPath: assets\scripts\fb_wall.lua
+  - Entity: 13712776944950742873
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [0, 9.65337467, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [0.999982238, 1, 0.999982238]
+      ParentUUID: 4367854054278011316
+    MeshComponent:
+      AssetPath: assets\meshes\Cube.fbx
+    BoxColliderComponent:
+      IsTrigger: true
+      Center: [0, 0, 0]
+      Size: [2, 2, 2]
+  - Entity: 2979539321512415074
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [0, 0, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [0.999996126, 1, 0.999997854]
+      ParentUUID: 4367854054278011316
+    MeshComponent:
+      AssetPath: assets\meshes\Cube.fbx
+    BoxColliderComponent:
+      IsTrigger: true
+      Center: [0, 0, 0]
+      Size: [2, 2, 2]
+  - Entity: 12705140471405573465
+    TagComponent:
+      Tag: Wall
+    TransformComponent:
+      Position: [4.57357407, 0, 0]
+      Rotation: [0.707106888, 0, 0.70710665, 0]
+      Scale: [0.999842703, 1, 0.999842703]
+      ChildUUIDs:
+        - 3364926750768262681
+        - 14145412765338110693
+    ScriptComponent:
+      ScriptPath: assets\scripts\fb_wall.lua
+  - Entity: 3364926750768262681
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [0, 9.65337467, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [0.999982238, 1, 0.999982238]
+      ParentUUID: 12705140471405573465
+    MeshComponent:
+      AssetPath: assets\meshes\Cube.fbx
+    BoxColliderComponent:
+      IsTrigger: true
+      Center: [0, 0, 0]
+      Size: [2, 2, 2]
+  - Entity: 14145412765338110693
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [0, 0, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [0.999996126, 1, 0.999997854]
+      ParentUUID: 12705140471405573465
+    MeshComponent:
+      AssetPath: assets\meshes\Cube.fbx
+    BoxColliderComponent:
+      IsTrigger: true
+      Center: [0, 0, 0]
+      Size: [2, 2, 2]

@@ -1,8 +1,8 @@
-EditorCameraInPlay: true
+EditorCameraInPlay: false
 DoSimulatePhysics: true
 RenderEntityInfo: false
 RenderPhysicsShape: true
-GizmoTransSpace: 1
+GizmoTransSpace: 0
 TranslationSnapValue: 0.5
 RotationSnapValue: 45
-SceneFilePath: assets\scenes\TestScene.pbsc
+SceneFilePath: assets\scenes\RotationSphere.pbsc

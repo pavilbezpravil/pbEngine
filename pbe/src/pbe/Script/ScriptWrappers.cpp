@@ -16,6 +16,7 @@
 #include <sol/sol.hpp>
 
 #include "pbe/Core/Application.h"
+#include "pbe/Core/Math/Random.h"
 #include "pbe/Renderer/RendPrim.h"
 #include "pbe/Scene/StandartComponents.h"
 
@@ -254,7 +255,10 @@ namespace pbe {
 				);
 
 			auto trans = g_luaState.new_usertype<TransformComponent>("TransformComponent",
-				"position", sol::property(&TransformComponent::WorldPosition, [](TransformComponent& tc, const Vec3& position) { tc.UpdatePosition(position, Space::World); }),
+				"position", sol::property(&TransformComponent::WorldPosition, [](TransformComponent& tc, const Vec3& position)
+				{
+					tc.UpdatePosition(position, Space::World);
+				}),
 				"rotation", sol::property(&TransformComponent::WorldRotation, [](TransformComponent& tc, const Quat& rotation) { tc.UpdateRotation(rotation, Space::World); }),
 				"scale", sol::property(&TransformComponent::WorldScale, [](TransformComponent& tc, const Vec3& scale) { tc.UpdateScale(scale, Space::World); }),
 				"localPosition", sol::property([](const TransformComponent& tc) { return tc.Local.Position; }, [](TransformComponent& tc, const Vec3& position) { tc.UpdatePosition(position, Space::Local); }),
@@ -273,7 +277,8 @@ namespace pbe {
 				auto& rb = g_luaState.new_usertype<RigidbodyComponent>("RigidbodyComponent");
 				rb.set("mass", sol::property(&RigidbodyComponent::Mass));
 				rb.set("drag", sol::property(&RigidbodyComponent::Drag));
-				rb.set("velocity", sol::property(&RigidbodyComponent::SetVelocity, &RigidbodyComponent::GetVelocity));
+				rb.set("velocity", sol::property(&RigidbodyComponent::GetVelocity, &RigidbodyComponent::SetVelocity));
+				rb.set("addForce", [](RigidbodyComponent& rb, const Vec3& f) {rb.AddForce(f); });
 			}
 		}
 
@@ -328,6 +333,9 @@ namespace pbe {
 						}
 						else if (!strcmp(name, CameraComponent::GetName())) {
 							return GetComponentSafe<CameraComponent>(e, name, lua);
+						}
+						else if (!strcmp(name, RigidbodyComponent::GetName())) {
+							return GetComponentSafe<RigidbodyComponent>(e, name, lua);
 						}
 						return sol::make_object(lua, sol::lua_nil);
 					});
@@ -409,10 +417,18 @@ namespace pbe {
 
 			auto input = g_luaState.create_table("Input");
 
-			input.set("isKeyPressed", [](const KeyCode& keyCode) { return s_ScriptsWrapperContext->GetInput()->IsKeyPressed(keyCode); });
+			input.set("isKeyPressed", [](const KeyCode& keyCode){ return s_ScriptsWrapperContext->GetInput()->IsKeyPressed(keyCode); });
 			input.set("isMouseButtonPressed", [](int button) { return s_ScriptsWrapperContext->GetInput()->IsMouseButtonPressed(button); });
 			input.set("getMousePosition", []() { return s_ScriptsWrapperContext->GetInput()->GetMousePos(); });
 			input.set("getMouseDelta", []() { return s_ScriptsWrapperContext->GetInput()->GetMouseDelta(); });
+		}
+
+		void RegisterRandom(sol::state& luaState)
+		{
+			auto input = luaState.create_table("Random");
+			
+			input.set("int", [] (int min, int max) { return s_Random.Int(min, max); });
+			input.set("float", [] (float min, float max) { return s_Random.Float(min, max); });
 		}
 
 		void RegisterRendPrim(sol::state& luaState)

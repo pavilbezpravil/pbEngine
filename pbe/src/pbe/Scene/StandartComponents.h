@@ -230,6 +230,8 @@ namespace pbe {
 
 		Vec3 GetAngularVelocity() const;
 		void SetAngularVelocity(Vec3 v);
+		
+		void AddForce(Vec3 f);
 
 		void SetupFiltering(uint32_t filterGroup, uint32_t filterMask);
 		

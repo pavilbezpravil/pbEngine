@@ -99,6 +99,7 @@ namespace pbe
 			trans.Hier.Rotation = totalRotation;
 			trans.Hier.Scale = totalScale;
 
+			trans.NotifyTransformChanged();
 			trans.UpdateChilds();
 		}
 	}
@@ -316,6 +317,11 @@ namespace pbe
 	void RigidbodyComponent::SetAngularVelocity(Vec3 v)
 	{
 		_actor->setAngularVelocity(Vec3ToPx(v));
+	}
+
+	void RigidbodyComponent::AddForce(Vec3 f)
+	{
+		_actor->addForce(Vec3ToPx(f));
 	}
 
 	void RigidbodyComponent::SetupFiltering(uint32_t filterGroup, uint32_t filterMask)

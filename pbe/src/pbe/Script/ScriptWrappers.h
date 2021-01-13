@@ -49,6 +49,7 @@ namespace pbe { namespace Script {
 	void RegisterScene(sol::state& g_luaState);
 	void RegisterEntity(sol::state& g_luaState);
 	void RegisterInput(sol::state& g_luaState);
+	void RegisterRandom(sol::state& g_luaState);
 	void RegisterRendPrim(sol::state& luaState);
 
 } }

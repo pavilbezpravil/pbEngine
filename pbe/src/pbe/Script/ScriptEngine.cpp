@@ -127,6 +127,7 @@ namespace pbe {
 		Script::LoadSystemScripts(luaState);
 		Script::RegisterGameFunction(luaState);
 		Script::RegisterInput(luaState);
+		Script::RegisterRandom(luaState);
 		Script::RegisterRendPrim(luaState);
 		Script::RegisterMathFunction(luaState);
 		Script::RegisterColor(luaState);
@@ -337,6 +338,9 @@ namespace pbe {
 	void ScriptEngine::InitScriptEntity(Entity entity)
 	{
 		auto& sc = entity.GetComponent<ScriptComponent>();
+		if (sc.ScriptPath.empty()) {
+			return;
+		}
 		if (!IsModuleKnown(sc.ScriptPath)) {
 			LoadModule(sc.ScriptPath);
 		}
@@ -364,16 +368,17 @@ namespace pbe {
 
 	void ScriptEngine::ShutdownScriptEntity(Entity entity)
 	{
-		HZ_CORE_ASSERT(HasEntityInstData(entity));
-		auto& instData = GetEntityInstData(entity);
-		if (instData.instantiated) {
-			HZ_CORE_ASSERT(IsScriptModuleSuccessLoaded(instData.pDesc->ModulePath));
-			OnDestroyEntity(entity);
-			UnloadEntityFromState(entity);
-			instData.instantiated = false;
+		if (HasEntityInstData(entity)) {
+			auto& instData = GetEntityInstData(entity);
+			if (instData.instantiated) {
+				HZ_CORE_ASSERT(IsScriptModuleSuccessLoaded(instData.pDesc->ModulePath));
+				OnDestroyEntity(entity);
+				UnloadEntityFromState(entity);
+				instData.instantiated = false;
+			}
+			instData.awaked = false;
+			RemoveEntityInstData(entity);
 		}
-		instData.awaked = false;
-		RemoveEntityInstData(entity);
 	}
 
 	bool ScriptEngine::HasEntityInstData(Entity entity)
