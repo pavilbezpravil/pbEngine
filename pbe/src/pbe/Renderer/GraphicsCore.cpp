@@ -23,7 +23,7 @@
 
 #include "pbe/Core/SystemTime.h"
 
-#define SWAP_CHAIN_BUFFER_COUNT 3
+#define SWAP_CHAIN_BUFFER_COUNT 2
 
 DXGI_FORMAT SwapChainFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
 
@@ -368,6 +368,8 @@ void Graphics::PreparePresentHDR(void)
 
 void Graphics::Present(void)
 {
+	std::this_thread::sleep_for(std::chrono::milliseconds(16));
+	
 	PreparePresentHDR();
 
     g_CurrentBuffer = (g_CurrentBuffer + 1) % SWAP_CHAIN_BUFFER_COUNT;

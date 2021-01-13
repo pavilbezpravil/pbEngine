@@ -246,11 +246,6 @@ namespace pbe {
 		colors[ImGuiCol_NavHighlight] = ImVec4(0.60f, 0.6f, 0.6f, 1.0f);
 		colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.0f, 1.0f, 1.0f, 0.7f);
 
-		using namespace glm;
-
-		// Editor
-		m_PlayButtonTex = Texture2D::Create("assets/editor/PlayButton.png");
-
 		m_EditorScene = Ref<Scene>::Create();
 		UpdateWindowTitle("Untitled Scene");
 		m_SceneHierarchyPanel = CreateScope<SceneHierarchyPanel>(m_EditorScene);
@@ -316,7 +311,6 @@ namespace pbe {
 		if (ImGui::BeginMenuBar()) {
 			if (ImGui::BeginMenu("File")) {
 				if (ImGui::MenuItem("New Scene", "Ctrl-N")) {
-					// TODO: save current scene dialog
 					NewScene();
 				}
 				if (ImGui::MenuItem("Open Scene...", "Ctrl+O"))
@@ -428,15 +422,6 @@ namespace pbe {
 		m_ViewportBounds[1] = { maxBound.x, maxBound.y };
 		m_AllowViewportCameraEvents = ImGui::IsMouseHoveringRect(minBound, maxBound);
 
-		// todo:
-		if (m_RuntimeScene) {
-			Entity cameraEntity = m_RuntimeScene->GetMainCameraEntity();
-			if (cameraEntity) {
-				CameraComponent& camera = cameraEntity.GetComponent<CameraComponent>();
-				camera.Camera.SetViewportSize((uint32_t)viewportSize.x, (uint32_t)viewportSize.y);
-			}
-		}
-
 		OnImGuiGizmo();
 
 		ImGui::End();
@@ -491,6 +476,8 @@ namespace pbe {
 
 	void EditorLayer::OnUpdate(Timestep ts)
 	{
+		RTSet rtSet = { Renderer::Get().GetFullScreenColor(), Renderer::Get().GetFullScreenDepth() };
+		
 		switch (m_SceneState)
 		{
 			case SceneState::Edit:
@@ -501,7 +488,7 @@ namespace pbe {
 				// todo: tmp for test script
 				// m_EditorScene->OnUpdate(ts);
 
-				m_EditorScene->OnRenderEditor(m_EditorCamera, m_EditorSettings.RenderEntityInfo, m_EditorSettings.RenderPhysicsShape);
+				m_EditorScene->OnRenderEditor(m_EditorCamera, rtSet, m_EditorSettings.RenderEntityInfo, m_EditorSettings.RenderPhysicsShape);
 
 				break;
 			}
@@ -513,9 +500,9 @@ namespace pbe {
 				m_RuntimeScene->OnUpdate(ts);
 				if (m_EditorSettings.EditorCameraInPlay) {
 					m_EditorCamera.OnUpdate(ts);
-					m_RuntimeScene->OnRenderEditor(m_EditorCamera, m_EditorSettings.RenderEntityInfo, m_EditorSettings.RenderPhysicsShape);
+					m_RuntimeScene->OnRenderEditor(m_EditorCamera, rtSet, m_EditorSettings.RenderEntityInfo, m_EditorSettings.RenderPhysicsShape);
 				} else {
-					m_RuntimeScene->OnRenderRuntime();
+					m_RuntimeScene->OnRenderRuntime(rtSet);
 				}
 				break;
 			}
@@ -524,7 +511,7 @@ namespace pbe {
 				if (m_ViewportPanelFocused)
 					m_EditorCamera.OnUpdate(ts);
 
-				m_RuntimeScene->OnRenderRuntime();
+				m_RuntimeScene->OnRenderRuntime(rtSet);
 				break;
 			}
 		}

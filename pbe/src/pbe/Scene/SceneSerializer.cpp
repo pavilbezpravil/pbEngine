@@ -372,6 +372,8 @@ namespace pbe {
 
 	bool SceneSerializer::Deserialize(const std::string& filepath)
 	{
+		HZ_CORE_ASSERT(m_Scene);
+		
 		std::ifstream stream(filepath);
 		std::stringstream strStream;
 		strStream << stream.rdbuf();

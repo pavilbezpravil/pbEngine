@@ -165,12 +165,12 @@ namespace pbe {
 			}
 
 			uint nVertex = lineBuffer.NumVertex();
-			if (lineVB2.GetElementSize() < nVertex) {
+			if (lineVB2.GetElementCount() < nVertex) {
 				lineVB2.Create(L"RendPrim_lineBufferVB", nVertex, lineBuffer.GetStride());
 			}
 
 			uint nIndexes = lineBuffer.NumIndexes();
-			if (lineIB2.GetElementSize() < nIndexes) {
+			if (lineIB2.GetElementCount() < nIndexes) {
 				lineIB2.Create(L"RendPrim_lineBufferIB", nIndexes, SIZEOF_INDEX);
 			}
 			context.WriteBuffer(lineVB2, 0, lineBuffer.GetRawVertexData(), nVertex * lineBuffer.GetStride());

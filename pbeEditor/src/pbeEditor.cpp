@@ -17,7 +17,7 @@ public:
 	}
 };
 
-pbe::Application* pbe::CreateApplication()
+pbe::Application* pbe::CreateApplication(int argc, char** argv)
 {
 	return new pbeEditorApplication({"pbeEditor", 1600, 900});
 }

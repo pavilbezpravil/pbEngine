@@ -6,14 +6,13 @@
 #include "Components.h"
 
 #include "pbe/Renderer/SceneRenderer.h"
+#include "pbe/Renderer/Renderer.h"
 #include "pbe/Script/ScriptEngine.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-
 
 #include "StandartComponents.h"
 #include "pbe/Renderer/GraphicsCore.h"
@@ -252,7 +251,7 @@ namespace pbe {
 			});
 	}
 
-	void Scene::OnRenderScene(const Mat4& viewProj, const Vec3& camPos)
+	void Scene::OnRenderScene(const Mat4& viewProj, const Vec3& camPos, const RTSet& rtSet)
 	{	
 		SceneRenderer::Environment environment;
 
@@ -288,7 +287,7 @@ namespace pbe {
 		}
 
 		auto group = m_Registry.group<MeshComponent>(entt::get<TransformComponent>);
-		SceneRenderer::Get().BeginScene(this, { viewProj, camPos }, environment);
+		SceneRenderer::Get().BeginScene(this, { viewProj, camPos, rtSet }, environment);
 		for (auto entity : group) {
 			auto&[meshComponent, transformComponent] = group.get<MeshComponent, TransformComponent>(entity);
 			if (meshComponent.Mesh) {
@@ -298,7 +297,7 @@ namespace pbe {
 		SceneRenderer::Get().EndScene();
 	}
 
-	void Scene::OnRenderRuntime()
+	void Scene::OnRenderRuntime(const RTSet& rtSet)
 	{
 		Entity cameraEntity = GetMainCameraEntity();
 		if (!cameraEntity)
@@ -309,10 +308,10 @@ namespace pbe {
 		const auto& trans = cameraEntity.GetComponent<TransformComponent>();
 		Mat4 view = glm::translate(glm::mat4(1.0f), trans.WorldPosition()) * glm::toMat4(trans.WorldRotation());
 		view = glm::inverse(view);
-		OnRenderScene(camera.Camera.GetProjectionMatrix() * view, trans.WorldPosition());
+		OnRenderScene(camera.Camera.GetProjectionMatrix() * view, trans.WorldPosition(), rtSet);
 	}
 
-	void Scene::OnRenderEditor(const EditorCamera& editorCamera,
+	void Scene::OnRenderEditor(const EditorCamera& editorCamera, const RTSet& rtSet,
 		bool renderEntityInfo, bool renderPhysicsShape)
 	{
 		if (renderEntityInfo) {
@@ -322,7 +321,7 @@ namespace pbe {
 			pPhysicsScene->RenderPhysicsInfo();
 		}
 
-		OnRenderScene(editorCamera.GetViewProjection(), editorCamera.GetPosition());
+		OnRenderScene(editorCamera.GetViewProjection(), editorCamera.GetPosition(), rtSet);
 	}
 
 	void Scene::OnEvent(Event& e)
@@ -363,6 +362,12 @@ namespace pbe {
 	{
 		m_ViewportWidth = width;
 		m_ViewportHeight = height;
+
+		Entity cameraEntity = GetMainCameraEntity();
+		if (cameraEntity) {
+			CameraComponent& camera = cameraEntity.GetComponent<CameraComponent>();
+			camera.Camera.SetViewportSize(m_ViewportWidth, m_ViewportHeight);
+		}
 	}
 
 	Entity Scene::GetMainCameraEntity()

@@ -10,6 +10,12 @@
 
 namespace pbe {
 
+	struct RTSet
+	{
+		Ref<ColorBuffer> colorBuffer;
+		Ref<DepthBuffer> depthBuffer;
+	};
+	
 	class Renderer;
 
 	class SceneRenderer : public Singleton<SceneRenderer>
@@ -26,6 +32,7 @@ namespace pbe {
 		{
 			Mat4 viewProj;
 			Vec3 position;
+			RTSet rtSet;
 		};
 		
 		void Init();

@@ -253,4 +253,81 @@ project "pbeEditor"
 		{
 			'{COPY} "../pbe/vendor/assimp/bin/Release/assimp-vc141-mtd.dll" "%{cfg.targetdir}"',
 		}
+
+
+project "pbeRuntime"
+	location "pbeRuntime"
+	kind "ConsoleApp"
+	language "C++"
+	cppdialect "C++17"
+	staticruntime "on"
+	
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	links 
+	{ 
+		"pbe",
+	}
+	
+	files 
+	{ 
+		"%{prj.name}/src/**.h", 
+		"%{prj.name}/src/**.c", 
+		"%{prj.name}/src/**.hpp", 
+		"%{prj.name}/src/**.cpp" 
+	}
+	
+	includedirs 
+	{
+		"%{prj.name}/src",
+		"pbe/src",
+		"%{IncludeDir.ImGui}",
+		"pbe/vendor",
+		"%{IncludeDir.entt}",
+		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.PhysX}",
+		"%{IncludeDir.pxshared}",
+		"%{IncludeDir.yaml}",
+	}
+	
+	filter "system:windows"
+		systemversion "latest"
+				
+		defines 
+		{ 
+			"HZ_PLATFORM_WINDOWS"
+		}
+	
+	filter "configurations:Debug"
+		defines "HZ_DEBUG"
+		symbols "on"
+
+		links
+		{
+			"pbe/vendor/assimp/bin/Debug/assimp-vc141-mtd.lib"
+		}
+				
+	filter "configurations:Release"
+		defines {
+			"HZ_RELEASE",
+			"NDEBUG",
+		}
+		optimize "on"
+
+		links
+		{
+			"pbe/vendor/assimp/bin/Release/assimp-vc141-mt.lib"
+		}
+
+	filter "configurations:Dist"
+		defines "HZ_DIST"
+		optimize "on"
+
+		links
+		{
+			"pbe/vendor/assimp/bin/Release/assimp-vc141-mt.lib"
+		}
+
 group ""

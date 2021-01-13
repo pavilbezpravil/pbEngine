@@ -63,5 +63,5 @@ namespace pbe {
 	};
 
 	// Implemented by CLIENT
-	Application* CreateApplication();
+	Application* CreateApplication(int argc, char** argv);
 }

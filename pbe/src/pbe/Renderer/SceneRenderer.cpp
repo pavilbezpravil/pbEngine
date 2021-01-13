@@ -95,9 +95,8 @@ namespace pbe {
 	{
 		HZ_CORE_ASSERT(_scene);
 
-		GraphicsContext& context = GraphicsContext::Begin(L"Clear Screen RT");
-		auto& rt = Renderer::Get().GetFullScreenColor();
-		context.ClearColor(rt);
+		GraphicsContext& context = GraphicsContext::Begin(L"Clear Color RT");
+		context.ClearColor(_cameraInfo.rtSet.colorBuffer);
 		context.Finish();
 		
 		FlushDrawList();
@@ -194,8 +193,8 @@ namespace pbe {
 	{
 		GraphicsContext& context = GraphicsContext::Begin(L"Color Pass");
 
-		auto& rt = Renderer::Get().GetFullScreenColor();
-		auto& depth = Renderer::Get().GetFullScreenDepth();
+		auto& rt = _cameraInfo.rtSet.colorBuffer;
+		auto& depth = _cameraInfo.rtSet.depthBuffer;
 
 		context.ClearColor(rt);
 		context.ClearDepth(depth);

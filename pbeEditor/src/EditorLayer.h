@@ -118,9 +118,6 @@ namespace pbe {
 
 		EditorCamera m_EditorCamera;
 
-		// Editor resources
-		Ref<Texture2D> m_PlayButtonTex;
-
 		glm::vec2 m_ViewportBounds[2];
 		int m_GizmoType = 0; // -1 = no gizmo
 		bool m_AllowViewportCameraEvents = false;

@@ -22,7 +22,7 @@
 // dx12
 extern DXGI_FORMAT SwapChainFormat;
 
-#define NUM_FRAMES_IN_FLIGHT 3
+#define NUM_FRAMES_IN_FLIGHT 2
 
 namespace pbe {
 

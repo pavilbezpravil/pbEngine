@@ -104,6 +104,11 @@ namespace pbe {
 			float time = GetTime();
 			m_TimeStep = time - m_LastFrameTime;
 			m_LastFrameTime = time;
+
+			// debug handler
+			if (m_TimeStep.GetSeconds() > 1.f) {
+				m_TimeStep = 1.f / 60.f;
+			}
 		}
 
 		for (auto& l : m_LayerStack) {

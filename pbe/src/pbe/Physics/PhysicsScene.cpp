@@ -49,7 +49,7 @@ namespace pbe
 			// mAccumulator -= mStepSize;
 			//
 			// mScene->simulate(mStepSize);
-			if (simulatePhysics) {
+			if (simulatePhysics && dt > 0.f) {
 				pScene->simulate(dt);
 				pScene->fetchResults(true); // end simulation, execute all callbacks	
 			}

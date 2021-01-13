@@ -365,6 +365,7 @@ void GraphicsContext::ClearColor( pbe::Ref<ColorBuffer>& Target )
 
 void GraphicsContext::ClearDepth(pbe::Ref<DepthBuffer>& Target )
 {
+	TransitionResource(*Target, D3D12_RESOURCE_STATE_DEPTH_WRITE, true);
     m_CommandList->ClearDepthStencilView(Target->GetDSV(), D3D12_CLEAR_FLAG_DEPTH, Target->GetClearDepth(), Target->GetClearStencil(), 0, nullptr );
 }
 

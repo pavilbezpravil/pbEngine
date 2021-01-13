@@ -9,14 +9,17 @@
 
 #include "entt/entt.hpp"
 #include "pbe/Input/SceneInput.h"
+#include "pbe/Renderer/DepthBuffer.h"
 #include "pbe/Renderer/RendScene.h"
 
 
 namespace pbe {
 
+	struct RTSet;
+
 	class Entity;
 	using EntityMap = std::unordered_map<UUID, Entity>;
-
+	
 	class Scene : public RefCounted
 	{
 	public:
@@ -32,9 +35,9 @@ namespace pbe {
 
 		// todo: tmp
 		void OnRenderEntitySceneInfo();
-		void OnRenderScene(const Mat4& viewProj, const Vec3& camPos);
-		void OnRenderRuntime();
-		void OnRenderEditor(const EditorCamera& editorCamera,
+		void OnRenderScene(const Mat4& viewProj, const Vec3& camPos, const RTSet& rtSet);
+		void OnRenderRuntime(const RTSet& rtSet);
+		void OnRenderEditor(const EditorCamera& editorCamera, const RTSet& rtSet,
 			bool renderEntityInfo = false, bool renderPhysicsShape = false);
 		
 		void OnEvent(Event& e);
