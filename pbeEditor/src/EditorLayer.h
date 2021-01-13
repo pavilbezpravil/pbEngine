@@ -84,6 +84,7 @@ namespace pbe {
 		void OpenScene();
 		void SaveScene();
 		void SaveSceneAs();
+		void BuildRuntime();
 	private:
 		std::pair<float, float> GetMouseViewportSpace();
 		std::pair<glm::vec3, glm::vec3> CastRay(float mx, float my);

@@ -322,6 +322,10 @@ namespace pbe {
 					SaveSceneAs();
 
 				ImGui::Separator();
+				if (ImGui::MenuItem("Build", NULL, false, m_EditorScene))
+					BuildRuntime();
+				
+				ImGui::Separator();
 				if (ImGui::MenuItem("Exit"))
 					p_open = false;
 				ImGui::EndMenu();
@@ -701,6 +705,14 @@ namespace pbe {
 			UpdateWindowTitle(path.filename().string());
 			m_EditorSettings.SceneFilePath = filepath;
 		}
+	}
+
+	void EditorLayer::BuildRuntime()
+	{
+		auto batPath = m_EditorSettings.SceneFilePath + ".bat";
+		std::replace(batPath.begin(), batPath.end(), '\\', '_');
+		std::ofstream fout(batPath);
+		fout << "pbeRuntime.exe " << m_EditorSettings.SceneFilePath;
 	}
 
 	void EditorLayer::OnImGuiRender()
