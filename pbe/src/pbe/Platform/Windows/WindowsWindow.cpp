@@ -160,6 +160,19 @@ namespace pbe {
 			data.EventCallback(event);
 		});
 
+		glfwSetWindowFocusCallback(m_Window, [](GLFWwindow* window, int focused)
+		{
+			auto& data = *((WindowData*)glfwGetWindowUserPointer(window));
+
+			if (focused == GLFW_TRUE) {
+				WindowFocusEvent event;
+				data.EventCallback(event);
+			} else {
+				WindowLostFocusEvent event;
+				data.EventCallback(event);
+			}
+		});
+
 		m_ImGuiMouseCursors[ImGuiMouseCursor_Arrow] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
 		m_ImGuiMouseCursors[ImGuiMouseCursor_TextInput] = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
 		m_ImGuiMouseCursors[ImGuiMouseCursor_ResizeAll] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);   // FIXME: GLFW doesn't have this.
@@ -197,7 +210,7 @@ namespace pbe {
 
 		ImGuiMouseCursor imgui_cursor = ImGui::GetMouseCursor();
 		glfwSetCursor(m_Window, m_ImGuiMouseCursors[imgui_cursor] ? m_ImGuiMouseCursors[imgui_cursor] : m_ImGuiMouseCursors[ImGuiMouseCursor_Arrow]);
-		glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		// glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
 		float time = glfwGetTime();
 		float delta = time - m_LastFrameTime;
@@ -209,13 +222,22 @@ namespace pbe {
 	void WindowsWindow::SetVSync(bool enabled)
 	{
 		// dx12
-
 		m_Data.VSync = enabled;
 	}
 
 	bool WindowsWindow::IsVSync() const
 	{
 		return m_Data.VSync;
+	}
+
+	void WindowsWindow::SetMouseMode(MouseMode mode)
+	{
+		switch (mode) {
+			case MouseMode::Normal: glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); break;
+			case MouseMode::Hidden: glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN); break;
+			case MouseMode::Disabled: glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); break;
+			default: HZ_UNIMPLEMENTED();
+		}
 	}
 
 	void WindowsWindow::SetTitle(const std::string& title)

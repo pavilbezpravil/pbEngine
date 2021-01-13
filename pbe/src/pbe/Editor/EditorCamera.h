@@ -35,6 +35,11 @@ namespace pbe {
 
 		float GetPitch() const { return m_Pitch; }
 		float GetYaw() const { return m_Yaw; }
+
+		const float minMoveSpeed = 0.1f;
+		const float maxMoveSpeed = 50.f;
+		float moveSpeed = 15.f;
+		
 	private:
 		void UpdateCameraView();
 
@@ -61,6 +66,8 @@ namespace pbe {
 		float m_Pitch, m_Yaw;
 
 		float m_Exposure = 0.8f;
+
+		bool flyMode = false;
 		
 		uint32_t m_ViewportWidth = 1280, m_ViewportHeight = 720;
 	};

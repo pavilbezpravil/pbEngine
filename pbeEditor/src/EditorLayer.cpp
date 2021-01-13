@@ -389,6 +389,7 @@ namespace pbe {
 		// todo:
 		ImGui::SameLine(); ImGui::Checkbox("RenderEntityInfo", &m_EditorSettings.RenderEntityInfo);
 		ImGui::SameLine(); ImGui::Checkbox("RenderPhysicsShape", &m_EditorSettings.RenderPhysicsShape);
+		ImGui::SameLine(); ImGui::SliderFloat("Camera Speed", &m_EditorCamera.moveSpeed, m_EditorCamera.minMoveSpeed, m_EditorCamera.maxMoveSpeed, "%.3f", ImGuiSliderFlags_Logarithmic);
 
 		m_ViewportPanelMouseOver = ImGui::IsWindowHovered();
 		m_ViewportPanelFocused = ImGui::IsWindowFocused();

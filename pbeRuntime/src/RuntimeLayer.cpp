@@ -18,6 +18,7 @@ namespace pbe {
 			m_RuntimeScene->OnRuntimeStart();
 			std::string title = scenePath + " - pbeRuntime - " + Application::GetPlatformName() + " (" + Application::GetConfigurationName() + ")";
 			Application::Get().GetWindow().SetTitle(title);
+			Application::Get().GetWindow().SetMouseMode(MouseMode::Disabled);
 		} else {
 			Application::Get().OnEvent(WindowCloseEvent{});
 		}
@@ -35,7 +36,20 @@ namespace pbe {
 
 	void RuntimeLayer::OnEvent(Event& e)
 	{
-		if (!m_RuntimeScene) {
+		// EventDispatcher d(e);
+		// d.Dispatch<MouseButtonPressedEvent>([&](MouseButtonPressedEvent& e) {
+		// 	if (e.GetMouseButton() == HZ_MOUSE_BUTTON_LEFT) {
+		// 		Application::Get().GetWindow().SetMouseMode(MouseMode::Disabled);
+		// 		return true;
+		// 	}
+		// 	return false;
+		// });
+		// d.Dispatch<WindowLostFocusEvent>([&](WindowLostFocusEvent&) {
+		// 	Application::Get().GetWindow().SetMouseMode(MouseMode::Normal);
+		// 	return false;
+		// });
+		
+		if (!m_RuntimeScene || e.Handled) {
 			return;
 		}
 

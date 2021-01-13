@@ -8,6 +8,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
+#include "pbe/Core/Application.h"
+
 #define M_PI 3.14159f
 
 namespace pbe {
@@ -84,8 +86,6 @@ namespace pbe {
 			}
 		} else {
 			if (Input::IsMouseButtonPressed(HZ_MOUSE_BUTTON_RIGHT)) {
-				float cameraMoveSpeed = 15.f;
-
 				Vec3 dir = Vec3_Zero;
 				if (Input::IsKeyPressed(KeyCode::W)) {
 					dir += GetForwardDirection();
@@ -107,7 +107,7 @@ namespace pbe {
 				}
 
 				if (glm::length2(dir) > 0.1f) {
-					m_FocalPoint += glm::normalize(dir) * ts.GetSeconds() * cameraMoveSpeed;
+					m_FocalPoint += glm::normalize(dir) * ts.GetSeconds() * moveSpeed;
 				}
 
 				Vec2 delta = Input::GetMouseDelta();
@@ -131,16 +131,39 @@ namespace pbe {
 
 	void EditorCamera::OnEvent(Event& e)
 	{
-		EventDispatcher dispatcher(e);
-		dispatcher.Dispatch<MouseScrolledEvent>(HZ_BIND_EVENT_FN(EditorCamera::OnMouseScroll));
+		EventDispatcher d(e);
+		d.Dispatch<MouseScrolledEvent>(HZ_BIND_EVENT_FN(EditorCamera::OnMouseScroll));
+
+		d.Dispatch<MouseButtonPressedEvent>([&](MouseButtonPressedEvent& e) {
+			if (e.GetMouseButton() == HZ_MOUSE_BUTTON_RIGHT) {
+				Application::Get().GetWindow().SetMouseMode(MouseMode::Disabled);
+				flyMode = true;
+				return true;
+			}
+			return false;
+		});
+		d.Dispatch<MouseButtonReleasedEvent>([&](MouseButtonReleasedEvent& e) {
+			if (e.GetMouseButton() == HZ_MOUSE_BUTTON_RIGHT) {
+				Application::Get().GetWindow().SetMouseMode(MouseMode::Normal);
+				flyMode = false;
+				return true;
+			}
+			return false;
+		});
 	}
 
 	bool EditorCamera::OnMouseScroll(MouseScrolledEvent& e)
 	{
-		float delta = e.GetYOffset() * 0.1f;
-		MouseZoom(delta);
-		UpdateCameraView();
-		return false;
+		if (flyMode) {
+			moveSpeed *= std::pow(1.1f, e.GetYOffset());
+			moveSpeed = std::clamp(moveSpeed, minMoveSpeed, maxMoveSpeed);
+		} else {
+			float delta = e.GetYOffset() * 0.1f;
+			MouseZoom(delta);
+			UpdateCameraView();
+		}
+		return true;
+		// return false;
 	}
 
 	void EditorCamera::MousePan(const glm::vec2& delta)
