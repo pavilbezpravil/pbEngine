@@ -49,7 +49,7 @@ namespace Graphics
     const GUID WKPDID_D3DDebugObjectName = { 0x429b8c22,0x9188,0x4b0c, { 0x87,0x42,0xac,0xb0,0xbf,0x85,0xc2,0x00 }};
 #endif
 
-    BoolVar s_EnableVSync("Timing/VSync", true);
+    BoolVar s_EnableVSync("Timing/VSync", false);
 
     bool g_bTypedUAVLoadSupport_R11G11B10_FLOAT = false;
     bool g_bTypedUAVLoadSupport_R16G16B16A16_FLOAT = false;
@@ -366,20 +366,22 @@ void Graphics::PreparePresentHDR(void)
     Context.Finish();
 }
 
+static uint64_t presentFence[2] = { UINT64_MAX, UINT64_MAX };
+
 void Graphics::Present(void)
 {
-	std::this_thread::sleep_for(std::chrono::milliseconds(16));
+	auto& queue = g_CommandManager.GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	if (presentFence[1] != UINT64_MAX) {
+		queue.WaitForFence(presentFence[1]);
+	}
+	std::swap(presentFence[0], presentFence[1]);
+	presentFence[0] = queue.IncrementFence();
 	
 	PreparePresentHDR();
-
     g_CurrentBuffer = (g_CurrentBuffer + 1) % SWAP_CHAIN_BUFFER_COUNT;
 
     UINT PresentInterval = s_EnableVSync ? std::min(4, (int)std::round(s_FrameTime * 60.0f)) : 0;
-
     s_SwapChain1->Present(PresentInterval, 0);
-
-	// todo:
-	g_CommandManager.IdleGPU();
 
     int64_t CurrentTick = SystemTime::GetCurrentTick();
 	 // static int n = 0;

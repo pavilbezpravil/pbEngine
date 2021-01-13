@@ -22,8 +22,8 @@ private:
 
 pbe::Application* pbe::CreateApplication(int argc, char** argv)
 {
+	// return new pbeRuntimeApplication({ "pbeRuntime", 1600, 900 }, "C:/Users/Pavel/Documents/dev/pbEngine/bin/builds/pbe_0_0_2/assets/scenes/TestScene.pbsc");
 	if (argc == 2) {
-		// "C:/Users/Pavel/Documents/dev/pbEngine/bin/builds/pbe_0_0_2/assets/scenes/TestScene.pbsc"
 		return new pbeRuntimeApplication({ "pbeRuntime", 1600, 900 }, argv[1]);
 	}
 	return NULL;
