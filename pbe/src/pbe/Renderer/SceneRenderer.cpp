@@ -94,6 +94,12 @@ namespace pbe {
 	void SceneRenderer::EndScene()
 	{
 		HZ_CORE_ASSERT(_scene);
+
+		GraphicsContext& context = GraphicsContext::Begin(L"Clear Screen RT");
+		auto& rt = Renderer::Get().GetFullScreenColor();
+		context.ClearColor(rt);
+		context.Finish();
+		
 		FlushDrawList();
 		_scene = nullptr;
 	}

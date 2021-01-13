@@ -107,10 +107,7 @@ namespace pbe {
 		void Show() override
 		{
 			if (open) {
-				if (ImGui::Begin(name.c_str(), &open)) {
-					ImGui::ShowDemoWindow(&open);
-				}
-				ImGui::End();
+				ImGui::ShowDemoWindow(&open);
 			}
 		}
 	};
@@ -665,7 +662,7 @@ namespace pbe {
 	void EditorLayer::NewScene()
 	{
 		auto& app = Application::Get();
-		std::string filepath = app.OpenFile("pbe Scene (*.pbsc)\0*.pbsc\0");
+		std::string filepath = app.SaveFile("pbe Scene (*.pbsc)\0*.pbsc\0");
 		if (!filepath.empty())
 		{
 			Ref<Scene> newScene = Ref<Scene>::Create();
