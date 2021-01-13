@@ -142,7 +142,10 @@ project "pbe"
 		symbols "On"
 				
 	filter "configurations:Release"
-		defines "HZ_RELEASE"
+		defines {
+			"HZ_RELEASE",
+			"NDEBUG",
+		}
 		optimize "On"
 
 	filter "configurations:Dist"
@@ -191,8 +194,6 @@ project "pbeEditor"
 		"%{IncludeDir.imgui_node_editor}",
 	}
 
-	print(LibraryDir["WinPixEventRuntime"] )
-
 	postbuildcommands 
 	{
 		-- '{COPY} "../pbeEditor/assets" "%{cfg.targetdir}/assets"',
@@ -223,7 +224,10 @@ project "pbeEditor"
 		}
 				
 	filter "configurations:Release"
-		defines "HZ_RELEASE"
+		defines {
+			"HZ_RELEASE",
+			"NDEBUG",
+		}
 		optimize "on"
 
 		links
