@@ -74,6 +74,8 @@ namespace pbe {
 		UUID GetUUID() const { return GetComponent<IDComponent>().ID; }
 		UUID GetSceneUUID() const { return m_Scene->GetUUID(); }
 		Scene* GetScene() const { return m_Scene; }
+
+		bool IsValid() const;
 	private:
 		Entity(const std::string& name);
 	private:

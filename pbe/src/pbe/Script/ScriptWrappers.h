@@ -46,6 +46,7 @@ namespace pbe { namespace Script {
 	void RegisterMathFunction(sol::state& g_luaState);
 	void RegisterColor(sol::state& luaState);
 	void RegisterComponent(sol::state& g_luaState);
+	void RegisterScene(sol::state& g_luaState);
 	void RegisterEntity(sol::state& g_luaState);
 	void RegisterInput(sol::state& g_luaState);
 	void RegisterRendPrim(sol::state& luaState);

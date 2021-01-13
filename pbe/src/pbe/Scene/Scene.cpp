@@ -217,6 +217,12 @@ namespace pbe {
 
 	void Scene::OnNextFrame()
 	{
+		for (auto entityUUID : pendingDestroySet) {
+			Entity e = GetEntityMap().at(entityUUID);
+			DestroyEntity(e);
+		}
+		pendingDestroySet.clear();
+		
 		pSceneInput->OnNextFrame();
 	}
 
@@ -512,6 +518,18 @@ namespace pbe {
 		}
 
 		return Entity{};
+	}
+
+	void Scene::PendingDestroy(Entity& e)
+	{
+		if (e.IsValid()) {
+			pendingDestroySet.insert(e.GetUUID());
+		}
+	}
+
+	bool Scene::IsPendingForDestroy(const Entity& e)
+	{
+		return pendingDestroySet.find(e.GetUUID()) != pendingDestroySet.end();
 	}
 
 	void Scene::CopyTo(Ref<Scene>& target)

@@ -270,6 +270,15 @@ namespace pbe {
 			trans.set("localRight", sol::property(&TransformComponent::WorldRight));
 		}
 
+		void RegisterScene(sol::state& g_luaState)
+		{
+			HZ_CORE_INFO("    RegisterScene");
+
+			auto& scene = g_luaState.create_table("Scene");
+			scene["findEntityByTag"] = [&](const char* tag) { return s_ScriptsWrapperContext->FindEntityByTag(tag); };
+			scene["destroy"] = [&](Entity& e) { return s_ScriptsWrapperContext->PendingDestroy(e); };
+		}
+
 		template <typename T>
 		sol::object GetComponentSafe(Entity& e, const char* name, sol::state_view& lua)
 		{
@@ -283,38 +292,56 @@ namespace pbe {
 		{
 			HZ_CORE_INFO("    RegisterEntity");
 
-			using EntityT = LuaEntity;
-			
-			auto& entity = g_luaState.new_usertype<EntityT>("Entity");
-
-			entity.set("getComponent", [](EntityT& e, const char* name, sol::this_state s)
-				{
-					sol::state_view lua(s);
-
-					if (!strcmp(name, TransformComponent::GetName())) {
-						return GetComponentSafe<TransformComponent>(e, name, lua);
-					} else if (!strcmp(name, DirectionLightComponent::GetName())) {
-						return GetComponentSafe<DirectionLightComponent>(e, name, lua);
-					} else if (!strcmp(name, PointLightComponent::GetName())) {
-						return GetComponentSafe<PointLightComponent>(e, name, lua);
-					} else if (!strcmp(name, SpotLightComponent::GetName())) {
-						return GetComponentSafe<SpotLightComponent>(e, name, lua);
-					} else if (!strcmp(name, MeshComponent::GetName())) {
-						return GetComponentSafe<MeshComponent>(e, name, lua);
-					} else if (!strcmp(name, TagComponent::GetName())) {
-						return GetComponentSafe<TagComponent>(e, name, lua);
-					} else if (!strcmp(name, CameraComponent::GetName())) {
-						return GetComponentSafe<CameraComponent>(e, name, lua);
-					}
-					return sol::make_object(lua, sol::lua_nil);
-				});
-			entity.set("getUUID", [](const EntityT& e) { return e.GetUUID(); });
-			entity.set(sol::meta_function::to_string, [](const EntityT& e)
 			{
-				return std::string("Entity {") + std::to_string(e.GetUUID()) + "}";
-			});
-			entity.set(sol::meta_function::index, &dynamic_object::dynamic_get);
-			entity.set(sol::meta_function::new_index, &dynamic_object::dynamic_set);
+				using EntityT = Entity;
+
+				auto& entity = g_luaState.new_usertype<EntityT>("Entity");
+
+				entity.set("getComponent", [](EntityT& e, const char* name, sol::this_state s)
+					{
+						sol::state_view lua(s);
+
+						if (!strcmp(name, TransformComponent::GetName())) {
+							return GetComponentSafe<TransformComponent>(e, name, lua);
+						}
+						else if (!strcmp(name, DirectionLightComponent::GetName())) {
+							return GetComponentSafe<DirectionLightComponent>(e, name, lua);
+						}
+						else if (!strcmp(name, PointLightComponent::GetName())) {
+							return GetComponentSafe<PointLightComponent>(e, name, lua);
+						}
+						else if (!strcmp(name, SpotLightComponent::GetName())) {
+							return GetComponentSafe<SpotLightComponent>(e, name, lua);
+						}
+						else if (!strcmp(name, MeshComponent::GetName())) {
+							return GetComponentSafe<MeshComponent>(e, name, lua);
+						}
+						else if (!strcmp(name, TagComponent::GetName())) {
+							return GetComponentSafe<TagComponent>(e, name, lua);
+						}
+						else if (!strcmp(name, CameraComponent::GetName())) {
+							return GetComponentSafe<CameraComponent>(e, name, lua);
+						}
+						return sol::make_object(lua, sol::lua_nil);
+					});
+				entity.set("getUUID", [](const EntityT& e) { return e.GetUUID(); });
+				entity.set("isValid", [](const EntityT& self) { return self.IsValid(); });
+				entity.set("destroy", [](const EntityT& self) { Entity e = self; return self.GetScene()->PendingDestroy(e); });
+				entity.set(sol::meta_function::to_string, [](const EntityT& e)
+					{
+						return std::string("Entity {") + std::to_string(e.GetUUID()) + "}";
+					});
+			}
+
+			{
+				using EntityT = LuaEntity;
+
+				auto& entity = g_luaState.new_usertype<EntityT>("LuaEntity",
+					sol::base_classes, sol::bases<Entity>());
+
+				entity.set(sol::meta_function::index, &dynamic_object::dynamic_get);
+				entity.set(sol::meta_function::new_index, &dynamic_object::dynamic_set);
+			}
 		}
 
 		void RegisterInput(sol::state& g_luaState)

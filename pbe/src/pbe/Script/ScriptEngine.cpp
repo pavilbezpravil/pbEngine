@@ -131,6 +131,7 @@ namespace pbe {
 		Script::RegisterMathFunction(luaState);
 		Script::RegisterColor(luaState);
 		Script::RegisterComponent(luaState);
+		Script::RegisterScene(luaState);
 		Script::RegisterEntity(luaState);
 	}
 

@@ -67,6 +67,9 @@ namespace pbe {
 
 		Entity FindEntityByTag(const std::string& tag);
 
+		void PendingDestroy(Entity& e);
+		bool IsPendingForDestroy(const Entity& e);
+
 		const EntityMap& GetEntityMap() const { return m_EntityIDMap; }
 		void CopyTo(Ref<Scene>& target);
 
@@ -85,6 +88,8 @@ namespace pbe {
 		uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
 
 		EntityMap m_EntityIDMap;
+
+		std::unordered_set<UUID> pendingDestroySet;
 
 		Ref<physics::PhysicsScene> pPhysicsScene;
 		Ref<SceneInput> pSceneInput;
