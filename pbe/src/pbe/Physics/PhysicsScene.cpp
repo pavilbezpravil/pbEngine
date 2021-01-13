@@ -7,6 +7,9 @@
 
 #include "pbe/Scene/StandartComponents.h"
 
+// todo: remove
+#include "pbe/Script/ScriptEngine.h"
+
 namespace pbe
 {
 	namespace physics
@@ -24,10 +27,37 @@ namespace pbe
 			delete s_Physics;
 		}
 
+		PxFilterFlags contactReportFilterShader(PxFilterObjectAttributes attributes0, PxFilterData filterData0,
+			PxFilterObjectAttributes attributes1, PxFilterData filterData1,
+			PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
+		{
+			PX_UNUSED(attributes0);
+			PX_UNUSED(attributes1);
+			PX_UNUSED(filterData0);
+			PX_UNUSED(filterData1);
+			PX_UNUSED(constantBlockSize);
+			PX_UNUSED(constantBlock);
+
+			// let triggers through
+			if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1))
+			{
+				pairFlags = PxPairFlag::eTRIGGER_DEFAULT;
+				return PxFilterFlag::eDEFAULT;
+			}
+
+			// all initial and persisting reports for everything, with per-point data
+			pairFlags = PxPairFlag::eSOLVE_CONTACT | PxPairFlag::eDETECT_DISCRETE_CONTACT
+				| PxPairFlag::eNOTIFY_TOUCH_FOUND | PxPairFlag::eNOTIFY_TOUCH_LOST
+				| PxPairFlag::eNOTIFY_TOUCH_PERSISTS | PxPairFlag::eNOTIFY_CONTACT_POINTS;
+			return PxFilterFlag::eDEFAULT;
+		}
+
 		PhysicsScene::PhysicsScene(PxScene* pScene) : pScene(pScene)
 		{
 			pScene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
 			pScene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
+
+			pScene->setSimulationEventCallback(this);
 		}
 
 		PhysicsScene::~PhysicsScene()
@@ -75,6 +105,7 @@ namespace pbe
 			}
 			
 			// actor->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+			actor->setActorFlag(PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
 			actor->userData = new Entity(entity);
 			pScene->addActor(*actor);
 
@@ -344,6 +375,61 @@ namespace pbe
 			return ret;
 		}
 
+		void PhysicsScene::onSleep(PxActor** actors, PxU32 count)
+		{
+			for (PxU32 i = 0; i < count; i++) {
+				Entity e = *(Entity*)actors[i]->userData;
+				HZ_CORE_INFO("onSleep {}", e.GetComponent<TagComponent>().Tag);
+			}
+		}
+
+		void PhysicsScene::onContact(const PxContactPairHeader& pairHeader, const PxContactPair* pairs, PxU32 nbPairs)
+		{
+			for (PxU32 i = 0; i < nbPairs; i++) {
+				const PxContactPair& cp = pairs[i];
+
+				if (cp.events & PxPairFlag::eNOTIFY_TOUCH_FOUND) {
+					Entity e0 = *(Entity*)pairHeader.actors[0]->userData;
+					Entity e1 = *(Entity*)pairHeader.actors[1]->userData;
+
+					s_ScriptEngine->OnBeginOverlap(e0 ,e1);
+					s_ScriptEngine->OnBeginOverlap(e1 ,e0);
+					// HZ_CORE_INFO("onContact eNOTIFY_TOUCH_FOUND {} {}", e0.GetComponent<TagComponent>().Tag, e1.GetComponent<TagComponent>().Tag);
+				}
+				// if (cp.events & PxPairFlag::eNOTIFY_TOUCH_LOST) {
+				// 	Entity e0 = *(Entity*)pairHeader.actors[0]->userData;
+				// 	Entity e1 = *(Entity*)pairHeader.actors[1]->userData;
+				//
+				// 	HZ_CORE_INFO("onContact eNOTIFY_TOUCH_LOST {} {}", e0.GetComponent<TagComponent>().Tag, e1.GetComponent<TagComponent>().Tag);
+				// }
+			}
+		}
+
+		void PhysicsScene::onTrigger(PxTriggerPair* pairs, PxU32 count)
+		{
+			for (PxU32 i = 0; i < count; i++) {
+				// ignore pairs when shapes have been deleted
+				if (pairs[i].flags & (PxTriggerPairFlag::eREMOVED_SHAPE_TRIGGER |
+					PxTriggerPairFlag::eREMOVED_SHAPE_OTHER))
+					continue;
+
+				if (pairs->status == PxPairFlag::eNOTIFY_TOUCH_FOUND) {
+					Entity e = *(Entity*)pairs[i].otherShape->getActor()->userData;
+					Entity trigger = *(Entity*)pairs[i].triggerShape->getActor()->userData;
+
+					s_ScriptEngine->OnTriggerEnter(e, trigger);	
+					// HZ_CORE_INFO("onTrigger eNOTIFY_TOUCH_FOUND {}", e.GetComponent<TagComponent>().Tag);
+				}
+				if (pairs->status == PxPairFlag::eNOTIFY_TOUCH_LOST) {
+					Entity e = *(Entity*)pairs[i].otherShape->getActor()->userData;
+					Entity trigger = *(Entity*)pairs[i].triggerShape->getActor()->userData;
+
+					s_ScriptEngine->OnTriggerExit(e, trigger);
+					// HZ_CORE_INFO("onTrigger eNOTIFY_TOUCH_LOST {}", e.GetComponent<TagComponent>().Tag);
+				}
+			}
+		}
+
 		void PhysicsScene::DestroyAllEntities()
 		{
 			std::vector<Entity> entities;
@@ -412,7 +498,8 @@ namespace pbe
 			PxSceneDesc sceneDesc{tolerancesScale};
 			sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
 			sceneDesc.cpuDispatcher = gDispatcher;
-			sceneDesc.filterShader = PxDefaultSimulationFilterShader;
+			// sceneDesc.filterShader = PxDefaultSimulationFilterShader;
+			sceneDesc.filterShader = contactReportFilterShader;
 			sceneDesc.flags = PxSceneFlag::eENABLE_ACTIVE_ACTORS;
 			
 			PxScene* pScene = mPhysics->createScene(sceneDesc);

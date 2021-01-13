@@ -85,6 +85,11 @@ namespace pbe {
 		void OnCreateEntity(Entity entity);
 		void OnUpdateEntity(Entity entity, Timestep ts);
 		void OnDestroyEntity(Entity entity);
+		
+		void OnBeginOverlap(Entity entity, Entity other);
+		
+		void OnTriggerEnter(Entity entity, Entity trigger);
+		void OnTriggerExit(Entity entity, Entity trigger);
 
 		bool PathExist(const std::string& modulePath); // todo: move to fs
 		

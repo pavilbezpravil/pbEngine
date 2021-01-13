@@ -253,6 +253,42 @@ namespace pbe {
 		LuaSafeCall(func, entity);
 	}
 
+	void ScriptEngine::OnBeginOverlap(Entity entity, Entity other)
+	{
+		if (HasEntityInstData(entity)) {
+			EntityInstanceData& instData = GetEntityInstData(entity);
+			if (!instData.instantiated)
+				return;
+
+			auto func = (*GetSceneContext(entity).luaState)[instData.pDesc->ModuleCallPrefix]["onBeginOverlap"];
+			LuaSafeCall(func, entity, other);
+		}
+	}
+
+	void ScriptEngine::OnTriggerEnter(Entity entity, Entity trigger)
+	{
+		if (HasEntityInstData(entity)) {
+			EntityInstanceData& instData = GetEntityInstData(entity);
+			if (!instData.instantiated)
+				return;
+
+			auto func = (*GetSceneContext(entity).luaState)[instData.pDesc->ModuleCallPrefix]["onTriggerEnter"];
+			LuaSafeCall(func, entity, trigger);
+		}
+	}
+
+	void ScriptEngine::OnTriggerExit(Entity entity, Entity trigger)
+	{
+		if (HasEntityInstData(entity)) {
+			EntityInstanceData& instData = GetEntityInstData(entity);
+			if (!instData.instantiated)
+				return;
+
+			auto func = (*GetSceneContext(entity).luaState)[instData.pDesc->ModuleCallPrefix]["onTriggerExit"];
+			LuaSafeCall(func, entity, trigger);
+		}
+	}
+
 	bool ScriptEngine::PathExist(const std::string& modulePath)
 	{
 		std::filesystem::path p{modulePath};

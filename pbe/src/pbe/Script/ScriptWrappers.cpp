@@ -268,6 +268,13 @@ namespace pbe {
 			trans.set("localForward", sol::property(&TransformComponent::WorldForward));
 			trans.set("localUp", sol::property(&TransformComponent::WorldUp));
 			trans.set("localRight", sol::property(&TransformComponent::WorldRight));
+
+			{
+				auto& rb = g_luaState.new_usertype<RigidbodyComponent>("RigidbodyComponent");
+				rb.set("mass", sol::property(&RigidbodyComponent::Mass));
+				rb.set("drag", sol::property(&RigidbodyComponent::Drag));
+				rb.set("velocity", sol::property(&RigidbodyComponent::SetVelocity, &RigidbodyComponent::GetVelocity));
+			}
 		}
 
 		void RegisterScene(sol::state& g_luaState)

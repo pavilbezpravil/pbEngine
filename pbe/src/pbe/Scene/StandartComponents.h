@@ -169,7 +169,10 @@ namespace pbe {
 
 		physx::PxShape* _shape = NULL; // internal
 
+		void UpdateIsTrigger();
 		void UpdateCenter();
+		
+		void UpdateAllBase();
 		
 	protected:
 		ColliderComponentBase() = default;
@@ -181,6 +184,7 @@ namespace pbe {
 		float Radius = 0.5f;
 
 		void UpdateRadius();
+		void UpdateAll();
 
 		COMPONENT_CLASS_TYPE(SphereColliderComponent)
 	};
@@ -198,6 +202,7 @@ namespace pbe {
 		Vec3 Size = Vec3_One;
 
 		void UpdateSize();
+		void UpdateAll();
 		
 		COMPONENT_CLASS_TYPE(BoxColliderComponent)
 	};
@@ -225,6 +230,8 @@ namespace pbe {
 
 		Vec3 GetAngularVelocity() const;
 		void SetAngularVelocity(Vec3 v);
+
+		void SetupFiltering(uint32_t filterGroup, uint32_t filterMask);
 		
 		physx::PxRigidDynamic* _actor = NULL; // internal
 		bool _pandingForDestroy = false; // internal

@@ -1,6 +1,6 @@
 function onCreate(self)
     self.mouseSensitivity = 0.002
-    self.destroyTest = true
+    self.destroyTest = false
     self.destroyTimerPeriod = 1.0
     self.destroyTimer = self.destroyTimerPeriod
 end
@@ -47,4 +47,19 @@ function onUpdate(self, dt)
             -- end
         end
     end
+end
+
+-- function onBeginOverlap(self, other)
+--     print("onBeginOverlap")
+--     other:destroy()
+-- end
+
+function onTriggerEnter(self, other)
+    print("onTriggerEnter")
+    other:destroy()
+end
+
+function onTriggerExit(self, other)
+    print("onTriggerExit")
+    other:destroy()
 end

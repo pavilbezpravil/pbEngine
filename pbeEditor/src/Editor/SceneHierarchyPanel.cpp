@@ -719,7 +719,9 @@ namespace pbe {
 
 		auto DrawColliderBase = [](ColliderComponentBase& cc)
 		{
-			ImGui::Checkbox("Is Trigger", &cc.IsTrigger);
+			if (ImGui::Checkbox("Is Trigger", &cc.IsTrigger)) {
+				cc.UpdateIsTrigger();
+			}
 			if (ImGui::DragFloat3("Center", glm::value_ptr(cc.Center), 0.05)) {
 				cc.UpdateCenter();
 			}

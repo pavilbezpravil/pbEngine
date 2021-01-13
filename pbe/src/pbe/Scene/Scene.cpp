@@ -444,7 +444,7 @@ namespace pbe {
 	}
 
 	template<typename T>
-	static void CopyComponent(entt::registry& dstRegistry, entt::registry& srcRegistry, const std::unordered_map<UUID, entt::entity>& enttMap, void (*f)(T&, T&) = {})
+	static void CopyComponent(entt::registry& dstRegistry, entt::registry& srcRegistry, const std::unordered_map<UUID, entt::entity>& enttMap, void (*f)(T&, const T&) = {})
 	{
 		auto components = srcRegistry.view<T>();
 		for (auto srcEntity : components) {
@@ -550,9 +550,12 @@ namespace pbe {
 		CopyComponent<DirectionLightComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<PointLightComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<SpotLightComponent>(target->m_Registry, m_Registry, enttMap);
-		CopyComponent<SphereColliderComponent>(target->m_Registry, m_Registry, enttMap);
-		CopyComponent<BoxColliderComponent>(target->m_Registry, m_Registry, enttMap);
-		CopyComponent<RigidbodyComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<SphereColliderComponent>(target->m_Registry, m_Registry, enttMap, 
+			[](SphereColliderComponent& dst, const SphereColliderComponent& src) { dst.UpdateAll(); });
+		CopyComponent<BoxColliderComponent>(target->m_Registry, m_Registry, enttMap,
+			[](BoxColliderComponent& dst, const BoxColliderComponent& src) { dst.UpdateAll(); });
+		CopyComponent<RigidbodyComponent>(target->m_Registry, m_Registry, enttMap,
+			[](RigidbodyComponent& dst, const RigidbodyComponent& src) { dst.UpdateAll(); });
 		CopyComponent<AIControllerComponent>(target->m_Registry, m_Registry, enttMap);
 
 		for (auto& [uuid, entity] : target->GetEntityMap()) {

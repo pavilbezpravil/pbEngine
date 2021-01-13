@@ -515,16 +515,18 @@ namespace pbe {
 				auto ReadColliderComponentBase = [](ColliderComponentBase& l, auto& yamlLightComponent)
 				{
 					l.IsTrigger = yamlLightComponent["IsTrigger"].as<bool>();
+					l.Center = yamlLightComponent["Center"].as<Vec3>();
+
+					l.UpdateIsTrigger();
+					l.UpdateCenter();
 				};
 
 				if (auto boxColliderComponent = entity["BoxColliderComponent"])
 				{
 					auto& component = deserializedEntity.AddComponent<BoxColliderComponent>();
 					ReadColliderComponentBase(component, boxColliderComponent);
-					component.Center = boxColliderComponent["Center"].as<Vec3>();
 					component.Size = boxColliderComponent["Size"].as<Vec3>();
 
-					component.UpdateCenter();
 					component.UpdateSize();
 				}
 
@@ -532,10 +534,8 @@ namespace pbe {
 				{
 					auto& component = deserializedEntity.AddComponent<SphereColliderComponent>();
 					ReadColliderComponentBase(component, sphereColliderComponent);
-					component.Center = sphereColliderComponent["Center"].as<Vec3>();
 					component.Radius = sphereColliderComponent["Radius"].as<float>();
 
-					component.UpdateCenter();
 					component.UpdateRadius();
 				}
 

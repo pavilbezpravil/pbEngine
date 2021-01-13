@@ -216,9 +216,21 @@ namespace pbe
 		pScene->GetPhysicsScene()->OnEntityTransformChanged(e);
 	}
 
+	void ColliderComponentBase::UpdateIsTrigger()
+	{
+		_shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, !IsTrigger);
+		_shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, IsTrigger);
+	}
+
 	void ColliderComponentBase::UpdateCenter()
 	{
 		_shape->setLocalPose(PxTransform(Vec3ToPx(Center)));
+	}
+
+	void ColliderComponentBase::UpdateAllBase()
+	{
+		UpdateIsTrigger();
+		UpdateCenter();
 	}
 
 	void SphereColliderComponent::UpdateRadius()
@@ -230,6 +242,12 @@ namespace pbe
 		_shape->setGeometry(sphereGeom);
 	}
 
+	void SphereColliderComponent::UpdateAll()
+	{
+		UpdateAllBase();
+		UpdateRadius();
+	}
+
 	void BoxColliderComponent::UpdateSize()
 	{
 		PxBoxGeometry boxGeom;
@@ -237,6 +255,12 @@ namespace pbe
 		HZ_CORE_ASSERT(success);
 		boxGeom.halfExtents = Vec3ToPx(Size) * 0.5;
 		_shape->setGeometry(boxGeom);
+	}
+
+	void BoxColliderComponent::UpdateAll()
+	{
+		UpdateAllBase();
+		UpdateSize();
 	}
 
 	void RigidbodyComponent::UpdateMass()
@@ -292,5 +316,21 @@ namespace pbe
 	void RigidbodyComponent::SetAngularVelocity(Vec3 v)
 	{
 		_actor->setAngularVelocity(Vec3ToPx(v));
+	}
+
+	void RigidbodyComponent::SetupFiltering(uint32_t filterGroup, uint32_t filterMask)
+	{
+		PxFilterData filterData;
+		filterData.word0 = filterGroup; // word0 = own ID
+		filterData.word1 = filterMask;  // word1 = ID mask to filter pairs that trigger a
+										// contact callback;
+		const PxU32 numShapes = _actor->getNbShapes();
+		PxShape** shapes = new PxShape*[numShapes]; // todo:
+		_actor->getShapes(shapes, numShapes);
+		for (PxU32 i = 0; i < numShapes; i++) {
+			PxShape* shape = shapes[i];
+			shape->setSimulationFilterData(filterData);
+		}
+		delete[](shapes);
 	}
 }
