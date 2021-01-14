@@ -13,6 +13,7 @@
 
 // dx12
 #include "Input.h"
+#include "pbe/Audio/AudioScene.h"
 #include "pbe/Physics/PhysicsScene.h"
 #include "pbe/Renderer/CommandContext.h"
 #include "pbe/Renderer/GraphicsCore.h"
@@ -42,6 +43,7 @@ namespace pbe {
 		PushOverlay(m_ImGuiLayer);
 
 		physics::Init();
+		audio::Init();
 
 		ScriptEngine::Init();
 	}
@@ -50,6 +52,7 @@ namespace pbe {
 	{
 		m_LayerStack.Clear();
 
+		audio::Term();
 		physics::Term();
 
 		ScriptEngine::Shutdown();

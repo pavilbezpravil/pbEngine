@@ -336,6 +336,21 @@ namespace pbe {
 			
 			out << YAML::EndMap;
 		}
+
+		if (entity.HasComponent<SoundSourceComponent>())
+		{
+			out << YAML::Key << "SoundSourceComponent";
+			out << YAML::BeginMap;
+
+			auto& c = entity.GetComponent<SoundSourceComponent>();
+			out << YAML::Key << "Filepath" << YAML::Value << c.Filepath;
+			out << YAML::Key << "Pitch" << YAML::Value << c.SoundSource.Pitch;
+			out << YAML::Key << "Gain" << YAML::Value << c.SoundSource.Gain;
+			out << YAML::Key << "IsLooping" << YAML::Value << c.SoundSource.IsLooping;
+			out << YAML::Key << "IsAutoPlay" << YAML::Value << c.SoundSource.IsAutoPlay;
+
+			out << YAML::EndMap;
+		}
 		
 		out << YAML::EndMap; // Entity
 	}
@@ -562,6 +577,22 @@ namespace pbe {
 						if (bt && bt->Deserialize(bt->GetFilepath())) {
 							component.AIController->SetBehaviorTree(bt);
 						}
+					}
+				}
+
+				if (auto soundSourceComponent = entity["SoundSourceComponent"])
+				{
+					auto& component = deserializedEntity.AddComponent<SoundSourceComponent>();
+					component.Filepath = soundSourceComponent["Filepath"].as<std::string>();
+					component.SoundSource.Pitch = soundSourceComponent["Pitch"].as<float>();
+					component.SoundSource.Gain = soundSourceComponent["Gain"].as<float>();
+					component.SoundSource.IsLooping = soundSourceComponent["IsLooping"].as<bool>();
+					component.SoundSource.IsAutoPlay = soundSourceComponent["IsAutoPlay"].as<bool>();
+
+					if (!component.Filepath.empty()) {
+						audio::s_AudioMng->BindContext(m_Scene->GetAudioScene());
+						component.SoundSource.Load(component.Filepath.c_str());
+						audio::s_AudioMng->UnbindContext();
 					}
 				}
 			}

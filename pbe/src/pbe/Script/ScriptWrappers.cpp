@@ -232,6 +232,10 @@ namespace pbe {
 		{
 			HZ_CORE_INFO("    RegisterComponent");
 
+			g_luaState.new_usertype<TagComponent>("TagComponent",
+				"tag", &TagComponent::Tag
+				);
+			
 			g_luaState.new_usertype<LightComponentBase>("LightComponentBaseComponent",
 				"enable", &LightComponentBase::Enable,
 				"castShadow", &LightComponentBase::CastShadow,

@@ -31,12 +31,14 @@ IncludeDir["WinPixEventRuntime"] = "pbe/vendor/WinPixEventRuntime/Include/WinPix
 IncludeDir["Lua"] = "pbe/vendor/lua-5.4.1/src"
 IncludeDir["Sol2"] = "pbe/vendor/sol2/single/include"
 IncludeDir["PhysX"] = "pbe/vendor/PhysX/include"
+IncludeDir["OpenAL"] = "pbe/vendor/OpenAL/include"
 IncludeDir["pxshared"] = "pbe/vendor/PhysX/pxshared/include"
 IncludeDir["yaml"] = "pbe/vendor/yaml-cpp/include"
 
 LibraryDir = {}
 LibraryDir["WinPixEventRuntime"] = "pbe/vendor/WinPixEventRuntime/bin"
 LibraryDir["PhysX"] = "pbe/vendor/PhysX/bin/%{cfg.buildcfg}"
+LibraryDir["OpenAL"] = "pbe/vendor/OpenAL/bin/%{cfg.buildcfg}"
 
 group "Dependencies"
 	include "pbe/vendor/GLFW"
@@ -87,6 +89,7 @@ project "pbe"
 		"%{IncludeDir.Sol2}",
 		"%{IncludeDir.PhysX}",
 		"%{IncludeDir.pxshared}",
+		"%{IncludeDir.OpenAL}",
 		"%{IncludeDir.FastNoise}",
 		"%{IncludeDir.yaml}",
 		"%{prj.name}/vendor/assimp/include",
@@ -96,6 +99,7 @@ project "pbe"
 	libdirs {
 		"%{LibraryDir.WinPixEventRuntime}",
 		"%{LibraryDir.PhysX}",
+		"%{LibraryDir.OpenAL}",
 	}
 
 	links 
@@ -116,6 +120,7 @@ project "pbe"
 		"PhysXExtensions_static_64",
 		"PhysXFoundation_64",
 		"PhysXPvdSDK_static_64",
+		"OpenAL32",
 	}
 	
 	defines 
@@ -199,6 +204,7 @@ project "pbeEditor"
 		-- '{COPY} "../pbeEditor/assets" "%{cfg.targetdir}/assets"',
 		'{COPY} "../%{LibraryDir.WinPixEventRuntime}/WinPixEventRuntime.dll" "%{cfg.targetdir}"',
 		'{COPY} "../%{LibraryDir.PhysX}/dll" "%{cfg.targetdir}"',
+		'{COPY} "../%{LibraryDir.OpenAL}/dll" "%{cfg.targetdir}"',
 	}
 	
 	filter "system:windows"

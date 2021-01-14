@@ -6,6 +6,7 @@
 #include "pbe/Renderer/Mesh.h"
 #include "pbe/Scene/SceneCamera.h"
 #include "pbe/AI/AIController.h"
+#include "pbe/Audio/AudioScene.h"
 
 
 namespace pbe {
@@ -246,6 +247,14 @@ namespace pbe {
 		Ref<AI::Controller> AIController;
 
 		COMPONENT_CLASS_TYPE(AIControllerComponent)
+	};
+
+	struct SoundSourceComponent
+	{
+		audio::SoundSource SoundSource;
+		std::string Filepath;
+
+		COMPONENT_CLASS_TYPE(SoundSourceComponent)
 	};
 	
 }

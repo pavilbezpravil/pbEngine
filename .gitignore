@@ -5,6 +5,7 @@
 !pbe/vendor/assimp/bin
 !pbe/vendor/WinPixEventRuntime/bin
 !pbe/vendor/PhysX/bin
+!pbe/vendor/OpenAL/bin
 bin-int/
 obj/
 

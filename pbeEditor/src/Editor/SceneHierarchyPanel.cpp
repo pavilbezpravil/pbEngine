@@ -139,6 +139,7 @@ namespace pbe {
 					AddComponent<SphereColliderComponent>(m_SelectionContext ,"Sphere Collider");
 					AddComponent<RigidbodyComponent>(m_SelectionContext ,"Rigidbody");
 					AddComponent<AIControllerComponent>(m_SelectionContext ,"AI Controller", [](Entity& e, AIControllerComponent& c) { c.AIController = Ref<AI::Controller>::Create(e); });
+					AddComponent<SoundSourceComponent>(m_SelectionContext ,"Sound Source");
 
 					ImGui::EndPopup();
 				}
@@ -794,6 +795,48 @@ namespace pbe {
 			}
 		});
 
+		DrawComponent<SoundSourceComponent>("Sound Source", entity, [&](SoundSourceComponent& aic)
+			{
+				if (ImGui::Checkbox("IsAutoPlay", &aic.SoundSource.IsAutoPlay)) {
+					// 
+				}
+				if (ImGui::Checkbox("IsLooping", &aic.SoundSource.IsLooping)) {
+					aic.SoundSource.SetLopping(aic.SoundSource.IsLooping);
+				}
+				if (ImGui::DragFloat("Gain", &aic.SoundSource.Gain, 0, 10)) {
+					aic.SoundSource.SetGain(aic.SoundSource.Gain);
+				}
+				if (ImGui::DragFloat("Pitch", &aic.SoundSource.Pitch, 0, 10)) {
+					aic.SoundSource.SetPitch(aic.SoundSource.Pitch);
+				}
+			
+				ImGui::Columns(3);
+				ImGui::SetColumnWidth(0, 75);
+				ImGui::SetColumnWidth(1, 200);
+				ImGui::SetColumnWidth(2, 30);
+				ImGui::Text("File Path");
+				ImGui::NextColumn();
+				ImGui::PushItemWidth(-1);
+				if (!aic.Filepath.empty()) {
+					ImGui::InputText("##filepath", (char*)aic.Filepath.c_str(), 256, ImGuiInputTextFlags_ReadOnly);
+				}
+				else {
+					ImGui::InputText("##filepath", (char*)"Null", 256, ImGuiInputTextFlags_ReadOnly);
+				}
+
+				ImGui::PopItemWidth();
+				ImGui::NextColumn();
+				if (ImGui::Button("...##open")) {
+					std::string filepath = Application::Get().OpenFile("Wav file (*.wav)\0*.wav\0");
+					if (!filepath.empty()) {
+						audio::s_AudioMng->BindContext(entity.GetScene()->GetAudioScene());
+						aic.Filepath = filepath;
+						aic.SoundSource.Load(aic.Filepath.c_str());
+						audio::s_AudioMng->UnbindContext();
+					}
+				}
+			});
+		
 		DrawComponent<ScriptComponent>("Script", entity, [=](ScriptComponent& sc) mutable
 		{
 			ImGui::Columns(3);

@@ -8,6 +8,7 @@
 #include "pbe/Physics/PhysicsScene.h"
 
 #include "entt/entt.hpp"
+#include "pbe/Audio/AudioScene.h"
 #include "pbe/Input/SceneInput.h"
 #include "pbe/Renderer/DepthBuffer.h"
 #include "pbe/Renderer/RendScene.h"
@@ -79,6 +80,8 @@ namespace pbe {
 
 		static Ref<Scene> GetScene(UUID uuid);
 
+		Ref<audio::AudioScene> GetAudioScene() { return pAudioScene; }
+
 		bool IsReloadRequested() const { return m_ReloadRequest; }
 		void RequestReload() { m_ReloadRequest = true; }
 		
@@ -97,6 +100,7 @@ namespace pbe {
 		Ref<physics::PhysicsScene> pPhysicsScene;
 		Ref<SceneInput> pSceneInput;
 		Ref<RendScene> pRendScene;
+		Ref<audio::AudioScene> pAudioScene;
 
 		bool m_IsPlaying = false;
 		bool m_ReloadRequest = false;

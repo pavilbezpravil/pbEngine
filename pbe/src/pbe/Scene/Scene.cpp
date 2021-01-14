@@ -125,6 +125,18 @@ namespace pbe {
 	{
 
 	}
+
+	static void OnSoundSourceComponentConstruct(entt::registry& registry, entt::entity entity)
+	{
+		
+	}
+
+	static void OnSoundSourceComponentDestroy(entt::registry& registry, entt::entity entity)
+	{
+		Entity e = GetEntityFromRegistry(registry, entity);
+		auto& soundSource = e.GetComponent<SoundSourceComponent>().SoundSource;
+		soundSource.Unload();
+	}
 	
 	Scene::Scene(const std::string& debugName)
 		: m_DebugName(debugName), m_SceneID(UUIDGet())
@@ -167,12 +179,16 @@ namespace pbe {
 
 		m_Registry.on_construct<AIControllerComponent>().connect<&OnAIControllerComponentConstruct>();
 		m_Registry.on_destroy<AIControllerComponent>().connect<&OnAIControllerComponentDestroy>();
+
+		m_Registry.on_construct<SoundSourceComponent>().connect<&OnSoundSourceComponentConstruct>();
+		m_Registry.on_destroy<SoundSourceComponent>().connect<&OnSoundSourceComponentDestroy>();
 		
 		m_SceneEntity = m_Registry.create();
 		m_Registry.emplace<SceneComponent>(m_SceneEntity, m_SceneID);
 		
 		pSceneInput = Ref<SceneInput>::Create();
 		pRendScene = Ref<RendScene>::Create();
+		pAudioScene = Ref<audio::AudioScene>::Create();
 		
 		pPhysicsScene = physics::s_Physics->CreateScene();
 		m_Registry.emplace<PhysicsSceneComponent>(m_SceneEntity, pPhysicsScene.Raw());
@@ -196,28 +212,33 @@ namespace pbe {
 
 	void Scene::OnUpdate(Timestep ts)
 	{
-		{
-			// collide event process by script
-			s_ScriptEngine->SetContext(this);
-			pPhysicsScene->Simulation(ts.GetSeconds());
-			s_ScriptEngine->SetContext(NULL);
-		}
+		audio::s_AudioMng->BindContext(pAudioScene);
+		s_ScriptEngine->SetContext(this);
+
+		pPhysicsScene->Simulation(ts.GetSeconds());
 		pPhysicsScene->SyncPhysicsWithScene();
 		
 		{
 			// Script update
-			s_ScriptEngine->SetContext(this);
 			for (auto entity : m_Registry.view<ScriptComponent>()) {
 				s_ScriptEngine->OnUpdateEntity(Entity{ entity, this }, ts);
 			}
-			s_ScriptEngine->SetContext(NULL);
 
 			// Ai update
 			for (auto entity : m_Registry.view<AIControllerComponent>()) {
 				auto aiContoller = m_Registry.get<AIControllerComponent>(entity).AIController;
 				aiContoller->Update();
 			}
+
+			// Sound update
+			for (auto entity : m_Registry.view<SoundSourceComponent>()) {
+				auto& soundSource = m_Registry.get<SoundSourceComponent>(entity).SoundSource;
+				soundSource.IsPlaying(); // update?
+			}
 		}
+
+		s_ScriptEngine->SetContext(NULL);
+		audio::s_AudioMng->UnbindContext();
 	}
 
 	void Scene::OnNextFrame()
@@ -354,12 +375,21 @@ namespace pbe {
 	{
 		{
 			s_ScriptEngine->SetContext(this);
-			for (auto entity : m_Registry.view<ScriptComponent>())
-			{
+			for (auto entity : m_Registry.view<ScriptComponent>()) {
 				Entity e = { entity, this };
 				s_ScriptEngine->InstantiateEntity(e);
 			}
 			s_ScriptEngine->SetContext(NULL);
+
+			audio::s_AudioMng->BindContext(pAudioScene);
+			for (auto entity : m_Registry.view<SoundSourceComponent>()) {
+				Entity e = { entity, this };
+				auto& ss = e.GetComponent<SoundSourceComponent>().SoundSource;
+				if (ss.IsLoaded() && ss.IsAutoPlay) {
+					ss.StartPlay();
+				}
+			}
+			audio::s_AudioMng->UnbindContext();
 		}
 
 		m_IsPlaying = true;
@@ -489,10 +519,11 @@ namespace pbe {
 		CopyComponentIfExists<DirectionLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<PointLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<SpotLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
-		CopyComponentIfExists<BoxColliderComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<SoundSourceComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<SphereColliderComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<RigidbodyComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<AIControllerComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<BoxColliderComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 
 		// duplicate childs
 		const auto* trans = &entity.GetComponent<TransformComponent>();
@@ -563,6 +594,16 @@ namespace pbe {
 		CopyComponent<RigidbodyComponent>(target->m_Registry, m_Registry, enttMap,
 			[](RigidbodyComponent& dst, const RigidbodyComponent& src) { dst.UpdateAll(); });
 		CopyComponent<AIControllerComponent>(target->m_Registry, m_Registry, enttMap);
+
+		audio::s_AudioMng->BindContext(target->pAudioScene);
+		CopyComponent<SoundSourceComponent>(target->m_Registry, m_Registry, enttMap,
+			[](SoundSourceComponent& dst, const SoundSourceComponent& src)
+			{
+				dst.SoundSource.Default();
+				dst.SoundSource.Load(dst.Filepath.c_str());
+				dst.SoundSource.UpdateAll();
+			});
+		audio::s_AudioMng->UnbindContext();
 
 		for (auto& [uuid, entity] : target->GetEntityMap()) {
 			Entity e = entity;
