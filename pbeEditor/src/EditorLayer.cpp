@@ -527,6 +527,11 @@ namespace pbe {
 		if (m_RuntimeScene) {
 			m_RuntimeScene->OnNextFrame();
 		}
+
+		if (m_RuntimeScene && m_RuntimeScene->IsReloadRequested()) {
+			OnSceneStop();
+			OnScenePlay();
+		}
 	}
 
 	bool EditorLayer::Property(const std::string& name, bool& value)

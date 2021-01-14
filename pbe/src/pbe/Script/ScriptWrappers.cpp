@@ -289,6 +289,7 @@ namespace pbe {
 			auto& scene = g_luaState.create_table("Scene");
 			scene["findEntityByTag"] = [&](const char* tag) { return s_ScriptsWrapperContext->FindEntityByTag(tag); };
 			scene["destroy"] = [&](Entity& e) { return s_ScriptsWrapperContext->PendingDestroy(e); };
+			scene["reload"] = [&]() { s_ScriptsWrapperContext->RequestReload(); };
 		}
 
 		template <typename T>

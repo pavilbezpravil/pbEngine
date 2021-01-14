@@ -79,6 +79,9 @@ namespace pbe {
 
 		static Ref<Scene> GetScene(UUID uuid);
 
+		bool IsReloadRequested() const { return m_ReloadRequest; }
+		void RequestReload() { m_ReloadRequest = true; }
+		
 	private:
 		UUID m_SceneID;
 		entt::entity m_SceneEntity;
@@ -96,6 +99,7 @@ namespace pbe {
 		Ref<RendScene> pRendScene;
 
 		bool m_IsPlaying = false;
+		bool m_ReloadRequest = false;
 
 		void AddTransformComponent(Entity entity);
 		void DestroyAllEntities();

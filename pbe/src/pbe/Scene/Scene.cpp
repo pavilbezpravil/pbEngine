@@ -196,7 +196,12 @@ namespace pbe {
 
 	void Scene::OnUpdate(Timestep ts)
 	{
-		pPhysicsScene->Simulation(ts.GetSeconds());
+		{
+			// collide event process by script
+			s_ScriptEngine->SetContext(this);
+			pPhysicsScene->Simulation(ts.GetSeconds());
+			s_ScriptEngine->SetContext(NULL);
+		}
 		pPhysicsScene->SyncPhysicsWithScene();
 		
 		{
@@ -348,12 +353,13 @@ namespace pbe {
 	void Scene::OnRuntimeStart()
 	{
 		{
-			auto view = m_Registry.view<ScriptComponent>();
-			for (auto entity : view)
+			s_ScriptEngine->SetContext(this);
+			for (auto entity : m_Registry.view<ScriptComponent>())
 			{
 				Entity e = { entity, this };
 				s_ScriptEngine->InstantiateEntity(e);
 			}
+			s_ScriptEngine->SetContext(NULL);
 		}
 
 		m_IsPlaying = true;

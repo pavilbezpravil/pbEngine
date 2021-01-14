@@ -11,27 +11,12 @@ namespace pbe {
 
 	void RuntimeLayer::OnAttach()
 	{
-		auto scene = Ref<Scene>::Create();
-		SceneSerializer serializer(scene);
-		if (serializer.Deserialize(scenePath)) {
-			m_RuntimeScene = scene;
-			m_RuntimeScene->OnRuntimeStart();
-			std::string title = scenePath + " - pbeRuntime - " + Application::GetPlatformName() + " (" + Application::GetConfigurationName() + ")";
-			Application::Get().GetWindow().SetTitle(title);
-			Application::Get().GetWindow().SetMouseMode(MouseMode::Disabled);
-		} else {
-			Application::Get().OnEvent(WindowCloseEvent{});
-		}
+		LoadRuntimeScene();
 	}
 
 	void RuntimeLayer::OnDetach()
 	{
-		if (!m_RuntimeScene) {
-			return;
-		}
-		
-		m_RuntimeScene->OnRuntimeStop();
-		m_RuntimeScene = nullptr;
+		UnloadRuntimeScene();
 	}
 
 	void RuntimeLayer::OnEvent(Event& e)
@@ -56,8 +41,40 @@ namespace pbe {
 		m_RuntimeScene->OnEvent(e);
 	}
 
+	bool RuntimeLayer::LoadRuntimeScene()
+	{
+		auto scene = Ref<Scene>::Create();
+		SceneSerializer serializer(scene);
+		if (serializer.Deserialize(scenePath)) {
+			m_RuntimeScene = scene;
+			m_RuntimeScene->OnRuntimeStart();
+			std::string title = scenePath + " - pbeRuntime - " + Application::GetPlatformName() + " (" + Application::GetConfigurationName() + ")";
+			Application::Get().GetWindow().SetTitle(title);
+			Application::Get().GetWindow().SetMouseMode(MouseMode::Disabled);
+			return true;
+		} else {
+			Application::Get().OnEvent(WindowCloseEvent{});
+			return false;
+		}
+	}
+
+	void RuntimeLayer::UnloadRuntimeScene()
+	{
+		if (!m_RuntimeScene) {
+			return;
+		}
+
+		m_RuntimeScene->OnRuntimeStop();
+		m_RuntimeScene = nullptr;
+	}
+
 	void RuntimeLayer::OnUpdate(Timestep ts)
 	{
+		if (m_RuntimeScene && m_RuntimeScene->IsReloadRequested()) {
+			UnloadRuntimeScene();
+			LoadRuntimeScene();
+		}
+		
 		if (!m_RuntimeScene) {
 			return;
 		}

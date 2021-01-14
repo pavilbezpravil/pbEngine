@@ -16,5 +16,6 @@ end
 
 function onTriggerEnter(self, other)
     -- other:destroy()
-    self:destroy()
+    Scene.reload()
+    -- self:destroy()
 end

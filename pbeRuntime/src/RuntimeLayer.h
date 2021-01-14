@@ -18,5 +18,8 @@ namespace pbe {
 	private:
 		Ref<Scene> m_RuntimeScene;
 		std::string scenePath;
+
+		bool LoadRuntimeScene();
+		void UnloadRuntimeScene();
 	};
 }
